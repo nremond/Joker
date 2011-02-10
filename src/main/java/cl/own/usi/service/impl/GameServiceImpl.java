@@ -50,7 +50,7 @@ public class GameServiceImpl implements GameService {
 	
 	private List<Question> mapToQuestion(List<Map<String, Map<String, Boolean>>> questions) {
 		List<Question> list = new ArrayList<Question>();
-		int number = 0;
+		int number = 1;
 		for (Map<String, Map<String, Boolean>> element : questions) {
 			for (Map.Entry<String, Map<String, Boolean>> entry : element.entrySet()) {
 				Question question = new Question();
@@ -100,7 +100,7 @@ public class GameServiceImpl implements GameService {
 	}
 
 	public Question getCurrentQuestion() {
-		return gameDAO.getGame().getQuestions().get(currentQuestion);
+		return gameDAO.getGame().getQuestions().get(currentQuestion - 1);
 	}
 
 	public int getCorrectAnswerForCurrentQuestion() {

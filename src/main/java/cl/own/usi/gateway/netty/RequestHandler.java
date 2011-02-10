@@ -49,7 +49,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
 			throws Exception {
 		
-e.getCause().printStackTrace();
+		e.getCause().printStackTrace();
 
 		super.exceptionCaught(ctx, e);
 	}

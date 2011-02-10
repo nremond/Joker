@@ -3,7 +3,6 @@ package cl.own.usi.service;
 import java.util.List;
 import java.util.Map;
 
-import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
 
 public interface GameService {
@@ -15,8 +14,6 @@ public interface GameService {
 	boolean waitOtherUsers() throws InterruptedException;
 	
 	void userEnter();
-	
-	Game getGame();
 	
 	long getStartOfCurrentQuestion();
 	

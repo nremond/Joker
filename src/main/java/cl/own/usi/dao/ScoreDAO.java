@@ -10,10 +10,9 @@ public interface ScoreDAO {
 	 * For a given User, update its score with the given delta.
 	 * 
 	 * @param user
-	 * @param scoreDelta
 	 * @return
 	 */
-	boolean updateScore(User user, int scoreDelta);
+	boolean updateScore(User user);
 	
 	/**
 	 * Return the Users having the higher score.
