@@ -25,12 +25,10 @@ do
 	curl -b "session_key=\"$session\"" "http://${HOST}:${PORT}/api/question/1";
 	let "e = $RANDOM % ${QUESTIONTIMELIMIT}"; sleep ${e};
 	curl -X POST -b "session_key=\"$session\"" -d "{ \"answer\" : $i }" "http://${HOST}:${PORT}/api/answer/1";
-	curl -b "session_key=\"$session\"" "http://${HOST}:${PORT}/api/ranking";
 	let "f = ${QUESTIONTIMELIMIT} - ${e} + 2"; sleep ${f};
 	curl -b "session_key=\"$session\"" "http://${HOST}:${PORT}/api/question/2";
 	let "e = $RANDOM % ${QUESTIONTIMELIMIT}"; sleep ${e};
 	curl -X POST -b "session_key=\"$session\"" -d "{ \"answer\" : $i }" "http://${HOST}:${PORT}/api/answer/2";
-	curl -b "session_key=\"$session\"" "http://${HOST}:${PORT}/api/ranking";
 	let "f = ${QUESTIONTIMELIMIT} - ${e} + 2"; sleep ${f};
 	curl -b "session_key=\"$session\"" "http://${HOST}:${PORT}/api/question/3";
 	let "e = $RANDOM % ${QUESTIONTIMELIMIT}"; sleep ${e};

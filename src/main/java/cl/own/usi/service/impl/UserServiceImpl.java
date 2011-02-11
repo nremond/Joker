@@ -70,6 +70,8 @@ public class UserServiceImpl implements UserService {
 					
 					answer.setAnswerNumber(answerNumber);
 					
+					userDAO.insertAnswer(user, answer);
+					
 					if (currentQuestion.getCorrectChoice() == answerNumber) {
 						return true;
 					} else {
