@@ -21,20 +21,20 @@ sleep 4
 for i in $(seq 1 ${NBUSERS})
 do
 	(curl -X POST -d "{ \"mail\" : \"$i\", \"password\" : \"$i\" }" -D $i.txt "http://${HOST}:${PORT}/api/login";
-	session=$(cat $i.txt | grep "Set-Cookie" | cut -d "\"" -f2);
-	curl -b "session_key=$session" "http://${HOST}:${PORT}/api/question/1";
+	session=$(cat $i.txt | grep "Set-Cookie" | sed -e "s/^Set-Cookie: session_key=\(.*\)\$/\1/" | sed -e "s/\"//g");
+	curl -b "session_key=\"$session\"" "http://${HOST}:${PORT}/api/question/1";
 	let "e = $RANDOM % ${QUESTIONTIMELIMIT}"; sleep ${e};
-	curl -X POST -b "session_key=$session" -d "{ \"answer\" : $i }" "http://${HOST}:${PORT}/api/answer/1";
-	curl -b "session_key=$session" "http://${HOST}:${PORT}/api/ranking";
+	curl -X POST -b "session_key=\"$session\"" -d "{ \"answer\" : $i }" "http://${HOST}:${PORT}/api/answer/1";
+	curl -b "session_key=\"$session\"" "http://${HOST}:${PORT}/api/ranking";
 	let "f = ${QUESTIONTIMELIMIT} - ${e} + 2"; sleep ${f};
-	curl -b "session_key=$session" "http://${HOST}:${PORT}/api/question/2";
+	curl -b "session_key=\"$session\"" "http://${HOST}:${PORT}/api/question/2";
 	let "e = $RANDOM % ${QUESTIONTIMELIMIT}"; sleep ${e};
-	curl -X POST -b "session_key=$session" -d "{ \"answer\" : $i }" "http://${HOST}:${PORT}/api/answer/2";
-	curl -b "session_key=$session" "http://${HOST}:${PORT}/api/ranking";
+	curl -X POST -b "session_key=\"$session\"" -d "{ \"answer\" : $i }" "http://${HOST}:${PORT}/api/answer/2";
+	curl -b "session_key=\"$session\"" "http://${HOST}:${PORT}/api/ranking";
 	let "f = ${QUESTIONTIMELIMIT} - ${e} + 2"; sleep ${f};
-	curl -b "session_key=$session" "http://${HOST}:${PORT}/api/question/3";
+	curl -b "session_key=\"$session\"" "http://${HOST}:${PORT}/api/question/3";
 	let "e = $RANDOM % ${QUESTIONTIMELIMIT}"; sleep ${e};
-	curl -X POST -b "session_key=$session" -d "{ \"answer\" : $i }" "http://${HOST}:${PORT}/api/answer/3";
-	curl -b "session_key=$session" "http://${HOST}:${PORT}/api/ranking";)&
+	curl -X POST -b "session_key=\"$session\"" -d "{ \"answer\" : $i }" "http://${HOST}:${PORT}/api/answer/3";
+	curl -b "session_key=\"$session\"" "http://${HOST}:${PORT}/api/ranking";)&
 done
 

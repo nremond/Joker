@@ -6,7 +6,7 @@ import cl.own.usi.model.User;
 
 public interface ScoreService {
 
-	int updateScore(String userId, long deltaTimeToAnswer, boolean answerCorrect);
+	int updateScore(User user, long deltaTimeToAnswer, boolean answerCorrect);
 	
 	List<User> getTop100();
 	

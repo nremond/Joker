@@ -9,16 +9,12 @@ import cl.own.usi.dao.ScoreDAO;
 import cl.own.usi.model.User;
 import cl.own.usi.service.GameService;
 import cl.own.usi.service.ScoreService;
-import cl.own.usi.service.UserService;
 
 @Service
 public class ScoreServiceImpl implements ScoreService {
 
 	@Autowired
 	GameService gameService;
-	
-	@Autowired
-	UserService userService;
 	
 	@Autowired
 	ScoreDAO scoreDAO;
@@ -28,8 +24,7 @@ public class ScoreServiceImpl implements ScoreService {
 	private static final int FIFTY = 50;
 	private static final int HUNDRED = 100;
 
-	public int updateScore(String userId, long deltaTimeToAnswer, boolean answerCorrect) {
-		User user = userService.getUserFromUserId(userId);
+	public int updateScore(User user, long deltaTimeToAnswer, boolean answerCorrect) {
 		if (answerCorrect) {
 			int timeBonus = Long.valueOf(deltaTimeToAnswer).intValue();
 			user.setScore(user.getScore() + CORRECT_QUESTION_BONUS + timeBonus);

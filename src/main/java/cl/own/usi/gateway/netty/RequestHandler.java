@@ -34,7 +34,6 @@ import org.json.simple.JSONValue;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import cl.own.usi.gateway.utils.Base64;
 import cl.own.usi.model.Question;
 import cl.own.usi.model.User;
 import cl.own.usi.service.ExecutorUtil;
@@ -66,6 +65,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 	protected static final String URI_LOGIN = "/login";
 	protected static final String URI_RANKING = "/ranking";
 	protected static final String URI_USER = "/user";
+	protected static final String URI_LOGOUT= "/logout";
 	
 	protected static final String COOKIE_AUTH_NAME = "session_key";
 	
@@ -98,8 +98,6 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 				if (request.getMethod() == HttpMethod.GET) {
 					String userId = getCookie(request, COOKIE_AUTH_NAME);
 					
-					// TODO : validate user.
-					
 					if (userId == null) {
 						writeResponse(e, UNAUTHORIZED);
 					} else {
@@ -111,25 +109,33 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 								writeResponse(e, BAD_REQUEST);
 							} else {
 							
-								// TODO : check users has answered previous questions
-								
-								gameService.userEnter();
-								
 								User user = userService.getUserFromUserId(userId);
 								
-								System.out.println("Get Question " + questionNumber + " for user " + userId);
-								
-								Question question = gameService.getCurrentQuestion();
-								
-								StringBuilder sb = new StringBuilder("{");
-								sb.append("\"question\":\"").append(question.getLabel()).append("\"");
-								int i = 0;
-								for (String answer : question.getChoices()) {
-									i++;
-									sb.append(",\"answer_").append(i).append("\":\"").append(answer).append("\"");
+								if (user != null && userService.isQuestionAllowed(user, questionNumber)) {
+									
+									gameService.userEnter();
+									
+									
+									System.out.println("Get Question " + questionNumber + " for user " + userId);
+									
+									Question question = gameService.getCurrentQuestion();
+									
+									StringBuilder sb = new StringBuilder("{");
+									sb.append("\"question\":\"").append(question.getLabel()).append("\"");
+									int i = 0;
+									for (String answer : question.getChoices()) {
+										i++;
+										sb.append(",\"answer_").append(i).append("\":\"").append(answer).append("\"");
+									}
+									
+									executorUtil.getExecutorService().execute(new QuestionWorker(user.getScore(), e, sb.toString()));
+									
+								} else {
+									
+									writeResponse(e, BAD_REQUEST);
+									
 								}
 								
-								executorUtil.getExecutorService().execute(new QuestionWorker(user.getScore(), e, sb.toString()));
 							}
 							
 						} catch (NumberFormatException exception) {
@@ -142,8 +148,6 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 			} else if (URI.startsWith(URI_ANSWER)) {
 				String userId = getCookie(request, COOKIE_AUTH_NAME);
 				
-				// TODO : validate user.
-				
 				if (userId == null) {
 					writeResponse(e, UNAUTHORIZED);
 				} else {
@@ -155,30 +159,37 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 							writeResponse(e, BAD_REQUEST);
 						} else {
 							
-							// TODO : check users has answered previous questions
+							User user = userService.getUserFromUserId(userId);
 							
-							System.out.println("Answer Question " + questionNumber + " for user " + userId);
-	
-							JSONObject object = (JSONObject) JSONValue.parse(request
-									.getContent().toString(CharsetUtil.UTF_8));
+							if (user != null && userService.isQuestionAllowed(user, questionNumber)) {
 							
-							Question question = gameService.getCurrentQuestion();
-							long deltaTimeToAnswer = System.nanoTime() - gameService.getStartOfCurrentQuestion();
+								System.out.println("Answer Question " + questionNumber + " for user " + userId);
+		
+								JSONObject object = (JSONObject) JSONValue.parse(request
+										.getContent().toString(CharsetUtil.UTF_8));
+								
+								Question question = gameService.getCurrentQuestion();
+								long deltaTimeToAnswer = System.nanoTime() - gameService.getStartOfCurrentQuestion();
+								
+								boolean answerCorrect = userService.insertAnswer(user, ((Long)object.get("answer")).intValue());
+								
+								int newScore = scoreService.updateScore(user, deltaTimeToAnswer, answerCorrect);
+								
+								StringBuilder sb = new StringBuilder("{ \"are_u_ok\" : ");
+								if (answerCorrect) {
+									sb.append("true");
+								} else {
+									sb.append("false");
+								}
+								sb.append(", \"good_answer\" : \"" + question.getChoices().get(question.getCorrectChoice()) + "\", \"score\" : " + newScore + "}");
+								
+								writeStringBuilder(sb, e, CREATED);
 							
-							boolean answerCorrect = userService.insertAnswer(userId, ((Long)object.get("answer")).intValue());
-							
-							int newScore = scoreService.updateScore(userId, deltaTimeToAnswer, answerCorrect);
-							
-							StringBuilder sb = new StringBuilder("{ \"are_u_ok\" : ");
-							if (answerCorrect) {
-								sb.append("true");
 							} else {
-								sb.append("false");
+
+								writeResponse(e, BAD_REQUEST);
+								
 							}
-							sb.append(", \"good_answer\" : \"" + question.getChoices().get(question.getCorrectChoice()) + "\", \"score\" : " + newScore + "}");
-							
-							writeStringBuilder(sb, e, CREATED);
-							
 						}
 					} catch (NumberFormatException exception) {
 						writeResponse(e, BAD_REQUEST);
@@ -188,40 +199,44 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 
 				String userId = getCookie(request, COOKIE_AUTH_NAME);
 				
-				// TODO : validate user.
-				
 				if (userId == null) {
 					writeResponse(e, UNAUTHORIZED);
 				} else {
 					
 					User user = userService.getUserFromUserId(userId);
 					
-					StringBuilder sb = new StringBuilder("{");
-					
-					sb.append(" \"my_score\" : ").append(user.getScore()).append(", ");
-					
-					sb.append(" \"top_scores\" : { ");
-					List<User> topUsers = scoreService.getTop100();
-					appendUsersScores(topUsers, sb);
-					sb.append(" }, ");
-					
-					sb.append(" \"before_me\" : { ");
-					List<User> beforeScores = scoreService.get50Before(user);
-					appendUsersScores(beforeScores, sb);
-					sb.append(" }, ");
-					
-					sb.append(" \"after_me\" : { ");
-					List<User> afterScores = scoreService.get50After(user);
-					appendUsersScores(afterScores, sb);
-					sb.append(" } ");
-					
-					sb.append(" } ");
-					
-					writeStringBuilder(sb, e, OK);
+					if (user != null) {
+						
+						StringBuilder sb = new StringBuilder("{");
+						
+						sb.append(" \"my_score\" : ").append(user.getScore()).append(", ");
+						
+						sb.append(" \"top_scores\" : { ");
+						List<User> topUsers = scoreService.getTop100();
+						appendUsersScores(topUsers, sb);
+						sb.append(" }, ");
+						
+						sb.append(" \"before_me\" : { ");
+						List<User> beforeScores = scoreService.get50Before(user);
+						appendUsersScores(beforeScores, sb);
+						sb.append(" }, ");
+						
+						sb.append(" \"after_me\" : { ");
+						List<User> afterScores = scoreService.get50After(user);
+						appendUsersScores(afterScores, sb);
+						sb.append(" } ");
+						
+						sb.append(" } ");
+						
+						writeStringBuilder(sb, e, OK);
+						
+					} else {
+						
+						writeResponse(e, BAD_REQUEST);
+						
+					}
 					
 				}
-				
-				writeResponse(e, NOT_IMPLEMENTED);
 				
 			} else if (URI.startsWith(URI_LOGIN)) {
 
@@ -331,7 +346,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 
 	private void setCookie(HttpResponse response, String name, String value) {
 		CookieEncoder cookieEncoder = new CookieEncoder(true);
-		cookieEncoder.addCookie(name, Base64.encodeBytes(value.getBytes(CharsetUtil.UTF_8), Base64.ORDERED));
+		cookieEncoder.addCookie(name, value);
 		response.addHeader(SET_COOKIE, cookieEncoder.encode());
 	}
 
@@ -346,7 +361,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 
 			for (Cookie cookie : cookies) {
 				if (cookie.getName().equals(name)) {
-					return new String(Base64.decode(cookie.getValue(), Base64.ORDERED), CharsetUtil.UTF_8);
+					return cookie.getValue();
 				}
 			}
 		}

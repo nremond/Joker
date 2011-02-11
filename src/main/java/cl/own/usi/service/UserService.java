@@ -8,12 +8,14 @@ public interface UserService {
 	
 	String login(String email, String password);
 	
-	boolean insertAnswer(String userId, Integer answer);
+	boolean insertAnswer(User user, Integer answer);
 	
 	boolean logout(String userId);
 	
 	User getUserFromUserId(String userId);
 	
 	void flushUsers();
+	
+	boolean isQuestionAllowed(User user, int questionNumber);
 	
 }

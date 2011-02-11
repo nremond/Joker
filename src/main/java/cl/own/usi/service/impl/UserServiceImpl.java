@@ -1,12 +1,13 @@
 package cl.own.usi.service.impl;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import cl.own.usi.dao.UserDAO;
+import cl.own.usi.model.Answer;
+import cl.own.usi.model.Question;
 import cl.own.usi.model.User;
 import cl.own.usi.service.GameService;
 import cl.own.usi.service.UserService;
@@ -23,50 +24,82 @@ public class UserServiceImpl implements UserService {
 	public boolean insertUser(String email, String password, String firstname,
 			String lastname) {
 		
-		User user = new User();
-		user.setEmail(email);
-		user.setPassword(password);
-		user.setFirstname(firstname);
-		user.setLastname(lastname);
-		
-		return userDAO.insertUser(user);
-		
+		if (email == null || password == null || firstname == null || lastname == null) {
+			throw new IllegalArgumentException("an argument is null.");
+		} else {
+			User user = new User();
+			user.setEmail(email);
+			user.setPassword(password);
+			user.setFirstname(firstname);
+			user.setLastname(lastname);
+			
+			return userDAO.insertUser(user);
+		}
 	}
 
 	public String login(String email, String password) {
 		
-		User user = userDAO.getUserById(email);
-		if (user != null) {
-			if (user.getPassword().equals(password)) {
-				return generateUserId(user);
-			}
+		if (email == null || password == null) {
+			return null;
+		} else {
+			return userDAO.login(email, password);
 		}
-		return null;
 	}
 
-	public boolean insertAnswer(String userId, Integer answer) {
-		int correctAnswer = gameService.getCurrentQuestion().getCorrectChoice();
+	public boolean insertAnswer(User user, Integer answerNumber) {
+		Question currentQuestion = gameService.getCurrentQuestion();
 		
-		if (correctAnswer == answer) {
-			return true;
+		if (answerNumber == null) {
+			throw new IllegalArgumentException("answerNumber is null.");
 		} else {
-			return false;
+			
+			if (answerNumber > currentQuestion.getChoices().size() || answerNumber < 1) {
+				throw new IllegalArgumentException("answerNumber " + answerNumber + " is out of range of questions choices.");
+			} else {
+				
+				List<Answer> answers = userDAO.getAnswers(user);
+				
+				// Ensure user has answered previous questions.
+				if (currentQuestion.getNumber() <= answers.size()) {
+					throw new IllegalArgumentException("User has not answered all previous questions.");
+				} else {
+					
+					Answer answer = new Answer();
+					answer.setQuestion(currentQuestion);
+					answer.setUser(user);
+					
+					answer.setAnswerNumber(answerNumber);
+					
+					if (currentQuestion.getCorrectChoice() == answerNumber) {
+						return true;
+					} else {
+						return false;
+					}
+				}
+			}
 		}
 	}
 
 	public boolean logout(String userId) {
-		return true;
+		User user = getUserFromUserId(userId);
+		if (user == null) {
+			return false;
+		} else {
+			userDAO.logout(user);
+			return true;
+		}
 	}
 
 	public User getUserFromUserId(String userId) {
 		return userDAO.getUserById(userId);
 	}
 
-	private String generateUserId(User user) {
-		return user.getEmail();
-	}
-
 	public void flushUsers() {
 		userDAO.flushUsers();
+	}
+
+	public boolean isQuestionAllowed(User user, int questionNumber) {
+		List<Answer> answers = userDAO.getAnswers(user);
+		return answers.size() == questionNumber - 1;
 	}
 }
