@@ -7,7 +7,7 @@ NBUSERS=4
 QUESTIONTIMELIMIT=30
 
 # Create 100 users
-for i in $(seq 1 100)
+for i in {1..100}
 do
    curl -X POST -d "{ \"firstname\" : \"$i\", \"lastname\" : \"$i\", \"mail\" : \"$i\", \"password\" : \"$i\" }" "http://${HOST}:${PORT}/api/user"
 done
@@ -18,7 +18,7 @@ curl -X POST -d "{ \"questions\" : [ { \"goodchoice\" : 1, \"label\" : \"Questio
 sleep 4
 
 # Login, get first question, post answer and get ranking for 4 first users.
-for i in $(seq 1 ${NBUSERS})
+for i in {1..$NBUSERS}
 do
 	(curl -X POST -d "{ \"mail\" : \"$i\", \"password\" : \"$i\" }" -D $i.txt "http://${HOST}:${PORT}/api/login";
 	session=$(cat $i.txt | grep "Set-Cookie" | sed -e "s/^Set-Cookie: session_key=\(.*\)\$/\1/" | sed -e "s/\"//g");
