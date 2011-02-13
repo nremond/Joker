@@ -9,12 +9,13 @@ public interface GameService {
 
 	boolean insertGame(int usersLimit, int questionTimeLimit, int pollingTimeLimit, List<Map<String, Map<String, Boolean>>> questions);
 	
+	Question getQuestion(int questionNumber);
 	Question getCurrentQuestion();
 	
-	boolean waitOtherUsers() throws InterruptedException;
+	boolean waitOtherUsers(int questionNumber) throws InterruptedException;
 	
-	void userEnter();
+	boolean userEnter(int questionNumber);
 	
-	long getStartOfCurrentQuestion();
+	boolean userAnswer(int questionNumber);
 	
 }

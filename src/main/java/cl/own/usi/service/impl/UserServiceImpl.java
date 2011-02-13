@@ -46,33 +46,41 @@ public class UserServiceImpl implements UserService {
 		}
 	}
 
-	public boolean insertAnswer(User user, Integer answerNumber) {
-		Question currentQuestion = gameService.getCurrentQuestion();
+	public boolean insertRequest(User user, int questionNumber) {
+		Question question = gameService.getQuestion(questionNumber);
+		userDAO.insertRequest(user, question);
+		return true;
+	}
+	
+	public boolean insertAnswer(User user, int questionNumber, Integer answerNumber) {
+		Question question = gameService.getQuestion(questionNumber);
 		
 		if (answerNumber == null) {
 			throw new IllegalArgumentException("answerNumber is null.");
 		} else {
 			
-			if (answerNumber > currentQuestion.getChoices().size() || answerNumber < 1) {
+			if (answerNumber > question.getChoices().size() || answerNumber < 1) {
 				throw new IllegalArgumentException("answerNumber " + answerNumber + " is out of range of questions choices.");
 			} else {
 				
 				List<Answer> answers = userDAO.getAnswers(user);
 				
 				// Ensure user has answered previous questions.
-				if (currentQuestion.getNumber() <= answers.size()) {
+				if (question.getNumber() != answers.size()) {
 					throw new IllegalArgumentException("User has not answered all previous questions.");
+				} else if (answers.get(question.getNumber() - 1) != null) {
+					throw new IllegalArgumentException("User has already answered this question.");
 				} else {
 					
 					Answer answer = new Answer();
-					answer.setQuestion(currentQuestion);
+					answer.setQuestion(question);
 					answer.setUser(user);
 					
 					answer.setAnswerNumber(answerNumber);
 					
 					userDAO.insertAnswer(user, answer);
 					
-					if (currentQuestion.getCorrectChoice() == answerNumber) {
+					if (answer.isCorrect()) {
 						return true;
 					} else {
 						return false;
@@ -100,8 +108,14 @@ public class UserServiceImpl implements UserService {
 		userDAO.flushUsers();
 	}
 
-	public boolean isQuestionAllowed(User user, int questionNumber) {
+	public boolean isQuestionRequestAllowed(User user, int questionNumber) {
 		List<Answer> answers = userDAO.getAnswers(user);
 		return answers.size() == questionNumber - 1;
 	}
+	
+	public boolean isQuestionResponseAllowed(User user, int questionNumber) {
+		List<Answer> answers = userDAO.getAnswers(user);
+		return answers.size() == questionNumber;
+	}
+	
 }

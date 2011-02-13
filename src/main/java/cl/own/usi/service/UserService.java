@@ -8,7 +8,8 @@ public interface UserService {
 	
 	String login(String email, String password);
 	
-	boolean insertAnswer(User user, Integer answer);
+	boolean insertRequest(User user, int questionNumber);
+	boolean insertAnswer(User user, int questionNumber, Integer answer);
 	
 	boolean logout(String userId);
 	
@@ -16,6 +17,7 @@ public interface UserService {
 	
 	void flushUsers();
 	
-	boolean isQuestionAllowed(User user, int questionNumber);
+	boolean isQuestionRequestAllowed(User user, int questionNumber);
+	boolean isQuestionResponseAllowed(User user, int questionNumber);
 	
 }

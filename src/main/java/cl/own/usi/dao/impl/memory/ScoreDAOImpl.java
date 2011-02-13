@@ -3,6 +3,8 @@ package cl.own.usi.dao.impl.memory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.springframework.stereotype.Repository;
@@ -14,6 +16,7 @@ import cl.own.usi.model.User;
 public class ScoreDAOImpl implements ScoreDAO {
 
 	private ConcurrentSkipListSet<User> rankedUsers = new ConcurrentSkipListSet<User>();
+	ConcurrentMap<User, Integer> userBonuses = new ConcurrentHashMap<User, Integer>();
 	
 	public boolean updateScore(User user) {
 		if (rankedUsers.contains(user)) {
@@ -61,6 +64,19 @@ public class ScoreDAOImpl implements ScoreDAO {
 			}
 		}
 		return users;
+	}
+
+	public int getUserBonus(User user) {
+		Integer bonus = userBonuses.get(user);
+		if (bonus == null) {
+			return 0;
+		} else {
+			return bonus;
+		}
+	}
+
+	public void setUserBonus(User user, int newBonus) {
+		userBonuses.put(user, newBonus);
 	}
 
 }

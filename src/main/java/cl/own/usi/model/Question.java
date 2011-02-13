@@ -12,6 +12,8 @@ public class Question {
 	
 	int correctChoice;
 
+	int value = 0;
+	
 	public int getNumber() {
 		return number;
 	}
@@ -43,6 +45,13 @@ public class Question {
 	public void setCorrectChoice(int correctChoice) {
 		this.correctChoice = correctChoice;
 	}
-	
+
+	public int getValue() {
+		return value;
+	}
+
+	public void setValue(int value) {
+		this.value = value;
+	}
 	
 }

@@ -1,12 +1,12 @@
 package cl.own.usi.service.impl;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,27 +27,42 @@ public class GameServiceImpl implements GameService {
 	@Autowired
 	GameDAO gameDAO;
 	
-	int currentQuestion = 0;
+	Map<Question, QuestionSynchronization> questionSynchronizations;
 	
-	long currentQuestionStartTime = 0L;
+	volatile int currentQuestionRequest = 0;
+	volatile int currentQuestionAnswer = 0;
 	
-	volatile boolean currentQuestionRunning = false;
-	
-	volatile CountDownLatch latch;
-	
-	private final ScheduledExecutorService scheduler = 
-	       Executors.newScheduledThreadPool(1);
+	final ExecutorService executorService = Executors.newFixedThreadPool(2);
  
 	public boolean insertGame(int usersLimit, int questionTimeLimit, int pollingTimeLimit, 
 			List<Map<String, Map<String, Boolean>>> questions) {
 		
-		gameDAO.insertGame(usersLimit, questionTimeLimit, pollingTimeLimit, mapToQuestion(questions));
+		resetPreviousGame();
 		
-		endOfCurrentQuestion();
+		Game game = gameDAO.insertGame(usersLimit, questionTimeLimit, pollingTimeLimit, mapToQuestion(questions));
+		
+		questionSynchronizations = new HashMap<Question, QuestionSynchronization>(game.getQuestions().size());
+		
+		for (Question question : game.getQuestions()) {
+			questionSynchronizations.put(question, new QuestionSynchronization(game.getUsersLimit()));
+		}
+		
+		executorService.execute(new StartOfNewQuestion());
 		
 		return true;
 	}
 	
+	private void resetPreviousGame() {
+		// TODO : test if previous game exists and is running.
+		
+		Game previousGame = gameDAO.getGame();
+		if (previousGame != null) {
+			
+//			for (QuestionSynchronization )
+		}
+		
+	}
+
 	private List<Question> mapToQuestion(List<Map<String, Map<String, Boolean>>> questions) {
 		List<Question> list = new ArrayList<Question>();
 		int number = 1;
@@ -72,95 +87,142 @@ public class GameServiceImpl implements GameService {
 		return list;
 	}
 
-	public void startOfCurrentQuestion() {
-		
-		currentQuestionStartTime = System.nanoTime();
-		currentQuestionRunning = true;
-		
-	}
-	
-	private void initLatch() {
-		latch = new CountDownLatch(gameDAO.getGame().getUsersLimit());
-	}
-	
-	public void endOfCurrentQuestion() {
-		
-		System.out.println("endOfCurrentQuestion");
-		
-		currentQuestionRunning = false;
-		
-		if (gameDAO.getGame().getQuestions().size() > currentQuestion) {
-			currentQuestion++;
-		}
-		
-		initLatch();
-		
-		executorUtil.getExecutorService().execute(timerWorker);
-		
-	}
-
-	public Question getCurrentQuestion() {
-		return gameDAO.getGame().getQuestions().get(currentQuestion - 1);
-	}
-
-	public int getCorrectAnswerForCurrentQuestion() {
-		return getCurrentQuestion().getCorrectChoice();
-	}
-
-	public boolean waitOtherUsers() throws InterruptedException {
-		
-		if (latch.await(gameDAO.getGame().getPollingTimeLimit(), TimeUnit.SECONDS)) {
-			return true;
+	public Question getQuestion(int questionNumber) {
+		if (questionNumber < 1 || questionNumber > gameDAO.getGame().getQuestions().size()) {
+			return null;
 		} else {
-			return false;
+			return gameDAO.getGame().getQuestions().get(questionNumber - 1);
+		}
+	}
+	
+	private QuestionSynchronization getQuestionSync(int questionNumber) {
+		Question question = getQuestion(questionNumber);
+		if (question != null) {
+			return questionSynchronizations.get(question);
+		} else {
+			return null;
 		}
 	}
 
-	public void userEnter() {
-		getLatch().countDown();
+	public boolean waitOtherUsers(int questionNumber) throws InterruptedException {
+		QuestionSynchronization questionSync = getQuestionSync(questionNumber);
+		if (questionSync == null) {
+			return false;
+		} else {
+			boolean enter = questionSync.questionsReadyLatch.await(gameDAO.getGame().getPollingTimeLimit(), TimeUnit.SECONDS);
+			return enter;
+		}
 	}
 
-	protected CountDownLatch getLatch() {
-		return latch;
+	public boolean userEnter(int questionNumber) {
+		QuestionSynchronization questionSync = getQuestionSync(questionNumber);
+		if (questionSync == null || questionSync.questionRunning || !validateQuestionToRequest(questionNumber)) {
+			return false;
+		} else {
+			questionSync.userEnterLatch.countDown();
+			return true;
+		}
 	}
-
-	QuestionTimerTask questionTimerTask = new QuestionTimerTask();
-	TimerWorker timerWorker = new TimerWorker();
 	
-	private class TimerWorker implements Runnable {
-		
-		public void run() {
-			try {
+	public boolean userAnswer(int questionNumber) {
+		QuestionSynchronization questionSync = getQuestionSync(questionNumber);
+		if (questionSync == null || !questionSync.questionRunning || !validateQuestionToAnswer(questionNumber)) {
+			return false;
+		} else {
+			questionSync.userAnswerLatch.countDown();
+			return true;
+		}
+	}
+	
+	private class StartOfNewQuestion implements Runnable {
 
-				getLatch().await();
+		public void run() {
+			
+			try {
+				currentQuestionRequest++;
 				
-				startOfCurrentQuestion();
+				QuestionSynchronization questionSynch = getQuestionSync(currentQuestionRequest);
 				
-				scheduler.schedule(questionTimerTask, gameDAO.getGame().getQuestionTimeLimit(), TimeUnit.SECONDS);
+				// Wait till the correct number of users join the game
+				questionSynch.userEnterLatch.await();
+								
+				currentQuestionAnswer++;
+				questionSynch.questionRunning = true;
+				
+				executorService.execute(new EndOfNewQuestionWorker());
+				
+				questionSynch.questionsReadyLatch.countDown();
+				
+				executorService.execute(new StartOfNewQuestion());
 				
 			} catch (InterruptedException e) {
 				
 			}
+			
 		}
+		
 	}
 	
-	private class QuestionTimerTask extends TimerTask {
-		
-		@Override
+	private class EndOfNewQuestionWorker implements Runnable {
+
 		public void run() {
-			endOfCurrentQuestion();
+			
+			int questionTimeLimit = gameDAO.getGame().getQuestionTimeLimit();
+				
+			try {
+				QuestionSynchronization questionSynch = getQuestionSync(currentQuestionAnswer);
+				
+				questionSynch.userAnswerLatch.await(questionTimeLimit, TimeUnit.SECONDS);
+				
+				questionSynch.questionRunning = false;
+				
+			} catch (InterruptedException e) {
+				
+				// TODO : terminate game.
+				
+			}
 		}
+		
 	}
 
-	public int getCurrentQuestionNumber() {
-		return currentQuestion;
+	public int getQuestionNumberToRequest() {
+		return currentQuestionRequest;
+	}
+	
+	public int getQuestionNumberToAnswer() {
+		return currentQuestionAnswer;
 	}
 
 	protected Game getGame() {
 		return gameDAO.getGame();
 	}
 
-	public long getStartOfCurrentQuestion() {
-		return currentQuestionStartTime;
+	private boolean validateQuestionToRequest(int questionNumber) {
+		return questionNumber == currentQuestionRequest;
 	}
+
+	private boolean validateQuestionToAnswer(int questionNumber) {
+		return questionNumber == currentQuestionAnswer;
+	}
+
+	public Question getCurrentQuestion() {
+		return getQuestion(currentQuestionAnswer);
+	}
+	
+	private class QuestionSynchronization {
+		
+		private volatile boolean questionRunning = false;
+		
+		private final CountDownLatch userEnterLatch;
+		private final CountDownLatch questionsReadyLatch;
+		private final CountDownLatch userAnswerLatch;
+		
+		public QuestionSynchronization(int usersLimit) {
+			userEnterLatch = new CountDownLatch(usersLimit);
+			questionsReadyLatch = new CountDownLatch(1);
+			userAnswerLatch = new CountDownLatch(usersLimit);
+		}
+		
+	}
+
 }

@@ -30,4 +30,7 @@ public class Answer {
 		this.answerNumber = answerNumber;
 	}
 	
+	public boolean isCorrect() {
+		return getQuestion().getCorrectChoice() == getAnswerNumber();
+	}
 }

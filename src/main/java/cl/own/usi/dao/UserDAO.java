@@ -3,6 +3,7 @@ package cl.own.usi.dao;
 import java.util.List;
 
 import cl.own.usi.model.Answer;
+import cl.own.usi.model.Question;
 import cl.own.usi.model.User;
 
 public interface UserDAO {
@@ -11,6 +12,7 @@ public interface UserDAO {
 	
 	User getUserById(String userId);
 	
+	void insertRequest(User user, Question question);
 	void insertAnswer(User user, Answer answer);
 	
 	List<Answer> getAnswers(User user);

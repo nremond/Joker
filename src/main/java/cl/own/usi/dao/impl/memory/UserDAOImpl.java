@@ -2,6 +2,7 @@ package cl.own.usi.dao.impl.memory;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -21,7 +22,7 @@ public class UserDAOImpl implements UserDAO {
 	private static final String USER_ID_SALT = "123456";
 	
 	ConcurrentMap<String, User> users = new ConcurrentHashMap<String, User>();
-	ConcurrentMap<User, List<Answer>> userAnswers = new ConcurrentHashMap<User, List<Answer>>();
+	ConcurrentMap<User, LinkedList<RequestAndAnswer>> userRequestAndAnswers = new ConcurrentHashMap<User, LinkedList<RequestAndAnswer>>();
 	ConcurrentMap<String, User> loggedUsers = new ConcurrentHashMap<String, User>();
 	
 	public boolean insertUser(User user) {
@@ -38,16 +39,6 @@ public class UserDAOImpl implements UserDAO {
 		return loggedUsers.get(userId);
 	}
 
-	public boolean insertAnswer(User user, Question question, int answerNumber) {
-		
-		List<Answer> answers = userAnswers.get(user);
-		if (answers == null) {
-			answers = new ArrayList<Answer>();
-		}
-		// TODO Auto-generated method stub
-		return false;
-	}
-
 	public void logout(User user) {
 		loggedUsers.remove(generateUserId(user));
 	}
@@ -56,18 +47,32 @@ public class UserDAOImpl implements UserDAO {
 		users.clear();
 	}
 
-	public void insertAnswer(User user, Answer answer) {
+	public void insertRequest(User user, Question question) {
+		LinkedList<RequestAndAnswer> requestAndAnswers = userRequestAndAnswers.get(user);
 		
-		List<Answer> answers = userAnswers.get(user);
-		
-		if (answers == null) {
-			answers = new ArrayList<Answer>();
-			List<Answer> tmpAnswers = userAnswers.putIfAbsent(user, answers);
+		if (requestAndAnswers == null) {
+			requestAndAnswers = new LinkedList<RequestAndAnswer>();
+			LinkedList<RequestAndAnswer> tmpAnswers = userRequestAndAnswers.putIfAbsent(user, requestAndAnswers);
 			if (tmpAnswers != null) {
-				answers = tmpAnswers;
+				requestAndAnswers = tmpAnswers;
 			}
 		}
-		answers.add(answer);
+		
+		RequestAndAnswer requestAndAnswer = new RequestAndAnswer();
+		requestAndAnswer.question = question;
+		requestAndAnswers.add(requestAndAnswer);
+	}
+	
+	public void insertAnswer(User user, Answer answer) {
+		
+		LinkedList<RequestAndAnswer> requestAndAnswers = userRequestAndAnswers.get(user);
+		
+		if (requestAndAnswers != null) {
+			RequestAndAnswer lastRequestAndAnswer = requestAndAnswers.getLast();
+			if (lastRequestAndAnswer.question.equals(answer.getQuestion())) {
+				lastRequestAndAnswer.answer = answer;
+			}
+		}
 	}
 
 	public String login(String email, String password) {
@@ -91,13 +96,23 @@ public class UserDAOImpl implements UserDAO {
 
 	public List<Answer> getAnswers(User user) {
 		
-		List<Answer> answers = userAnswers.get(user);
+		List<RequestAndAnswer> requestAndAnswers = userRequestAndAnswers.get(user);
 		
-		if (answers == null) {
+		if (requestAndAnswers == null) {
 			return Collections.emptyList();
 		} else {
-			return Collections.unmodifiableList(answers);
+			List<Answer> answers = new ArrayList<Answer>();
+			for (RequestAndAnswer raa : requestAndAnswers) {
+				answers.add(raa.answer);
+			}
+			return answers;
 		}
 	}
+	
+	private static class RequestAndAnswer {
+		Question question;
+		Answer answer;
+	}
+
 	
 }

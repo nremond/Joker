@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import cl.own.usi.dao.ScoreDAO;
+import cl.own.usi.model.Question;
 import cl.own.usi.model.User;
 import cl.own.usi.service.GameService;
 import cl.own.usi.service.ScoreService;
@@ -18,16 +19,17 @@ public class ScoreServiceImpl implements ScoreService {
 	
 	@Autowired
 	ScoreDAO scoreDAO;
-	
-	private static final int CORRECT_QUESTION_BONUS = 100;
 
 	private static final int FIFTY = 50;
 	private static final int HUNDRED = 100;
 
-	public int updateScore(User user, long deltaTimeToAnswer, boolean answerCorrect) {
+	public int updateScore(Question question, User user, boolean answerCorrect) {
 		if (answerCorrect) {
-			int timeBonus = Long.valueOf(deltaTimeToAnswer).intValue();
-			user.setScore(user.getScore() + CORRECT_QUESTION_BONUS + timeBonus);
+			int bonus = scoreDAO.getUserBonus(user);
+			scoreDAO.setUserBonus(user, bonus + 1);
+			user.setScore(user.getScore() + question.getValue() + bonus);
+		} else {
+			scoreDAO.setUserBonus(user, 0);
 		}
 		scoreDAO.updateScore(user);
 		return user.getScore();

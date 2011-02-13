@@ -105,36 +105,27 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 							int questionNumber = Integer.parseInt(URI
 									.substring(URI_QUESTION_LENGTH));
 							
-							if (gameService.getCurrentQuestion().getNumber() != questionNumber) {
+							User user = userService.getUserFromUserId(userId);
+							
+							if (user == null || !userService.isQuestionRequestAllowed(user, questionNumber) || !gameService.userEnter(questionNumber)) {
 								writeResponse(e, BAD_REQUEST);
 							} else {
-							
-								User user = userService.getUserFromUserId(userId);
+
+								userService.insertRequest(user, questionNumber);
 								
-								if (user != null && userService.isQuestionAllowed(user, questionNumber)) {
-									
-									gameService.userEnter();
-									
-									
-									System.out.println("Get Question " + questionNumber + " for user " + userId);
-									
-									Question question = gameService.getCurrentQuestion();
-									
-									StringBuilder sb = new StringBuilder("{");
-									sb.append("\"question\":\"").append(question.getLabel()).append("\"");
-									int i = 0;
-									for (String answer : question.getChoices()) {
-										i++;
-										sb.append(",\"answer_").append(i).append("\":\"").append(answer).append("\"");
-									}
-									
-									executorUtil.getExecutorService().execute(new QuestionWorker(user.getScore(), e, sb.toString()));
-									
-								} else {
-									
-									writeResponse(e, BAD_REQUEST);
-									
+								System.out.println("Get Question " + questionNumber + " for user " + userId);
+								
+								Question question = gameService.getQuestion(questionNumber);
+								
+								StringBuilder sb = new StringBuilder("{");
+								sb.append("\"question\":\"").append(question.getLabel()).append("\"");
+								int i = 0;
+								for (String answer : question.getChoices()) {
+									i++;
+									sb.append(",\"answer_").append(i).append("\":\"").append(answer).append("\"");
 								}
+								
+								executorUtil.getExecutorService().execute(new QuestionWorker(questionNumber, user.getScore(), e, sb.toString()));
 								
 							}
 							
@@ -155,41 +146,33 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 						int questionNumber = Integer.parseInt(URI
 								.substring(URI_ANSWER_LENGTH));
 
-						if (gameService.getCurrentQuestion().getNumber() != questionNumber) {
+						User user = userService.getUserFromUserId(userId);
+						
+						if (user == null || !userService.isQuestionResponseAllowed(user, questionNumber) || !gameService.userAnswer(questionNumber)) {
 							writeResponse(e, BAD_REQUEST);
 						} else {
 							
-							User user = userService.getUserFromUserId(userId);
+							System.out.println("Answer Question " + questionNumber + " for user " + userId);
+	
+							JSONObject object = (JSONObject) JSONValue.parse(request
+									.getContent().toString(CharsetUtil.UTF_8));
 							
-							if (user != null && userService.isQuestionAllowed(user, questionNumber)) {
+							Question question = gameService.getQuestion(questionNumber);
 							
-								System.out.println("Answer Question " + questionNumber + " for user " + userId);
-		
-								JSONObject object = (JSONObject) JSONValue.parse(request
-										.getContent().toString(CharsetUtil.UTF_8));
-								
-								Question question = gameService.getCurrentQuestion();
-								long deltaTimeToAnswer = System.nanoTime() - gameService.getStartOfCurrentQuestion();
-								
-								boolean answerCorrect = userService.insertAnswer(user, ((Long)object.get("answer")).intValue());
-								
-								int newScore = scoreService.updateScore(user, deltaTimeToAnswer, answerCorrect);
-								
-								StringBuilder sb = new StringBuilder("{ \"are_u_ok\" : ");
-								if (answerCorrect) {
-									sb.append("true");
-								} else {
-									sb.append("false");
-								}
-								sb.append(", \"good_answer\" : \"" + question.getChoices().get(question.getCorrectChoice()) + "\", \"score\" : " + newScore + "}");
-								
-								writeStringBuilder(sb, e, CREATED);
+							boolean answerCorrect = userService.insertAnswer(user, questionNumber, ((Long)object.get("answer")).intValue());
 							
+							int newScore = scoreService.updateScore(question, user, answerCorrect);
+							
+							StringBuilder sb = new StringBuilder("{ \"are_u_ok\" : ");
+							if (answerCorrect) {
+								sb.append("true");
 							} else {
-
-								writeResponse(e, BAD_REQUEST);
-								
+								sb.append("false");
 							}
+							sb.append(", \"good_answer\" : \"" + question.getChoices().get(question.getCorrectChoice()) + "\", \"score\" : " + newScore + "}");
+							
+							writeStringBuilder(sb, e, CREATED);
+							
 						}
 					} catch (NumberFormatException exception) {
 						writeResponse(e, BAD_REQUEST);
@@ -370,11 +353,13 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 
 	private class QuestionWorker implements Runnable {
 
+		final int questionNumber;
 		final int score;
 		final MessageEvent e;
 		final String questionFirstPart;
 		
-		public QuestionWorker(int score, MessageEvent e, String questionFirstPart) {
+		public QuestionWorker(int questionNumber, int score, MessageEvent e, String questionFirstPart) {
+			this.questionNumber = questionNumber;
 			this.score = score;
 			this.e = e;
 			this.questionFirstPart = questionFirstPart;
@@ -385,7 +370,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 			StringBuilder sb = new StringBuilder(questionFirstPart);
 			
 			try {
-				if (gameService.waitOtherUsers()) {
+				if (gameService.waitOtherUsers(questionNumber)) {
 				
 					sb.append(",\"score\":").append(score);
 					sb.append("}");
