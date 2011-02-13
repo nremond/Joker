@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cl.own.usi</groupId>
 	<artifactId>Joker</artifactId>
@@ -12,7 +13,7 @@
 		<connection>scm:git:git://github.com/nire/jocker</connection>
 		<developerConnection>scm:git:git://github.com/nire/jocker</developerConnection>
 	</scm>
-	
+
 	<repositories>
 		<repository>
 			<id>jboss-public-repository-group</id>
@@ -29,7 +30,7 @@
 			</snapshots>
 		</repository>
 	</repositories>
-	
+
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -38,20 +39,60 @@
 				<version>3.2.4.Final</version>
 				<scope>compile</scope>
 			</dependency>
+
+			<dependency>
+				<groupId>org.codehaus.jackson</groupId>
+				<artifactId>jackson-mapper-lgpl</artifactId>
+				<version>1.7.2</version>
+			</dependency>
+			<dependency>
+				<groupId>org.codehaus.jackson</groupId>
+				<artifactId>jackson-core-lgpl</artifactId>
+				<version>1.7.2</version>
+			</dependency>
+
+			<!-- commons-logging sucks, scope it as provided to exclude it fully -->
+			<dependency>
+				<groupId>commons-logging</groupId>
+				<artifactId>commons-logging</artifactId>
+				<version>1.1.1</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>jcl-over-slf4j</artifactId>
+				<version>1.6.1</version>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>1.6.1</version>
+			</dependency>
+			<dependency>
+				<groupId>ch.qos.logback</groupId>
+				<artifactId>logback-classic</artifactId>
+				<version>0.9.28</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
 			<version>2.6</version>
 		</dependency>
+
 		<dependency>
-			<groupId>commons-logging</groupId>
-			<artifactId>commons-logging</artifactId>
-			<version>1.1.1</version>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>commons-httpclient</groupId>
 			<artifactId>commons-httpclient</artifactId>
@@ -76,18 +117,31 @@
 			<artifactId>spring-context</artifactId>
 			<version>3.0.5.RELEASE</version>
 		</dependency>
-		<!--dependency>
-			<groupId>org.apache.thrift</groupId>
-			<artifactId>libthrift</artifactId>
-			<version>0.5.0</version>
-		 </dependency-->
+		<!--dependency> <groupId>org.apache.thrift</groupId> <artifactId>libthrift</artifactId>
+			<version>0.5.0</version> </dependency -->
 		<dependency>
+			<!-- todo: remote this deps, uses Jackson instead -->
 			<groupId>com.googlecode.json-simple</groupId>
 			<artifactId>json-simple</artifactId>
 			<version>1.1</version>
 		</dependency>
+
+		<dependency>
+			<groupId>org.codehaus.jackson</groupId>
+			<artifactId>jackson-mapper-lgpl</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.codehaus.jackson</groupId>
+			<artifactId>jackson-core-lgpl</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.8.2</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
-	
+
 	<build>
 		<finalName>joker</finalName>
 		<pluginManagement>
@@ -95,10 +149,10 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>2.0.2</version>
+					<version>2.3.2</version>
 					<configuration>
-						<source>1.5</source>
-						<target>1.5</target>
+						<source>1.6</source>
+						<target>1.6</target>
 					</configuration>
 				</plugin>
 				<plugin>
