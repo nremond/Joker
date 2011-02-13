@@ -15,10 +15,10 @@ done
 # Create a game with 3 questions
 curl -X POST -d "{ \"questions\" : [ { \"goodchoice\" : 1, \"label\" : \"Question1\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 2, \"label\" : \"Question2\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\", \"choix5\" ] }, { \"goodchoice\" : 1, \"label\" : \"Question3\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] } ], \"parameters\" : { \"longpollingduration\" : 600, \"nbusersthreshold\" : ${NBUSERS}, \"questiontimeframe\" : ${QUESTIONTIMELIMIT}, \"nbquestions\" : 3, \"flushusertable\" : false, \"trackeduseridmail\" : \"unused\" } }" "http://${HOST}:${PORT}/api/game"
 
-i=1
 
 # Login, get first question, post answer and get ranking for 4 first users.
-for i in {1..$NBUSERS}
+i=1
+while [[ $i -le ${NBUSERS} ]]
 do
 	(curl -X POST -d "{ \"mail\" : \"$i\", \"password\" : \"$i\" }" -D $i.txt "http://${HOST}:${PORT}/api/login";
 	session=$(cat $i.txt | grep "Set-Cookie" | sed -e "s/^Set-Cookie: session_key=\(.*\)\$/\1/" | sed -e "s/\"//g");
@@ -32,5 +32,6 @@ do
 	let "e = $RANDOM % ${QUESTIONTIMELIMIT}"; sleep ${e};
 	curl -X POST -b "session_key=\"$session\"" -d "{ \"answer\" : $i }" "http://${HOST}:${PORT}/api/answer/3";
 	curl -b "session_key=\"$session\"" "http://${HOST}:${PORT}/api/ranking";)&
+	let i=i+1
 done
 
