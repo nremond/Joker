@@ -41,7 +41,6 @@ import org.json.simple.JSONValue;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import cl.own.usi.json.AnswerRequest;
 import cl.own.usi.json.LoginRequest;
 import cl.own.usi.json.UserRequest;
 import cl.own.usi.model.Question;
@@ -116,29 +115,41 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 						try {
 							int questionNumber = Integer.parseInt(URI
 									.substring(URI_QUESTION_LENGTH));
-							
+
 							User user = userService.getUserFromUserId(userId);
-							
-							if (user == null || !userService.isQuestionRequestAllowed(user, questionNumber) || !gameService.userEnter(questionNumber)) {
+
+							if (user == null
+									|| !userService.isQuestionRequestAllowed(
+											user, questionNumber)
+									|| !gameService.userEnter(questionNumber)) {
 								writeResponse(e, BAD_REQUEST);
 							} else {
 
 								userService.insertRequest(user, questionNumber);
-								
-								System.out.println("Get Question " + questionNumber + " for user " + userId);
-								
-								Question question = gameService.getQuestion(questionNumber);
-								
+
+								System.out.println("Get Question "
+										+ questionNumber + " for user "
+										+ userId);
+
+								Question question = gameService
+										.getQuestion(questionNumber);
+
 								StringBuilder sb = new StringBuilder("{");
-								sb.append("\"question\":\"").append(question.getLabel()).append("\"");
+								sb.append("\"question\":\"")
+										.append(question.getLabel())
+										.append("\"");
 								int i = 0;
 								for (String answer : question.getChoices()) {
 									i++;
-									sb.append(",\"answer_").append(i).append("\":\"").append(answer).append("\"");
+									sb.append(",\"answer_").append(i)
+											.append("\":\"").append(answer)
+											.append("\"");
 								}
-								
-								executorUtil.getExecutorService().execute(new QuestionWorker(questionNumber, user.getScore(), e, sb.toString()));
-								
+
+								executorUtil.getExecutorService().execute(
+										new QuestionWorker(questionNumber, user
+												.getScore(), e, sb.toString()));
+
 							}
 
 						} catch (NumberFormatException exception) {
@@ -159,32 +170,45 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 								.substring(URI_ANSWER_LENGTH));
 
 						User user = userService.getUserFromUserId(userId);
-						
-						if (user == null || !userService.isQuestionResponseAllowed(user, questionNumber) || !gameService.userAnswer(questionNumber)) {
+
+						if (user == null
+								|| !userService.isQuestionResponseAllowed(user,
+										questionNumber)
+								|| !gameService.userAnswer(questionNumber)) {
 							writeResponse(e, BAD_REQUEST);
 						} else {
-							
-							System.out.println("Answer Question " + questionNumber + " for user " + userId);
-	
-							JSONObject object = (JSONObject) JSONValue.parse(request
-									.getContent().toString(CharsetUtil.UTF_8));
-							
-							Question question = gameService.getQuestion(questionNumber);
-							
-							boolean answerCorrect = userService.insertAnswer(user, questionNumber, ((Long)object.get("answer")).intValue());
-							
-							int newScore = scoreService.updateScore(question, user, answerCorrect);
-							
-							StringBuilder sb = new StringBuilder("{ \"are_u_ok\" : ");
+
+							System.out.println("Answer Question "
+									+ questionNumber + " for user " + userId);
+
+							JSONObject object = (JSONObject) JSONValue
+									.parse(request.getContent().toString(
+											CharsetUtil.UTF_8));
+
+							Question question = gameService
+									.getQuestion(questionNumber);
+
+							boolean answerCorrect = userService.insertAnswer(
+									user, questionNumber,
+									((Long) object.get("answer")).intValue());
+
+							int newScore = scoreService.updateScore(question,
+									user, answerCorrect);
+
+							StringBuilder sb = new StringBuilder(
+									"{ \"are_u_ok\" : ");
 							if (answerCorrect) {
 								sb.append("true");
 							} else {
 								sb.append("false");
 							}
-							sb.append(", \"good_answer\" : \"" + question.getChoices().get(question.getCorrectChoice()) + "\", \"score\" : " + newScore + "}");
-							
+							sb.append(", \"good_answer\" : \""
+									+ question.getChoices().get(
+											question.getCorrectChoice())
+									+ "\", \"score\" : " + newScore + "}");
+
 							writeStringBuilder(sb, e, CREATED);
-							
+
 						}
 					} catch (NumberFormatException exception) {
 						writeResponse(e, BAD_REQUEST);
@@ -383,8 +407,9 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 		final int score;
 		final MessageEvent e;
 		final String questionFirstPart;
-		
-		public QuestionWorker(int questionNumber, int score, MessageEvent e, String questionFirstPart) {
+
+		public QuestionWorker(int questionNumber, int score, MessageEvent e,
+				String questionFirstPart) {
 			this.questionNumber = questionNumber;
 			this.score = score;
 			this.e = e;
@@ -397,7 +422,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 
 			try {
 				if (gameService.waitOtherUsers(questionNumber)) {
-				
+
 					sb.append(",\"score\":").append(score);
 					sb.append("}");
 
