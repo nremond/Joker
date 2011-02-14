@@ -7,11 +7,15 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.handler.codec.base64.Base64;
+import org.jboss.netty.handler.codec.base64.Base64Dialect;
 import org.jboss.netty.util.CharsetUtil;
 import org.springframework.stereotype.Repository;
+import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
 
 import cl.own.usi.dao.UserDAO;
-import cl.own.usi.gateway.utils.Base64;
+
 import cl.own.usi.model.Answer;
 import cl.own.usi.model.Question;
 import cl.own.usi.model.User;
@@ -95,7 +99,8 @@ public class UserDAOImpl implements UserDAO {
 	}
 
 	private String generateUserId(User user) {
-		return Base64.encodeBytes((user.getEmail() + USER_ID_SALT).getBytes(CharsetUtil.UTF_8), Base64.ORDERED);
+		ChannelBuffer chanBuff = wrappedBuffer((user.getEmail() + USER_ID_SALT).getBytes(CharsetUtil.UTF_8));
+		return Base64.encode(chanBuff, Base64Dialect.ORDERED).toString();
 	}
 
 	public List<Answer> getAnswers(User user) {
