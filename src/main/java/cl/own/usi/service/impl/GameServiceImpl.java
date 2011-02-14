@@ -139,6 +139,10 @@ public class GameServiceImpl implements GameService {
 		public void run() {
 			
 			try {
+				if (currentQuestionRequest == gameDAO.getGame().getQuestions().size()) {
+					return;
+				}
+				
 				currentQuestionRequest++;
 				
 				QuestionSynchronization questionSynch = getQuestionSync(currentQuestionRequest);
@@ -167,7 +171,8 @@ public class GameServiceImpl implements GameService {
 
 		public void run() {
 			
-			int questionTimeLimit = gameDAO.getGame().getQuestionTimeLimit();
+			Game game = gameDAO.getGame();
+			int questionTimeLimit = game.getQuestionTimeLimit();
 				
 			try {
 				QuestionSynchronization questionSynch = getQuestionSync(currentQuestionAnswer);
@@ -176,6 +181,9 @@ public class GameServiceImpl implements GameService {
 				
 				questionSynch.questionRunning = false;
 				
+				if (currentQuestionAnswer == game.getQuestions().size()) {
+					// TODO : twittService.twitt("Notre Appli supporte " + game.getUsersLimit() + " joueurs #challengeUSI2011");
+				}
 			} catch (InterruptedException e) {
 				
 				// TODO : terminate game.
@@ -203,10 +211,6 @@ public class GameServiceImpl implements GameService {
 
 	private boolean validateQuestionToAnswer(int questionNumber) {
 		return questionNumber == currentQuestionAnswer;
-	}
-
-	public Question getCurrentQuestion() {
-		return getQuestion(currentQuestionAnswer);
 	}
 	
 	private class QuestionSynchronization {
