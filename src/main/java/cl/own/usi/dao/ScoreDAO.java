@@ -44,4 +44,6 @@ public interface ScoreDAO {
 	
 	void setUserBonus(User user, int newBonus);
 	
+	void flushUsers();
+	
 }

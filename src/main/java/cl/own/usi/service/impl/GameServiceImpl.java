@@ -52,14 +52,17 @@ public class GameServiceImpl implements GameService {
 		return true;
 	}
 	
-	private void resetPreviousGame() {
-		// TODO : test if previous game exists and is running.
-		
+	private void resetPreviousGame() {		
 		Game previousGame = gameDAO.getGame();
 		if (previousGame != null) {
-			
-//			for (QuestionSynchronization )
+			// TODO : if previous game is still running, reset connections and clean resources.
+			for (Map.Entry<Question, QuestionSynchronization> entry : questionSynchronizations.entrySet()) {
+				
+			}
 		}
+		
+		currentQuestionRequest = 0;
+		currentQuestionAnswer = 0;
 		
 	}
 
@@ -88,11 +91,7 @@ public class GameServiceImpl implements GameService {
 	}
 
 	public Question getQuestion(int questionNumber) {
-		if (questionNumber < 1 || questionNumber > gameDAO.getGame().getQuestions().size()) {
-			return null;
-		} else {
-			return gameDAO.getGame().getQuestions().get(questionNumber - 1);
-		}
+		return gameDAO.getQuestion(questionNumber);
 	}
 	
 	private QuestionSynchronization getQuestionSync(int questionNumber) {
@@ -171,7 +170,7 @@ public class GameServiceImpl implements GameService {
 
 		public void run() {
 			
-			Game game = gameDAO.getGame();
+			Game game = getGame();
 			int questionTimeLimit = game.getQuestionTimeLimit();
 				
 			try {
@@ -191,14 +190,6 @@ public class GameServiceImpl implements GameService {
 			}
 		}
 		
-	}
-
-	public int getQuestionNumberToRequest() {
-		return currentQuestionRequest;
-	}
-	
-	public int getQuestionNumberToAnswer() {
-		return currentQuestionAnswer;
 	}
 
 	protected Game getGame() {

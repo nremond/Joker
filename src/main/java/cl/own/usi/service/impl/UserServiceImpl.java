@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import cl.own.usi.dao.ScoreDAO;
 import cl.own.usi.dao.UserDAO;
 import cl.own.usi.model.Answer;
 import cl.own.usi.model.Question;
@@ -16,10 +17,13 @@ import cl.own.usi.service.UserService;
 public class UserServiceImpl implements UserService {
 
 	@Autowired
-	GameService gameService;
+	private GameService gameService;
 	
 	@Autowired
-	UserDAO userDAO;
+	private UserDAO userDAO;
+	
+	@Autowired
+	private ScoreDAO scoreDAO;
 	
 	public boolean insertUser(String email, String password, String firstname,
 			String lastname) {
@@ -106,6 +110,7 @@ public class UserServiceImpl implements UserService {
 
 	public void flushUsers() {
 		userDAO.flushUsers();
+		scoreDAO.flushUsers();
 	}
 
 	public boolean isQuestionRequestAllowed(User user, int questionNumber) {

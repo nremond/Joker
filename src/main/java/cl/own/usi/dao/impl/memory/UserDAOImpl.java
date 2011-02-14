@@ -21,9 +21,9 @@ public class UserDAOImpl implements UserDAO {
 
 	private static final String USER_ID_SALT = "123456";
 	
-	ConcurrentMap<String, User> users = new ConcurrentHashMap<String, User>();
-	ConcurrentMap<User, LinkedList<RequestAndAnswer>> userRequestAndAnswers = new ConcurrentHashMap<User, LinkedList<RequestAndAnswer>>();
-	ConcurrentMap<String, User> loggedUsers = new ConcurrentHashMap<String, User>();
+	private ConcurrentMap<String, User> users = new ConcurrentHashMap<String, User>();
+	private ConcurrentMap<User, LinkedList<RequestAndAnswer>> userRequestAndAnswers = new ConcurrentHashMap<User, LinkedList<RequestAndAnswer>>();
+	private ConcurrentMap<String, User> loggedUsers = new ConcurrentHashMap<String, User>();
 	
 	public boolean insertUser(User user) {
 		User oldUser = users.putIfAbsent(user.getEmail(), user);
@@ -44,7 +44,11 @@ public class UserDAOImpl implements UserDAO {
 	}
 
 	public void flushUsers() {
+		
+		loggedUsers.clear();
+		userRequestAndAnswers.clear();
 		users.clear();
+		
 	}
 
 	public void insertRequest(User user, Question question) {
@@ -114,5 +118,4 @@ public class UserDAOImpl implements UserDAO {
 		Answer answer;
 	}
 
-	
 }

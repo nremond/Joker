@@ -16,7 +16,7 @@ import cl.own.usi.model.User;
 public class ScoreDAOImpl implements ScoreDAO {
 
 	private ConcurrentSkipListSet<User> rankedUsers = new ConcurrentSkipListSet<User>();
-	ConcurrentMap<User, Integer> userBonuses = new ConcurrentHashMap<User, Integer>();
+	private ConcurrentMap<User, Integer> userBonuses = new ConcurrentHashMap<User, Integer>();
 	
 	public boolean updateScore(User user) {
 		if (rankedUsers.contains(user)) {
@@ -77,6 +77,12 @@ public class ScoreDAOImpl implements ScoreDAO {
 
 	public void setUserBonus(User user, int newBonus) {
 		userBonuses.put(user, newBonus);
+	}
+
+	@Override
+	public void flushUsers() {
+		rankedUsers.clear();
+		userBonuses.clear();
 	}
 
 }

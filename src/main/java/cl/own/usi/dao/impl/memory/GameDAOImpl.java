@@ -12,28 +12,29 @@ import cl.own.usi.model.Question;
 @Repository
 public class GameDAOImpl implements GameDAO {
 
-	Game game;
-	
-	public Game insertGame(int usersLimit, int questionTimeLimit, int pollingTimeLimit, 
-			List<Question> questions) {
-		
+	private Game game;
+
+	public Game insertGame(int usersLimit, int questionTimeLimit,
+			int pollingTimeLimit, List<Question> questions) {
+
 		game = new Game();
-		
+
 		game.setUsersLimit(usersLimit);
 		game.setQuestionTimeLimit(questionTimeLimit);
 		game.setPollingTimeLimit(pollingTimeLimit);
-		
+
 		game.setQuestions(new ArrayList<Question>(questions));
-		
+
 		return game;
 	}
 
 	public Question getQuestion(int questionNumber) {
-		
-		if (game == null || questionNumber < 0 || questionNumber >= game.getQuestions().size()) {
+		if (game == null || questionNumber < 1
+				|| questionNumber > getGame().getQuestions().size()) {
 			return null;
+		} else {
+			return getGame().getQuestions().get(questionNumber - 1);
 		}
-		return game.getQuestions().get(questionNumber);
 	}
 
 	public Game getGame() {
