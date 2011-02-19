@@ -1,7 +1,7 @@
 
 Install THRIFT on ubuntu
 
-sudo apt-get install libboost-dev libevent-dev python-dev automake pkg-config libtool flex bison
+sudo apt-get install subversion g++ make flex bison python-dev libboost-dev libevent-dev automake pkg-config libtool make
 
 svn co http://svn.apache.org/repos/asf/thrift/trunk thrift-trunk
 
