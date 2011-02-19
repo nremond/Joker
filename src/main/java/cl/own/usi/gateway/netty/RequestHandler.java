@@ -418,13 +418,15 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 		final int score;
 		final MessageEvent e;
 		final String questionFirstPart;
-
+		final long timeAtCreation;
+		
 		public QuestionWorker(int questionNumber, int score, MessageEvent e,
 				String questionFirstPart) {
 			this.questionNumber = questionNumber;
 			this.score = score;
 			this.e = e;
 			this.questionFirstPart = questionFirstPart;
+			this.timeAtCreation = System.currentTimeMillis();
 		}
 
 		public void run() {
@@ -432,7 +434,8 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 			StringBuilder sb = new StringBuilder(questionFirstPart);
 
 			try {
-				if (gameService.waitOtherUsers(questionNumber)) {
+				long alreadyWaitedMili = System.currentTimeMillis() - timeAtCreation;
+				if (gameService.waitOtherUsers(questionNumber, alreadyWaitedMili)) {
 
 					sb.append(",\"score\":").append(score);
 					sb.append("}");

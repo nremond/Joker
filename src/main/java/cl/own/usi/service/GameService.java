@@ -40,7 +40,7 @@ public interface GameService {
 	 * @return
 	 * @throws InterruptedException
 	 */
-	boolean waitOtherUsers(int questionNumber) throws InterruptedException;
+	boolean waitOtherUsers(int questionNumber, long alreadyWaitedMili) throws InterruptedException;
 
 	/**
 	 * Stipulate a {@link User} request the {@link Question}

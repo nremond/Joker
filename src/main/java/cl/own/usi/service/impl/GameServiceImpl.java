@@ -10,6 +10,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,12 +101,13 @@ public class GameServiceImpl implements GameService {
 		return gameSynchronization.getQuestionSynchronization(questionNumber);
 	}
 
-	public boolean waitOtherUsers(int questionNumber) throws InterruptedException {
+	public boolean waitOtherUsers(int questionNumber, long alreadyWaitedMili) throws InterruptedException {
 		QuestionSynchronization questionSync = getQuestionSync(questionNumber);
 		if (questionSync == null) {
 			return false;
 		} else {
-			boolean enter = questionSync.questionReadyLatch.await(gameDAO.getGame().getPollingTimeLimit(), TimeUnit.SECONDS);
+			long remainingTimeToWait = Math.max(gameDAO.getGame().getPollingTimeLimit() - alreadyWaitedMili / 1000, 0);
+			boolean enter = questionSync.questionReadyLatch.await(remainingTimeToWait, TimeUnit.SECONDS);
 			return enter && questionSync.questionRunning;
 		}
 	}
@@ -136,6 +139,8 @@ public class GameServiceImpl implements GameService {
 				logger.warn("Interrupted", e);
 			}
 			
+			boolean first = true;
+			
 			for (int i = 1; i <= gameSynchronization.game.getQuestions().size(); i++) {
 			
 				logger.info("Starting question " + i + ". Response question number " + gameSynchronization.currentQuestionToAnswer);
@@ -143,12 +148,18 @@ public class GameServiceImpl implements GameService {
 				
 				questionSynchronization.questionRunning = true;
 				
-				for (Runnable r : questionSynchronization.waitingQueue) {
-					logger.debug("Inserting a early requester to the working queue");
-					executorUtil.getExecutorService().execute(r);
+				if (!first) {
+					questionSynchronization.lock.lock();
+					gameSynchronization.currentQuestionToAnswer++;
+					for (Runnable r : questionSynchronization.waitingQueue) {
+						logger.debug("Inserting a early requester to the working queue");
+						executorUtil.getExecutorService().execute(r);
+					}
+					questionSynchronization.lock.unlock();
 				}
+				first = false;
 				
-				// Wait till the correct number of users join the game
+				// Send questions to the users
 				questionSynchronization.questionReadyLatch.countDown();
 				
 				try {
@@ -168,8 +179,6 @@ public class GameServiceImpl implements GameService {
 				}
 				
 				logger.info("Question " + i + " finished, going to the next question");
-				
-				gameSynchronization.currentQuestionToAnswer++;
 				
 			}
 			
@@ -241,7 +250,7 @@ public class GameServiceImpl implements GameService {
 		private final CountDownLatch allUsersAnswerLatch;
 		
 		private final Queue<Runnable> waitingQueue = new LinkedBlockingQueue<Runnable>();
-		
+		private final Lock lock = new ReentrantLock();
 		public QuestionSynchronization(int userLimit) {
 			questionReadyLatch = new CountDownLatch(1);
 			allUsersAnswerLatch = new CountDownLatch(userLimit);
@@ -270,13 +279,18 @@ public class GameServiceImpl implements GameService {
 		} else {
 			QuestionSynchronization questionSynchronization = getQuestionSync(questionWorker.getQuestionNumber());
 			
-			// TODO : lock here.
-			logger.info("Too early question request for quesition " + questionWorker.getQuestionNumber() + ", putting in a temporaray queue");
-			questionSynchronization.waitingQueue.offer(questionWorker);
+			questionSynchronization.lock.lock();
 			
+			// double check
 			if (questionWorker.getQuestionNumber() <= gameSynchronization.currentQuestionToAnswer) {
-				logger.error("Race condition for question " + questionWorker.getQuestionNumber());
+				executorUtil.getExecutorService().execute(questionWorker);
+			} else {
+				logger.info("Too early question request for quesition " + questionWorker.getQuestionNumber() + ", putting in a temporaray queue");
+				questionSynchronization.waitingQueue.offer(questionWorker);
 			}
+			
+			questionSynchronization.lock.unlock();
+			
 		}
 	}
 
