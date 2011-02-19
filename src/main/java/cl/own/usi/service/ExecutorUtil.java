@@ -7,7 +7,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ExecutorUtil implements InitializingBean{
+public class ExecutorUtil implements InitializingBean {
 
 	private ExecutorService executorService;
 

@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -15,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import cl.own.usi.dao.GameDAO;
+import cl.own.usi.gateway.netty.RequestHandler;
 import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
 import cl.own.usi.service.ExecutorUtil;
@@ -138,8 +141,12 @@ public class GameServiceImpl implements GameService {
 				logger.info("Starting question " + i + ". Response question number " + gameSynchronization.currentQuestionToAnswer);
 				QuestionSynchronization questionSynchronization = gameSynchronization.getQuestionSynchronization(i);
 				
-				gameSynchronization.currentQuestionToAnswer++;
 				questionSynchronization.questionRunning = true;
+				
+				for (Runnable r : questionSynchronization.waitingQueue) {
+					logger.debug("Inserting a early requester to the working queue");
+					executorUtil.getExecutorService().execute(r);
+				}
 				
 				// Wait till the correct number of users join the game
 				questionSynchronization.questionReadyLatch.countDown();
@@ -161,6 +168,8 @@ public class GameServiceImpl implements GameService {
 				}
 				
 				logger.info("Question " + i + " finished, going to the next question");
+				
+				gameSynchronization.currentQuestionToAnswer++;
 				
 			}
 			
@@ -198,7 +207,7 @@ public class GameServiceImpl implements GameService {
 
 		private final Map<Question, QuestionSynchronization> questionSynchronizations;
 		
-		volatile int currentQuestionToAnswer = 0;
+		volatile int currentQuestionToAnswer = 1;
 		
 		private final Game game;
 		
@@ -231,6 +240,8 @@ public class GameServiceImpl implements GameService {
 		private final CountDownLatch questionReadyLatch;
 		private final CountDownLatch allUsersAnswerLatch;
 		
+		private final Queue<Runnable> waitingQueue = new LinkedBlockingQueue<Runnable>();
+		
 		public QuestionSynchronization(int userLimit) {
 			questionReadyLatch = new CountDownLatch(1);
 			allUsersAnswerLatch = new CountDownLatch(userLimit);
@@ -248,6 +259,24 @@ public class GameServiceImpl implements GameService {
 			return true;
 		} else {
 			return false;
+		}
+	}
+	
+	
+	public void scheduleQuestionReply(RequestHandler.QuestionWorker questionWorker) {
+		
+		if (questionWorker.getQuestionNumber() <= gameSynchronization.currentQuestionToAnswer) {
+			executorUtil.getExecutorService().execute(questionWorker);
+		} else {
+			QuestionSynchronization questionSynchronization = getQuestionSync(questionWorker.getQuestionNumber());
+			
+			// TODO : lock here.
+			logger.info("Too early question request for quesition " + questionWorker.getQuestionNumber() + ", putting in a temporaray queue");
+			questionSynchronization.waitingQueue.offer(questionWorker);
+			
+			if (questionWorker.getQuestionNumber() <= gameSynchronization.currentQuestionToAnswer) {
+				logger.error("Race condition for question " + questionWorker.getQuestionNumber());
+			}
 		}
 	}
 

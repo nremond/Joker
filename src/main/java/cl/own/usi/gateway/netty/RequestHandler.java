@@ -47,7 +47,6 @@ import cl.own.usi.json.LoginRequest;
 import cl.own.usi.json.UserRequest;
 import cl.own.usi.model.Question;
 import cl.own.usi.model.User;
-import cl.own.usi.service.ExecutorUtil;
 import cl.own.usi.service.GameService;
 import cl.own.usi.service.ScoreService;
 import cl.own.usi.service.UserService;
@@ -92,9 +91,6 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 
 	@Autowired
 	private ScoreService scoreService;
-
-	@Autowired
-	private ExecutorUtil executorUtil;
 
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
@@ -150,7 +146,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 											.append("\"");
 								}
 
-								executorUtil.getExecutorService().execute(
+								gameService.scheduleQuestionReply(
 										new QuestionWorker(questionNumber, user
 												.getScore(), e, sb.toString()));
 
@@ -416,7 +412,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 		return null;
 	}
 
-	private class QuestionWorker implements Runnable {
+	public class QuestionWorker implements Runnable {
 
 		final int questionNumber;
 		final int score;
@@ -456,6 +452,10 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 				logger.warn("Interrupted", ie);
 				
 			}
+		}
+		
+		public int getQuestionNumber() {
+			return questionNumber;
 		}
 	}
 

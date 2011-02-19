@@ -3,6 +3,7 @@ package cl.own.usi.service;
 import java.util.List;
 import java.util.Map;
 
+import cl.own.usi.gateway.netty.RequestHandler;
 import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
 import cl.own.usi.model.User;
@@ -61,4 +62,5 @@ public interface GameService {
 	 */
 	boolean userAnswer(int questionNumber);
 
+	void scheduleQuestionReply(RequestHandler.QuestionWorker questionWorker);
 }
