@@ -140,6 +140,21 @@
 			<version>4.8.2</version>
 			<scope>test</scope>
 		</dependency>
+		
+		
+		<!-- Nicolas : Mongo driver, see if we keep or drop this DB -->
+		<dependency>
+		    <groupId>org.mongodb</groupId>
+		    <artifactId>mongo-java-driver</artifactId>
+		    <version>2.4</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>cglib</groupId>
+			<artifactId>cglib-nodep</artifactId>
+			<version>2.2</version>
+		</dependency>
+		
 	</dependencies>
 
 	<build>

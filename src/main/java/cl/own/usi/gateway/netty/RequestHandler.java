@@ -55,7 +55,7 @@ import cl.own.usi.service.UserService;
 public class RequestHandler extends SimpleChannelUpstreamHandler {
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
-	
+
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
 			throws Exception {
@@ -120,16 +120,17 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 							User user = userService.getUserFromUserId(userId);
 
 							if (user == null
-									|| !gameService.validateQuestionToRequest(questionNumber)) {
+									|| !gameService
+											.validateQuestionToRequest(questionNumber)) {
 								writeResponse(e, BAD_REQUEST);
-								logger.info("Invalid question number " + questionNumber);
+								logger.info("Invalid question number "
+										+ questionNumber);
 							} else {
 
 								userService.insertRequest(user, questionNumber);
 
-								logger.debug("Get Question "
-										+ questionNumber + " for user "
-										+ userId);
+								logger.debug("Get Question " + questionNumber
+										+ " for user " + userId);
 
 								Question question = gameService
 										.getQuestion(questionNumber);
@@ -146,9 +147,11 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 											.append("\"");
 								}
 
-								gameService.scheduleQuestionReply(
-										new QuestionWorker(questionNumber, user
-												.getScore(), e, sb.toString()));
+								gameService
+										.scheduleQuestionReply(new QuestionWorker(
+												questionNumber,
+												user.getScore(), e, sb
+														.toString()));
 
 							}
 
@@ -175,16 +178,18 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 						User user = userService.getUserFromUserId(userId);
 
 						if (user == null
-								|| !gameService.validateQuestionToAnswer(questionNumber)) {
+								|| !gameService
+										.validateQuestionToAnswer(questionNumber)) {
 							writeResponse(e, BAD_REQUEST);
-							logger.info("Invalid question number" + questionNumber);
+							logger.info("Invalid question number"
+									+ questionNumber);
 						} else {
 
-							logger.debug("Answer Question "
-									+ questionNumber + " for user " + userId);
+							logger.debug("Answer Question " + questionNumber
+									+ " for user " + userId);
 
 							gameService.userAnswer(questionNumber);
-							
+
 							JSONObject object = (JSONObject) JSONValue
 									.parse(request.getContent().toString(
 											CharsetUtil.UTF_8));
@@ -279,9 +284,9 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 							loginRequest.getPassword());
 
 					if (userId != null) {
-						
+
 						gameService.enterGame(userId);
-						
+
 						HttpResponse response = new DefaultHttpResponse(
 								HTTP_1_0, CREATED);
 						setCookie(response, COOKIE_AUTH_NAME, userId);
@@ -444,16 +449,17 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 					// time to wait is elapsed, return 400.
 					writeResponse(e, BAD_REQUEST);
 
-					logger.warn("Fail to wait on other users for question " + questionNumber + ", maybe long polling timeout");
+					logger.warn("Fail to wait on other users for question "
+							+ questionNumber + ", maybe long polling timeout");
 				}
 			} catch (InterruptedException ie) {
 
 				writeResponse(e, BAD_REQUEST);
 				logger.warn("Interrupted", ie);
-				
+
 			}
 		}
-		
+
 		public int getQuestionNumber() {
 			return questionNumber;
 		}

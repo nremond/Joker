@@ -233,7 +233,7 @@ public class GameServiceImpl implements GameService {
 		}
 	}
 	
-	private class QuestionSynchronization {
+	private static class QuestionSynchronization {
 		
 		private volatile boolean questionRunning = false;
 		

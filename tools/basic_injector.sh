@@ -3,7 +3,7 @@
 PORT="9080"
 HOST="localhost"
 
-NBUSERS=100
+NBUSERS=10
 QUESTIONTIMELIMIT=10
 
 # Create a game with 3 questions

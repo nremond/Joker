@@ -3,13 +3,11 @@ package cl.own.usi.dao.impl.memory;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.stereotype.Repository;
-
 import cl.own.usi.dao.GameDAO;
 import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
 
-@Repository
+//@Repository
 public class GameDAOImpl implements GameDAO {
 
 	private Game game;
