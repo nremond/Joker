@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,9 +21,9 @@ import org.springframework.stereotype.Service;
 
 import cl.own.usi.dao.GameDAO;
 import cl.own.usi.gateway.netty.RequestHandler;
+import cl.own.usi.gateway.utils.ExecutorUtil;
 import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
-import cl.own.usi.service.ExecutorUtil;
 import cl.own.usi.service.GameService;
 
 @Service
@@ -69,6 +70,7 @@ public class GameServiceImpl implements GameService {
 		}
 	}
 
+	Random r = new Random();
 	private List<Question> mapToQuestion(List<Map<String, Map<String, Boolean>>> questions) {
 		List<Question> list = new ArrayList<Question>();
 		int number = 1;
@@ -78,6 +80,8 @@ public class GameServiceImpl implements GameService {
 				question.setNumber(number);
 				question.setLabel(entry.getKey());
 				question.setChoices(new ArrayList<String>(entry.getValue().size()));
+				// TODO : get real question's value.
+				question.setValue(r.nextInt(50));
 				int i = 1;
 				for (Map.Entry<String, Boolean> answer : entry.getValue().entrySet()) {
 					question.getChoices().add(answer.getKey());
@@ -291,6 +295,39 @@ public class GameServiceImpl implements GameService {
 			
 			questionSynchronization.lock.unlock();
 			
+		}
+	}
+
+	@Override
+	public Integer validateAnswer(int questionNumber, Integer answer) {
+		Question question = getQuestion(questionNumber);
+		
+		if (question == null || answer == null) {
+			return null;
+		} else {
+			
+			if (answer < 1 || answer > question.getChoices().size()) {
+				return null;
+			} else {
+				return answer;
+			}
+		}
+	}
+
+	@Override
+	public boolean isAnswerCorrect(int questionNumber, Integer answer) {
+		
+		answer = validateAnswer(questionNumber, answer);
+		
+		if (answer == null) {
+			return false;
+		} else {
+			Question question = getQuestion(questionNumber);
+			if (question == null) {
+				return false;
+			} else {
+				return question.getCorrectChoice() == answer;
+			}
 		}
 	}
 

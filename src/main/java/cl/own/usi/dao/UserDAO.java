@@ -12,7 +12,7 @@ public interface UserDAO {
 	
 	User getUserById(String userId);
 	
-	void insertRequest(User user, Question question);
+	void insertRequest(User user, int questionNumber);
 	void insertAnswer(User user, Answer answer);
 	
 	List<Answer> getAnswers(User user);

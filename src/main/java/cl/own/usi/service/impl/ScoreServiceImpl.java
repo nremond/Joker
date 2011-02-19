@@ -6,16 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import cl.own.usi.dao.ScoreDAO;
-import cl.own.usi.model.Question;
 import cl.own.usi.model.User;
-import cl.own.usi.service.GameService;
 import cl.own.usi.service.ScoreService;
 
 @Service
 public class ScoreServiceImpl implements ScoreService {
-
-	@Autowired
-	GameService gameService;
 	
 	@Autowired
 	ScoreDAO scoreDAO;
@@ -23,11 +18,11 @@ public class ScoreServiceImpl implements ScoreService {
 	private static final int FIFTY = 50;
 	private static final int HUNDRED = 100;
 
-	public int updateScore(Question question, User user, boolean answerCorrect) {
+	public int updateScore(int questionNumber, int questionValue, User user, boolean answerCorrect) {
 		if (answerCorrect) {
 			int bonus = scoreDAO.getUserBonus(user);
 			scoreDAO.setUserBonus(user, bonus + 1);
-			user.setScore(user.getScore() + question.getValue() + bonus);
+			user.setScore(user.getScore() + questionValue + bonus);
 		} else {
 			scoreDAO.setUserBonus(user, 0);
 		}

@@ -8,16 +8,11 @@ import org.springframework.stereotype.Service;
 import cl.own.usi.dao.ScoreDAO;
 import cl.own.usi.dao.UserDAO;
 import cl.own.usi.model.Answer;
-import cl.own.usi.model.Question;
 import cl.own.usi.model.User;
-import cl.own.usi.service.GameService;
 import cl.own.usi.service.UserService;
 
 @Service
 public class UserServiceImpl implements UserService {
-
-	@Autowired
-	private GameService gameService;
 	
 	@Autowired
 	private UserDAO userDAO;
@@ -50,47 +45,26 @@ public class UserServiceImpl implements UserService {
 		}
 	}
 
-	public boolean insertRequest(User user, int questionNumber) {
-		Question question = gameService.getQuestion(questionNumber);
-		userDAO.insertRequest(user, question);
-		return true;
+	public void insertRequest(User user, int questionNumber) {
+		userDAO.insertRequest(user, questionNumber);
 	}
 	
-	public boolean insertAnswer(User user, int questionNumber, Integer answerNumber) {
-		Question question = gameService.getQuestion(questionNumber);
+	public void insertAnswer(User user, int questionNumber, Integer answerNumber) {
+				
+		List<Answer> answers = userDAO.getAnswers(user);
 		
-		if (answerNumber == null) {
-			throw new IllegalArgumentException("answerNumber is null.");
+		if (answers.get(questionNumber - 1) != null) {
+			throw new IllegalArgumentException("User has already answered this question.");
 		} else {
 			
-			if (answerNumber > question.getChoices().size() || answerNumber < 1) {
-				throw new IllegalArgumentException("answerNumber " + answerNumber + " is out of range of questions choices.");
-			} else {
-				
-				List<Answer> answers = userDAO.getAnswers(user);
-				
-				// Ensure user has answered previous questions.
-				if (question.getNumber() != answers.size()) {
-					throw new IllegalArgumentException("User has not answered all previous questions.");
-				} else if (answers.get(question.getNumber() - 1) != null) {
-					throw new IllegalArgumentException("User has already answered this question.");
-				} else {
-					
-					Answer answer = new Answer();
-					answer.setQuestion(question);
-					answer.setUser(user);
-					
-					answer.setAnswerNumber(answerNumber);
-					
-					userDAO.insertAnswer(user, answer);
-					
-					if (answer.isCorrect()) {
-						return true;
-					} else {
-						return false;
-					}
-				}
-			}
+			Answer answer = new Answer();
+			answer.setQuestionNumber(questionNumber);
+			answer.setUser(user);
+			
+			answer.setAnswerNumber(answerNumber);
+			
+			userDAO.insertAnswer(user, answer);
+			
 		}
 	}
 
@@ -111,16 +85,6 @@ public class UserServiceImpl implements UserService {
 	public void flushUsers() {
 		userDAO.flushUsers();
 		scoreDAO.flushUsers();
-	}
-
-	public boolean isQuestionRequestAllowed(User user, int questionNumber) {
-		List<Answer> answers = userDAO.getAnswers(user);
-		return answers.size() == questionNumber - 1;
-	}
-	
-	public boolean isQuestionResponseAllowed(User user, int questionNumber) {
-		List<Answer> answers = userDAO.getAnswers(user);
-		return answers.size() == questionNumber;
 	}
 	
 }

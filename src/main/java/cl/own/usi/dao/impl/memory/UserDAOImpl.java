@@ -55,7 +55,7 @@ public class UserDAOImpl implements UserDAO {
 		
 	}
 
-	public void insertRequest(User user, Question question) {
+	public void insertRequest(User user, int questionNumber) {
 		LinkedList<RequestAndAnswer> requestAndAnswers = userRequestAndAnswers.get(user);
 		
 		if (requestAndAnswers == null) {
@@ -67,7 +67,7 @@ public class UserDAOImpl implements UserDAO {
 		}
 		
 		RequestAndAnswer requestAndAnswer = new RequestAndAnswer();
-		requestAndAnswer.question = question;
+		requestAndAnswer.questionNumber = questionNumber;
 		requestAndAnswers.add(requestAndAnswer);
 	}
 	
@@ -77,7 +77,7 @@ public class UserDAOImpl implements UserDAO {
 		
 		if (requestAndAnswers != null) {
 			RequestAndAnswer lastRequestAndAnswer = requestAndAnswers.getLast();
-			if (lastRequestAndAnswer.question.equals(answer.getQuestion())) {
+			if (lastRequestAndAnswer.questionNumber == answer.getQuestionNumber()) {
 				lastRequestAndAnswer.answer = answer;
 			}
 		}
@@ -119,7 +119,7 @@ public class UserDAOImpl implements UserDAO {
 	}
 	
 	private static class RequestAndAnswer {
-		Question question;
+		int questionNumber;
 		Answer answer;
 	}
 

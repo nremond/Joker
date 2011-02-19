@@ -63,4 +63,9 @@ public interface GameService {
 	boolean userAnswer(int questionNumber);
 
 	void scheduleQuestionReply(RequestHandler.QuestionWorker questionWorker);
+	
+	Integer validateAnswer(int questionNumber, Integer answer);
+	
+	boolean isAnswerCorrect(int questionNumber, Integer answer);
+	
 }

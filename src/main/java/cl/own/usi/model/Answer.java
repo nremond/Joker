@@ -3,7 +3,7 @@ package cl.own.usi.model;
 public class Answer {
 
 	User user;
-	Question question;
+	int questionNumber;
 	int answerNumber = -1;
 	
 	public User getUser() {
@@ -14,12 +14,12 @@ public class Answer {
 		this.user = user;
 	}
 	
-	public Question getQuestion() {
-		return question;
+	public int getQuestionNumber() {
+		return questionNumber;
 	}
 	
-	public void setQuestion(Question question) {
-		this.question = question;
+	public void setQuestionNumber(int questionNumber) {
+		this.questionNumber = questionNumber;
 	}
 	
 	public int getAnswerNumber() {
@@ -28,9 +28,5 @@ public class Answer {
 	
 	public void setAnswerNumber(int answerNumber) {
 		this.answerNumber = answerNumber;
-	}
-	
-	public boolean isCorrect() {
-		return getQuestion().getCorrectChoice() == getAnswerNumber();
 	}
 }
