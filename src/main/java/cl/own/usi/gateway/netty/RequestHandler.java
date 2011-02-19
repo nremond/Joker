@@ -38,6 +38,8 @@ import org.jboss.netty.util.CharsetUtil;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -53,11 +55,13 @@ import cl.own.usi.service.UserService;
 @Component
 public class RequestHandler extends SimpleChannelUpstreamHandler {
 
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
+	
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
 			throws Exception {
 
-		e.getCause().printStackTrace();
+		logger.error("Exception thrown", e.getCause());
 
 		super.exceptionCaught(ctx, e);
 	}
@@ -111,6 +115,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 
 					if (userId == null) {
 						writeResponse(e, UNAUTHORIZED);
+						logger.info("User not authorized");
 					} else {
 						try {
 							int questionNumber = Integer.parseInt(URI
@@ -119,15 +124,14 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 							User user = userService.getUserFromUserId(userId);
 
 							if (user == null
-									|| !userService.isQuestionRequestAllowed(
-											user, questionNumber)
-									|| !gameService.userEnter(questionNumber)) {
+									|| !gameService.validateQuestionToRequest(questionNumber)) {
 								writeResponse(e, BAD_REQUEST);
+								logger.info("Invalid question number " + questionNumber);
 							} else {
 
 								userService.insertRequest(user, questionNumber);
 
-								System.out.println("Get Question "
+								logger.debug("Get Question "
 										+ questionNumber + " for user "
 										+ userId);
 
@@ -154,16 +158,19 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 
 						} catch (NumberFormatException exception) {
 							writeResponse(e, BAD_REQUEST);
+							logger.warn("NumberFormatException", exception);
 						}
 					}
 				} else {
 					writeResponse(e, NOT_IMPLEMENTED);
+					logger.info("Wrong method");
 				}
 			} else if (URI.startsWith(URI_ANSWER)) {
 				String userId = getCookie(request, COOKIE_AUTH_NAME);
 
 				if (userId == null) {
 					writeResponse(e, UNAUTHORIZED);
+					logger.info("User not authorized");
 				} else {
 					try {
 						int questionNumber = Integer.parseInt(URI
@@ -172,15 +179,16 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 						User user = userService.getUserFromUserId(userId);
 
 						if (user == null
-								|| !userService.isQuestionResponseAllowed(user,
-										questionNumber)
-								|| !gameService.userAnswer(questionNumber)) {
+								|| !gameService.validateQuestionToAnswer(questionNumber)) {
 							writeResponse(e, BAD_REQUEST);
+							logger.info("Invalid question number" + questionNumber);
 						} else {
 
-							System.out.println("Answer Question "
+							logger.debug("Answer Question "
 									+ questionNumber + " for user " + userId);
 
+							gameService.userAnswer(questionNumber);
+							
 							JSONObject object = (JSONObject) JSONValue
 									.parse(request.getContent().toString(
 											CharsetUtil.UTF_8));
@@ -212,6 +220,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 						}
 					} catch (NumberFormatException exception) {
 						writeResponse(e, BAD_REQUEST);
+						logger.warn("NumberFormatException", exception);
 					}
 				}
 			} else if (URI.startsWith(URI_RANKING)) {
@@ -220,6 +229,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 
 				if (userId == null) {
 					writeResponse(e, UNAUTHORIZED);
+					logger.info("User not authorized");
 				} else {
 
 					User user = userService.getUserFromUserId(userId);
@@ -273,6 +283,9 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 							loginRequest.getPassword());
 
 					if (userId != null) {
+						
+						gameService.enterGame(userId);
+						
 						HttpResponse response = new DefaultHttpResponse(
 								HTTP_1_0, CREATED);
 						setCookie(response, COOKIE_AUTH_NAME, userId);
@@ -280,10 +293,12 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 						future.addListener(ChannelFutureListener.CLOSE);
 					} else {
 						writeResponse(e, BAD_REQUEST);
+						logger.warn("Wrong method");
 					}
 
 				} else {
 					writeResponse(e, NOT_IMPLEMENTED);
+					logger.warn("Not implemented");
 				}
 			} else if (URI.startsWith(URI_USER)) {
 
@@ -433,11 +448,13 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 					// time to wait is elapsed, return 400.
 					writeResponse(e, BAD_REQUEST);
 
+					logger.warn("Fail to wait on other users for question " + questionNumber + ", maybe long polling timeout");
 				}
 			} catch (InterruptedException ie) {
 
 				writeResponse(e, BAD_REQUEST);
-
+				logger.warn("Interrupted", ie);
+				
 			}
 		}
 	}

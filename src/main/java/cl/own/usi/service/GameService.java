@@ -10,7 +10,8 @@ import cl.own.usi.model.User;
 public interface GameService {
 
 	/**
-	 * Create a new {@link Game}. Setup all synchronization stuff, reset previous game if existing.
+	 * Create a new {@link Game}. Setup all synchronization stuff, reset
+	 * previous game if existing.
 	 * 
 	 * @param usersLimit
 	 * @param questionTimeLimit
@@ -18,8 +19,10 @@ public interface GameService {
 	 * @param questions
 	 * @return
 	 */
-	boolean insertGame(int usersLimit, int questionTimeLimit, int pollingTimeLimit, List<Map<String, Map<String, Boolean>>> questions);
-	
+	boolean insertGame(int usersLimit, int questionTimeLimit,
+			int pollingTimeLimit,
+			List<Map<String, Map<String, Boolean>>> questions);
+
 	/**
 	 * Get given question. Return null if questionNumber does not exist.
 	 * 
@@ -27,24 +30,29 @@ public interface GameService {
 	 * @return
 	 */
 	Question getQuestion(int questionNumber);
-	
+
 	/**
-	 * Wait till {@link Game#getUsersLimit()} {@link User} reach the {@link Game}
+	 * Wait till {@link Game#getUsersLimit()} {@link User} reach the
+	 * {@link Game}
 	 * 
 	 * @param questionNumber
 	 * @return
 	 * @throws InterruptedException
 	 */
 	boolean waitOtherUsers(int questionNumber) throws InterruptedException;
-	
+
 	/**
 	 * Stipulate a {@link User} request the {@link Question}
 	 * 
 	 * @param questionNumber
 	 * @return
 	 */
-	boolean userEnter(int questionNumber);
-	
+	boolean enterGame(String userId);
+
+	boolean validateQuestionToRequest(int questionNumber);
+
+	boolean validateQuestionToAnswer(int questionNumber);
+
 	/**
 	 * Stipulate a {@link User} answer the {@link Question}
 	 * 
@@ -52,5 +60,5 @@ public interface GameService {
 	 * @return
 	 */
 	boolean userAnswer(int questionNumber);
-	
+
 }

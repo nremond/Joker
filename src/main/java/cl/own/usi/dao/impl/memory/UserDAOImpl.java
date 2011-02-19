@@ -100,7 +100,7 @@ public class UserDAOImpl implements UserDAO {
 
 	private String generateUserId(User user) {
 		ChannelBuffer chanBuff = wrappedBuffer((user.getEmail() + USER_ID_SALT).getBytes(CharsetUtil.UTF_8));
-		return Base64.encode(chanBuff, Base64Dialect.ORDERED).toString();
+		return Base64.encode(chanBuff, Base64Dialect.ORDERED).toString(CharsetUtil.UTF_8);
 	}
 
 	public List<Answer> getAnswers(User user) {
