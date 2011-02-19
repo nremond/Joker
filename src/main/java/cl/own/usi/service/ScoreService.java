@@ -2,7 +2,6 @@ package cl.own.usi.service;
 
 import java.util.List;
 
-import cl.own.usi.model.Question;
 import cl.own.usi.model.User;
 
 public interface ScoreService {
@@ -15,7 +14,7 @@ public interface ScoreService {
 	 * @param answerCorrect
 	 * @return
 	 */
-	int updateScore(Question question, User user, boolean answerCorrect);
+	int updateScore(int questionNumber, int questionValue, User user, boolean answerCorrect);
 	
 	/**
 	 * Return the 100 top {@link User}

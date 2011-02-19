@@ -43,13 +43,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import cl.own.usi.gateway.client.WorkerClient;
+import cl.own.usi.gateway.client.WorkerClient.UserAndScore;
+import cl.own.usi.gateway.client.WorkerClient.UserAndScoreAndAnswer;
+import cl.own.usi.gateway.client.WorkerClient.UserInfoAndScore;
 import cl.own.usi.json.LoginRequest;
 import cl.own.usi.json.UserRequest;
 import cl.own.usi.model.Question;
-import cl.own.usi.model.User;
 import cl.own.usi.service.GameService;
-import cl.own.usi.service.ScoreService;
-import cl.own.usi.service.UserService;
 
 @Component
 public class RequestHandler extends SimpleChannelUpstreamHandler {
@@ -87,10 +88,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 	private GameService gameService;
 
 	@Autowired
-	private UserService userService;
-
-	@Autowired
-	private ScoreService scoreService;
+	private WorkerClient workerClient;
 
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
@@ -117,42 +115,39 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 							int questionNumber = Integer.parseInt(URI
 									.substring(URI_QUESTION_LENGTH));
 
-							User user = userService.getUserFromUserId(userId);
-
-							if (user == null
-									|| !gameService
-											.validateQuestionToRequest(questionNumber)) {
+							if (!gameService.validateQuestionToRequest(questionNumber)) {
 								writeResponse(e, BAD_REQUEST);
-								logger.info("Invalid question number "
-										+ questionNumber);
+								logger.info("Invalid question number " + questionNumber);
 							} else {
 
-								userService.insertRequest(user, questionNumber);
+								UserAndScore userAndScore = workerClient.validateUserAndInsertQuestionRequest(userId, questionNumber);
 
-								logger.debug("Get Question " + questionNumber
-										+ " for user " + userId);
+								if (userAndScore.userId == null) {
+									writeResponse(e, BAD_REQUEST);
+									logger.info("Invalid userId " + userId);
+								} else {
+									logger.debug("Get Question "
+											+ questionNumber + " for user "
+											+ userId);
 
-								Question question = gameService
-										.getQuestion(questionNumber);
+									Question question = gameService
+											.getQuestion(questionNumber);
 
-								StringBuilder sb = new StringBuilder("{");
-								sb.append("\"question\":\"")
-										.append(question.getLabel())
-										.append("\"");
-								int i = 0;
-								for (String answer : question.getChoices()) {
-									i++;
-									sb.append(",\"answer_").append(i)
-											.append("\":\"").append(answer)
+									StringBuilder sb = new StringBuilder("{");
+									sb.append("\"question\":\"")
+											.append(question.getLabel())
 											.append("\"");
+									int i = 0;
+									for (String answer : question.getChoices()) {
+										i++;
+										sb.append(",\"answer_").append(i)
+												.append("\":\"").append(answer)
+												.append("\"");
+									}
+
+									gameService.scheduleQuestionReply(
+											new QuestionWorker(questionNumber, userAndScore.score, e, sb.toString()));
 								}
-
-								gameService
-										.scheduleQuestionReply(new QuestionWorker(
-												questionNumber,
-												user.getScore(), e, sb
-														.toString()));
-
 							}
 
 						} catch (NumberFormatException exception) {
@@ -175,18 +170,13 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 						int questionNumber = Integer.parseInt(URI
 								.substring(URI_ANSWER_LENGTH));
 
-						User user = userService.getUserFromUserId(userId);
-
-						if (user == null
-								|| !gameService
-										.validateQuestionToAnswer(questionNumber)) {
+						if (!gameService.validateQuestionToAnswer(questionNumber)) {
 							writeResponse(e, BAD_REQUEST);
-							logger.info("Invalid question number"
-									+ questionNumber);
+							logger.info("Invalid question number" + questionNumber);
 						} else {
 
-							logger.debug("Answer Question " + questionNumber
-									+ " for user " + userId);
+							logger.debug("Answer Question "
+									+ questionNumber + " for user " + userId);
 
 							gameService.userAnswer(questionNumber);
 
@@ -197,27 +187,33 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 							Question question = gameService
 									.getQuestion(questionNumber);
 
-							boolean answerCorrect = userService.insertAnswer(
-									user, questionNumber,
-									((Long) object.get("answer")).intValue());
+							Long answerLong = ((Long) object.get("answer"));
+							Integer answer = null;
+							if (answerLong != null) { answer = answerLong.intValue(); }
 
-							int newScore = scoreService.updateScore(question,
-									user, answerCorrect);
+//							answer = gameService.validateAnswer(questionNumber, answer);
+//							boolean answerCorrect = gameService.isAnswerCorrect(questionNumber, answer);
 
-							StringBuilder sb = new StringBuilder(
-									"{ \"are_u_ok\" : ");
-							if (answerCorrect) {
-								sb.append("true");
+							UserAndScoreAndAnswer userAndScoreAndAnswer = workerClient.validateUserAndInsertQuestionResponseAndUpdateScore(userId, questionNumber, answer);
+
+							if (userAndScoreAndAnswer.userId == null) {
+								writeResponse(e, BAD_REQUEST);
+								logger.info("Invalid userId " + userId);
 							} else {
-								sb.append("false");
+								StringBuilder sb = new StringBuilder(
+										"{ \"are_u_ok\" : ");
+								if (userAndScoreAndAnswer.answer) {
+									sb.append("true");
+								} else {
+									sb.append("false");
+								}
+								sb.append(", \"good_answer\" : \""
+										+ question.getChoices().get(
+												question.getCorrectChoice())
+										+ "\", \"score\" : " + userAndScoreAndAnswer.score + "}");
+
+								writeStringBuilder(sb, e, CREATED);
 							}
-							sb.append(", \"good_answer\" : \""
-									+ question.getChoices().get(
-											question.getCorrectChoice())
-									+ "\", \"score\" : " + newScore + "}");
-
-							writeStringBuilder(sb, e, CREATED);
-
 						}
 					} catch (NumberFormatException exception) {
 						writeResponse(e, BAD_REQUEST);
@@ -233,39 +229,37 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 					logger.info("User not authorized");
 				} else {
 
-					User user = userService.getUserFromUserId(userId);
+					UserAndScore userAndScore = workerClient.validateUserAndGetScore(userId);
 
-					if (user != null) {
+					if (userAndScore.userId == null) {
+						writeResponse(e, BAD_REQUEST);
+						logger.info("Invalid userId " + userId);
+					} else {
 
 						StringBuilder sb = new StringBuilder("{");
 
-						sb.append(" \"my_score\" : ").append(user.getScore())
+						sb.append(" \"my_score\" : ").append(userAndScore.score)
 								.append(", ");
 
 						sb.append(" \"top_scores\" : { ");
-						List<User> topUsers = scoreService.getTop100();
+						List<UserInfoAndScore> topUsers = workerClient.getTop100();
 						appendUsersScores(topUsers, sb);
 						sb.append(" }, ");
 
 						sb.append(" \"before_me\" : { ");
-						List<User> beforeScores = scoreService
-								.get50Before(user);
+						List<UserInfoAndScore> beforeScores = workerClient
+								.get50Before(userId);
 						appendUsersScores(beforeScores, sb);
 						sb.append(" }, ");
 
 						sb.append(" \"after_me\" : { ");
-						List<User> afterScores = scoreService.get50After(user);
+						List<UserInfoAndScore> afterScores = workerClient.get50After(userId);
 						appendUsersScores(afterScores, sb);
 						sb.append(" } ");
 
 						sb.append(" } ");
 
 						writeStringBuilder(sb, e, OK);
-
-					} else {
-
-						writeResponse(e, BAD_REQUEST);
-
 					}
 
 				}
@@ -280,7 +274,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 											CharsetUtil.UTF_8),
 									LoginRequest.class);
 
-					String userId = userService.login(loginRequest.getMail(),
+					String userId = workerClient.loginUser(loginRequest.getMail(),
 							loginRequest.getPassword());
 
 					if (userId != null) {
@@ -294,7 +288,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 						future.addListener(ChannelFutureListener.CLOSE);
 					} else {
 						writeResponse(e, BAD_REQUEST);
-						logger.warn("Wrong method");
+						logger.warn("User not found for session " + loginRequest.getMail());
 					}
 
 				} else {
@@ -309,7 +303,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 							request.getContent().toString(CharsetUtil.UTF_8),
 							UserRequest.class);
 
-					boolean inserted = userService.insertUser(
+					boolean inserted = workerClient.insertUser(
 							userRequest.getMail(), userRequest.getPassword(),
 							userRequest.getFirstName(),
 							userRequest.getLastName());
@@ -364,7 +358,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 							questions);
 
 					if ((Boolean) parameters.get("flushusertable")) {
-						userService.flushUsers();
+						workerClient.flushUsers();
 					}
 
 					writeResponse(e, CREATED);
@@ -423,6 +417,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 		final int score;
 		final MessageEvent e;
 		final String questionFirstPart;
+		final long timeAtCreation;
 
 		public QuestionWorker(int questionNumber, int score, MessageEvent e,
 				String questionFirstPart) {
@@ -430,6 +425,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 			this.score = score;
 			this.e = e;
 			this.questionFirstPart = questionFirstPart;
+			this.timeAtCreation = System.currentTimeMillis();
 		}
 
 		public void run() {
@@ -437,7 +433,8 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 			StringBuilder sb = new StringBuilder(questionFirstPart);
 
 			try {
-				if (gameService.waitOtherUsers(questionNumber)) {
+				long alreadyWaitedMili = System.currentTimeMillis() - timeAtCreation;
+				if (gameService.waitOtherUsers(questionNumber, alreadyWaitedMili)) {
 
 					sb.append(",\"score\":").append(score);
 					sb.append("}");
@@ -449,8 +446,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 					// time to wait is elapsed, return 400.
 					writeResponse(e, BAD_REQUEST);
 
-					logger.warn("Fail to wait on other users for question "
-							+ questionNumber + ", maybe long polling timeout");
+					logger.warn("Fail to wait on other users for question " + questionNumber + ", maybe long polling timeout");
 				}
 			} catch (InterruptedException ie) {
 
@@ -465,31 +461,31 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 		}
 	}
 
-	private void appendUsersScores(List<User> users, StringBuilder sb) {
+	private void appendUsersScores(List<UserInfoAndScore> users, StringBuilder sb) {
 		StringBuilder topScoresMail = new StringBuilder("\"mail\" : [ ");
 		StringBuilder topScoresScores = new StringBuilder("\"scores\" : [ ");
 		StringBuilder topScoresFirstName = new StringBuilder(
 				"\"firstname\" : [ ");
 		StringBuilder topScoresLastname = new StringBuilder("\"lastname\" : [ ");
 		boolean first = true;
-		for (User topUser : users) {
+		for (UserInfoAndScore user : users) {
 			if (!first) {
 				topScoresMail.append(",");
 			}
-			topScoresMail.append("\"").append(topUser.getEmail()).append("\"");
+			topScoresMail.append("\"").append(user.email).append("\"");
 			if (!first) {
 				topScoresScores.append(",");
 			}
-			topScoresScores.append(topUser.getScore());
+			topScoresScores.append(user.score);
 			if (!first) {
 				topScoresFirstName.append(",");
 			}
-			topScoresFirstName.append("\"").append(topUser.getFirstname())
+			topScoresFirstName.append("\"").append(user.firstname)
 					.append("\"");
 			if (!first) {
 				topScoresLastname.append(",");
 			}
-			topScoresLastname.append("\"").append(topUser.getLastname())
+			topScoresLastname.append("\"").append(user.lastname)
 					.append("\"");
 			first = false;
 		}

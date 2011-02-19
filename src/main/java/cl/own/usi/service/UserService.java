@@ -31,7 +31,7 @@ public interface UserService {
 	 * @param questionNumber
 	 * @return
 	 */
-	boolean insertRequest(User user, int questionNumber);
+	void insertRequest(User user, int questionNumber);
 	
 	/**
 	 * Answer a {@link Question}
@@ -41,7 +41,7 @@ public interface UserService {
 	 * @param answer
 	 * @return
 	 */
-	boolean insertAnswer(User user, int questionNumber, Integer answer);
+	void insertAnswer(User user, int questionNumber, Integer answer);
 	
 	/**
 	 * Logout
@@ -63,23 +63,5 @@ public interface UserService {
 	 * Remove all {@link User}s
 	 */
 	void flushUsers();
-	
-	/**
-	 * Check if the {@link User} is allowed to request the given {@link Question}.
-	 * 
-	 * @param user
-	 * @param questionNumber
-	 * @return
-	 */
-	boolean isQuestionRequestAllowed(User user, int questionNumber);
-	
-	/**
-	 * Check if the {@link User} is allowed to answer the given {@link Question}.
-	 * 
-	 * @param user
-	 * @param questionNumber
-	 * @return
-	 */
-	boolean isQuestionResponseAllowed(User user, int questionNumber);
 	
 }
