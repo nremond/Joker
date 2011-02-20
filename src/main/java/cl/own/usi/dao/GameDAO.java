@@ -10,15 +10,20 @@ public interface GameDAO {
 	/**
 	 * @return The freshly created game
 	 */
-	Game insertGame(int usersLimit, int questionTimeLimit, int pollingTimeLimit, 
-			List<Question> questions);
-	
-	
+	Game insertGame(int usersLimit, int questionTimeLimit,
+			int pollingTimeLimit, List<Question> questions);
+
 	/**
-	 * @return The last created game
+	 * When a game is created by a node, a new game is persisted. So all nodes
+	 * need to refresh their cache.
+	 */
+	void refreshCache();
+
+	/**
+	 * @return The game in cache
 	 */
 	Game getGame();
-	
+
 	/**
 	 * Get the given question.
 	 * 
@@ -26,5 +31,5 @@ public interface GameDAO {
 	 * @return
 	 */
 	Question getQuestion(int questionNumber);
-	
+
 }

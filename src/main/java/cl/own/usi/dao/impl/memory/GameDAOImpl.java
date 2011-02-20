@@ -41,4 +41,9 @@ public class GameDAOImpl implements GameDAO {
 		return game;
 	}
 
+	@Override
+	public void refreshCache() {
+		// nothing to do as it's not persisted here
+	}
+
 }
