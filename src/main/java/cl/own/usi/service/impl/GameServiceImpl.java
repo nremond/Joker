@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import cl.own.usi.dao.GameDAO;
-import cl.own.usi.gateway.netty.RequestHandler;
+import cl.own.usi.gateway.netty.QuestionWorker;
 import cl.own.usi.gateway.utils.ExecutorUtil;
 import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
@@ -276,7 +276,7 @@ public class GameServiceImpl implements GameService {
 	}
 	
 	
-	public void scheduleQuestionReply(RequestHandler.QuestionWorker questionWorker) {
+	public void scheduleQuestionReply(QuestionWorker questionWorker) {
 		
 		if (questionWorker.getQuestionNumber() <= gameSynchronization.currentQuestionToAnswer) {
 			executorUtil.getExecutorService().execute(questionWorker);
