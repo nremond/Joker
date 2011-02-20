@@ -1,4 +1,4 @@
-package cl.own.usi.dao.impl.memory;
+package cl.own.usi.dao.impl;
 
 import java.util.ArrayList;
 import java.util.List;
