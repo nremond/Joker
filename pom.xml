@@ -162,8 +162,6 @@
 				<groupId>org.apache.thrift</groupId>
 				<artifactId>libthrift</artifactId>
 				<version>0.6.0</version>
-				<scope>system</scope>
-				<systemPath>${basedir}/lib/libthrift.0.6.0.jar</systemPath>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
