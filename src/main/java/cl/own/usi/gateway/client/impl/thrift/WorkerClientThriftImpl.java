@@ -242,4 +242,29 @@ public class WorkerClientThriftImpl implements WorkerClient, InitializingBean {
 		return client;
 		
 	}
+	
+	private static class ClientPool {
+		
+		public Client borrow() {
+			
+			return null;
+		}
+		
+		public void release(Client client) {
+			
+		}
+		
+		public void invalidate(Client client) {
+			
+		}
+		
+		public void addHost(String host, int port) {
+			
+		}
+		
+		public void removeHost(String host, int port) {
+			
+		}
+		
+	}
 }
