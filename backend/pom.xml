@@ -17,5 +17,6 @@
 		<module>interface</module>
 		<module>common</module>
 		<module>mongodb</module>
+		<module>cassandra</module>
 	</modules>
 </project>
