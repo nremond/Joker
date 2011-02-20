@@ -11,8 +11,6 @@ import java.util.List;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,8 +20,6 @@ import cl.own.usi.gateway.client.WorkerClient.UserInfoAndScore;
 
 @Component
 public class RankingController extends AbstractController {
-
-	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Autowired
 	private WorkerClient workerClient;
@@ -37,7 +33,7 @@ public class RankingController extends AbstractController {
 
 		if (userId == null) {
 			writeResponse(e, UNAUTHORIZED);
-			logger.info("User not authorized");
+			getLogger().info("User not authorized");
 		} else {
 
 			UserAndScore userAndScore = workerClient
@@ -45,7 +41,7 @@ public class RankingController extends AbstractController {
 
 			if (userAndScore.userId == null) {
 				writeResponse(e, BAD_REQUEST);
-				logger.info("Invalid userId " + userId);
+				getLogger().info("Invalid userId " + userId);
 			} else {
 
 				StringBuilder sb = new StringBuilder("{");

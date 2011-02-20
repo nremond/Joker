@@ -18,8 +18,6 @@ import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.util.CharsetUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -35,8 +33,6 @@ public class LoginController extends AbstractController {
 
 	@Autowired
 	private WorkerClient workerClient;
-
-	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private final ObjectMapper jsonObjectMapper = new ObjectMapper();
 
@@ -68,13 +64,13 @@ public class LoginController extends AbstractController {
 				future.addListener(ChannelFutureListener.CLOSE);
 			} else {
 				writeResponse(e, BAD_REQUEST);
-				logger.warn("User not found for session "
+				getLogger().warn("User not found for session "
 						+ loginRequest.getMail());
 			}
 
 		} else {
 			writeResponse(e, NOT_IMPLEMENTED);
-			logger.warn("Not implemented");
+			getLogger().warn("Not implemented");
 		}
 
 	}

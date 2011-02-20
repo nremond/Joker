@@ -34,7 +34,7 @@ public class GameController extends AbstractController {
 	private WorkerClient workerClient;
 	
 	@Override
-	 public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
+	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 	throws Exception {
 		
 		HttpRequest request = (HttpRequest) e.getMessage();
@@ -89,7 +89,5 @@ public class GameController extends AbstractController {
 		}
 		
 	}
-
-	
 	
 }

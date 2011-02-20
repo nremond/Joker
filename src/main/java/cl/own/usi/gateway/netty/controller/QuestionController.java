@@ -9,8 +9,6 @@ import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -34,8 +32,6 @@ public class QuestionController extends AbstractController {
 	@Autowired
 	private WorkerClient workerClient;
 
-	private Logger logger = LoggerFactory.getLogger(this.getClass());
-
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 			throws Exception {
@@ -49,7 +45,7 @@ public class QuestionController extends AbstractController {
 
 			if (userId == null) {
 				writeResponse(e, UNAUTHORIZED);
-				logger.info("User not authorized");
+				getLogger().info("User not authorized");
 			} else {
 				try {
 					int questionNumber = Integer.parseInt(uri
@@ -57,7 +53,7 @@ public class QuestionController extends AbstractController {
 
 					if (!gameService.validateQuestionToRequest(questionNumber)) {
 						writeResponse(e, BAD_REQUEST);
-						logger.info("Invalid question number " + questionNumber);
+						getLogger().info("Invalid question number " + questionNumber);
 					} else {
 
 						UserAndScore userAndScore = workerClient
@@ -66,9 +62,9 @@ public class QuestionController extends AbstractController {
 
 						if (userAndScore.userId == null) {
 							writeResponse(e, BAD_REQUEST);
-							logger.info("Invalid userId " + userId);
+							getLogger().info("Invalid userId " + userId);
 						} else {
-							logger.debug("Get Question " + questionNumber
+							getLogger().debug("Get Question " + questionNumber
 									+ " for user " + userId);
 
 							Question question = gameService
@@ -94,12 +90,12 @@ public class QuestionController extends AbstractController {
 
 				} catch (NumberFormatException exception) {
 					writeResponse(e, BAD_REQUEST);
-					logger.warn("NumberFormatException", exception);
+					getLogger().warn("NumberFormatException", exception);
 				}
 			}
 		} else {
 			writeResponse(e, NOT_IMPLEMENTED);
-			logger.info("Wrong method");
+			getLogger().info("Wrong method");
 		}
 
 	}

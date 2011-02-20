@@ -9,6 +9,8 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.handler.codec.http.Cookie;
 import org.jboss.netty.handler.codec.http.CookieDecoder;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 
@@ -21,7 +23,11 @@ public abstract class AbstractController {
 	abstract public void messageReceived(ChannelHandlerContext ctx,
 			MessageEvent e) throws Exception;
 
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
+	protected Logger getLogger() {
+		return logger;
+	}
 
 	protected String getCookie(HttpRequest request, String name) {
 		String cookieString = request.getHeader(COOKIE);

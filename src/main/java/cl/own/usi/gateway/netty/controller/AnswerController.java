@@ -12,8 +12,6 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.util.CharsetUtil;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +22,7 @@ import cl.own.usi.service.GameService;
 
 
 @Component
-public class AnswerController extends AbstractController{
+public class AnswerController extends AbstractController {
 
 	public static final String URI_ANSWER = "/answer/";
 	protected static final int URI_ANSWER_LENGTH = URI_ANSWER.length();
@@ -34,9 +32,7 @@ public class AnswerController extends AbstractController{
 
 	@Autowired
 	private WorkerClient workerClient;
-	
-	private Logger logger = LoggerFactory.getLogger(this.getClass());
-	
+		
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 			throws Exception {
@@ -49,7 +45,7 @@ public class AnswerController extends AbstractController{
 
 		if (userId == null) {
 			writeResponse(e, UNAUTHORIZED);
-			logger.info("User not authorized");
+			getLogger().info("User not authorized");
 		} else {
 			try {
 				int questionNumber = Integer.parseInt(uri
@@ -58,11 +54,11 @@ public class AnswerController extends AbstractController{
 				if (!gameService
 						.validateQuestionToAnswer(questionNumber)) {
 					writeResponse(e, BAD_REQUEST);
-					logger.info("Invalid question number"
+					getLogger().info("Invalid question number"
 							+ questionNumber);
 				} else {
 
-					logger.debug("Answer Question " + questionNumber
+					getLogger().debug("Answer Question " + questionNumber
 							+ " for user " + userId);
 
 					gameService.userAnswer(questionNumber);
@@ -93,7 +89,7 @@ public class AnswerController extends AbstractController{
 
 					if (userAndScoreAndAnswer.userId == null) {
 						writeResponse(e, BAD_REQUEST);
-						logger.info("Invalid userId " + userId);
+						getLogger().info("Invalid userId " + userId);
 					} else {
 						StringBuilder sb = new StringBuilder(
 								"{ \"are_u_ok\" : ");
@@ -113,7 +109,7 @@ public class AnswerController extends AbstractController{
 				}
 			} catch (NumberFormatException exception) {
 				writeResponse(e, BAD_REQUEST);
-				logger.warn("NumberFormatException", exception);
+				getLogger().warn("NumberFormatException", exception);
 			}
 		}
 		
