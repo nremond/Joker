@@ -10,8 +10,8 @@
 	<description>Extremly funny way of programming</description>
 	<url>http://github.com/nire/jocker</url>
 	<scm>
-		<connection>scm:git:git://github.com/nire/jocker</connection>
-		<developerConnection>scm:git:git://github.com/nire/jocker</developerConnection>
+		<connection>scm:git:git://github.com/nire/Joker</connection>
+		<developerConnection>scm:git:git://github.com/nire/Joker</developerConnection>
 	</scm>
 
 	<repositories>
@@ -41,12 +41,16 @@
 			<id>cloudera</id>
 			<url>https://repository.cloudera.com/content/repositories/cloudera-repos/</url>
 		</pluginRepository>
-	
-		
 	</pluginRepositories>
 
 	<dependencyManagement>
 		<dependencies>
+			<dependency>
+				<groupId>commons-httpclient</groupId>
+				<artifactId>commons-httpclient</artifactId>
+				<version>3.1</version>
+			</dependency>
+			
 			<dependency>
 				<groupId>org.jboss.netty</groupId>
 				<artifactId>netty</artifactId>
@@ -87,6 +91,34 @@
 				<artifactId>logback-classic</artifactId>
 				<version>0.9.28</version>
 			</dependency>
+			
+			<dependency>
+				<groupId>commons-lang</groupId>
+				<artifactId>commons-lang</artifactId>
+				<version>2.6</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>4.8.2</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-core</artifactId>
+				<version>3.0.5.RELEASE</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-beans</artifactId>
+				<version>3.0.5.RELEASE</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-context</artifactId>
+				<version>3.0.5.RELEASE</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
@@ -94,7 +126,6 @@
 		<dependency>
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
-			<version>2.6</version>
 		</dependency>
 
 		<dependency>
@@ -110,27 +141,25 @@
 		<dependency>
 			<groupId>commons-httpclient</groupId>
 			<artifactId>commons-httpclient</artifactId>
-			<version>3.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jboss.netty</groupId>
 			<artifactId>netty</artifactId>
 		</dependency>
+		
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-core</artifactId>
-			<version>3.0.5.RELEASE</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-beans</artifactId>
-			<version>3.0.5.RELEASE</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
-			<version>3.0.5.RELEASE</version>
 		</dependency>
+		
 		<dependency>
 			<!-- todo: remote this deps, uses Jackson instead -->
 			<groupId>com.googlecode.json-simple</groupId>
@@ -146,13 +175,7 @@
 			<groupId>org.codehaus.jackson</groupId>
 			<artifactId>jackson-core-lgpl</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.8.2</version>
-			<scope>test</scope>
-		</dependency>		
-		
+				
 		<!-- Nicolas : Mongo driver, see if we keep or drop this DB -->
 		<dependency>
 		    <groupId>org.mongodb</groupId>
@@ -175,6 +198,11 @@
 			<systemPath>${basedir}/lib/libthrift.0.6.0.jar</systemPath>
 		</dependency>
 
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -199,16 +227,19 @@
 						<wtpversion>1.5</wtpversion>
 					</configuration>
 				</plugin>
+				
+				<plugin>
+					<groupId>org.apache.thrift.tools</groupId>
+					<artifactId>maven-thrift-plugin</artifactId>
+					<version>0.1.10</version>
+				</plugin>
 			</plugins>
 		</pluginManagement>
+		
 		<plugins>
 			<plugin>
 				<groupId>org.apache.thrift.tools</groupId>
 				<artifactId>maven-thrift-plugin</artifactId>
-				<configuration>
-				    <thriftExecutable>/usr/local/bin/thrift</thriftExecutable>
-				</configuration>
-
 				<executions>
 					<execution>
 						<id>thrift-java-generation</id>
