@@ -36,6 +36,13 @@
 			<id>dtrott</id>
 			<url>http://maven.davidtrott.com/repository</url>
 		</pluginRepository>
+		
+		<pluginRepository>
+			<id>cloudera</id>
+			<url>https://repository.cloudera.com/content/repositories/cloudera-repos/</url>
+		</pluginRepository>
+	
+		
 	</pluginRepositories>
 
 	<dependencyManagement>
@@ -198,7 +205,6 @@
 			<plugin>
 				<groupId>org.apache.thrift.tools</groupId>
 				<artifactId>maven-thrift-plugin</artifactId>
-				<version>0.1.11-SNAPSHOT</version>
 				<configuration>
 				    <thriftExecutable>/usr/local/bin/thrift</thriftExecutable>
 				</configuration>
