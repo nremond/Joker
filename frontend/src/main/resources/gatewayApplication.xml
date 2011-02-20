@@ -6,8 +6,7 @@
      http://www.springframework.org/schema/context/spring-context-3.0.xsd">
 	<context:annotation-config />
 	
-	<context:component-scan base-package="cl.own.usi.dao.impl.memory" />
-	<!--context:component-scan base-package="cl.own.usi.dao.impl.mongo" /-->
+	<context:component-scan base-package="cl.own.usi.dao.impl" />
 	
 	<bean class="cl.own.usi.service.impl.GameServiceImpl"/>
 	
