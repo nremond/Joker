@@ -7,12 +7,16 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import cl.own.usi.thrift.WorkerRPC.Client;
 
 
 public class WorkerFacadeTester {
 
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
+	
 	@Test
 	public void test() {
 
@@ -23,7 +27,7 @@ public class WorkerFacadeTester {
 			Client client = new Client(protocol);
 			transport.open();
 			String userId = client.loginUser("email", "password");
-			System.out.println("UserId from logged user : " + userId);
+			logger.info("UserId from logged user : " + userId);
 			transport.close();
 		} catch (TTransportException e) {
 			e.printStackTrace();
