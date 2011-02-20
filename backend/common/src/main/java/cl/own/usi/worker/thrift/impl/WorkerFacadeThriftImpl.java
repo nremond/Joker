@@ -7,7 +7,6 @@ import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadPoolServer;
-import org.apache.thrift.server.TThreadPoolServer.Args;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransportException;
 import org.springframework.beans.factory.InitializingBean;
@@ -34,15 +33,12 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface, InitializingBean
 	public void afterPropertiesSet() throws Exception {
 		try {
 			TServerSocket serverTransport = new TServerSocket(getPort());
-			WorkerRPC.Processor<WorkerRPC.Iface> processor = 
-				new WorkerRPC.Processor<WorkerRPC.Iface>(this);
+			WorkerRPC.Processor processor = 
+				new WorkerRPC.Processor(this);
 			org.apache.thrift.protocol.TBinaryProtocol.Factory protFactory = new TBinaryProtocol.Factory(
 					true, true);
-			Args serverArgs = new Args(serverTransport);
-			serverArgs.processor(processor);
-			serverArgs.protocolFactory(protFactory);
 
-			TServer server = new TThreadPoolServer(serverArgs);
+			TServer server = new TThreadPoolServer(processor, serverTransport, protFactory);
 			server.serve();
 		} catch (TTransportException e) {
 			e.printStackTrace();
