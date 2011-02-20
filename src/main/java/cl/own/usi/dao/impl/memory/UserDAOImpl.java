@@ -17,7 +17,6 @@ import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
 import cl.own.usi.dao.UserDAO;
 
 import cl.own.usi.model.Answer;
-import cl.own.usi.model.Question;
 import cl.own.usi.model.User;
 
 @Repository
