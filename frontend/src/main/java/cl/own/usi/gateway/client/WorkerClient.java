@@ -34,4 +34,7 @@ public interface WorkerClient {
 		public String firstname;
 		public String lastname;
 	}
+	
+	void addWorkerNode(String host, int port);
+	
 }
