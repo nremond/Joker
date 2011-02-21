@@ -36,8 +36,6 @@ public class LoginController extends AbstractController {
 
 	private final ObjectMapper jsonObjectMapper = new ObjectMapper();
 
-	
-
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 			throws Exception {

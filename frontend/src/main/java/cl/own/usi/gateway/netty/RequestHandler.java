@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import cl.own.usi.gateway.netty.controller.AddWorkerNodeController;
 import cl.own.usi.gateway.netty.controller.AnswerController;
 import cl.own.usi.gateway.netty.controller.GameController;
 import cl.own.usi.gateway.netty.controller.LoginController;
@@ -48,6 +49,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 	protected static final String URI_RANKING = "/ranking";
 	protected static final String URI_USER = "/user";
 	protected static final String URI_LOGOUT = "/logout";
+	protected static final String URI_ADD_WORKER_NODE = "/join";
 
 	@Autowired
 	private QuestionController questionController;
@@ -70,6 +72,9 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 	// TODO
 	@Autowired
 	private LogoutController logoutController;
+	
+	@Autowired
+	private AddWorkerNodeController addWorkerNodeController;
 
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
@@ -93,6 +98,8 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 				loginController.messageReceived(ctx, e);
 			} else if (URI.startsWith(URI_USER)) {
 				userController.messageReceived(ctx, e);
+			} else if (URI.startsWith(URI_ADD_WORKER_NODE)) {
+				addWorkerNodeController.messageReceived(ctx, e);
 			} else if (URI.startsWith(URI_GAME)) {
 				gameController.messageReceived(ctx, e);
 			} else {

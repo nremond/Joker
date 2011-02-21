@@ -1,8 +1,10 @@
 package cl.own.usi.gateway.client.impl.thrift;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -10,172 +12,226 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import cl.own.usi.gateway.client.WorkerClient;
+import cl.own.usi.gateway.client.pool.MultiPool;
+import cl.own.usi.gateway.client.pool.ObjectPoolFactory;
+import cl.own.usi.gateway.client.pool.Pool;
+import cl.own.usi.gateway.client.pool.exception.FactoryException;
+import cl.own.usi.gateway.client.pool.exception.PoolException;
+import cl.own.usi.gateway.client.pool.impl.MultiPoolImpl;
+import cl.own.usi.gateway.client.pool.impl.PoolImpl;
 import cl.own.usi.model.Question;
 import cl.own.usi.service.GameService;
 import cl.own.usi.thrift.WorkerRPC.Client;
 
 @Component
-public class WorkerClientThriftImpl implements WorkerClient, InitializingBean {
+public class WorkerClientThriftImpl implements WorkerClient {
+	
+	private static final int THRIFT_RETRY = 3;
 	
 	@Autowired
 	GameService gameService;
 	
-	int port = 7911;
-	String host = "localhost";
-	
-	private int getPort() {
-		return port;
-	}
-	
-	public void setPort(int port) {
-		this.port = port;
-	}
-	
-	private String getHost() {
-		return host;
-	}
-	
-	public void setHost(String host) {
-		this.host = host;
-	}
+	MultiPool<WorkerHost, Client> pools = new ThriftMultiPool();
 	
 	@Override
 	public UserAndScore validateUserAndInsertQuestionRequest(String userId,
 			int questionNumber) {
 		
-		try {
-			cl.own.usi.thrift.UserAndScore userAndScore = getClient().validateUserAndInsertQuestionRequest(userId, questionNumber);
-			return map(userAndScore);
-		} catch (TException e) {
-			
-			// TODO : select another node
-			return null;
+		for (int i = 0; i < THRIFT_RETRY; i++) {
+			Client client = getClient();
+			try {
+				cl.own.usi.thrift.UserAndScore userAndScore = client.validateUserAndInsertQuestionRequest(userId, questionNumber);
+				return map(userAndScore);
+			} catch (TException e) {
+				pools.invalidate(client);
+				client = null;
+			} finally {
+				if (client != null) {
+					release(client);
+				}
+			}
 		}
+		return null;
 	}
 
 	@Override
 	public UserAndScoreAndAnswer validateUserAndInsertQuestionResponseAndUpdateScore(
 			String userId, int questionNumber, Integer answer) {
 		
-		try {
-			answer = gameService.validateAnswer(questionNumber, answer);
-			boolean answerCorrect = gameService.isAnswerCorrect(questionNumber, answer);
-			Question question = gameService.getQuestion(questionNumber);
-			cl.own.usi.thrift.UserAndScore userAndScore = getClient().validateUserAndInsertQuestionResponseAndUpdateScore(userId, questionNumber, question.getValue(), answer, answerCorrect);
-			return map(userAndScore, answerCorrect);
-		} catch (TException e) {
-
-			// TODO : select another node
-			return null;
+		for (int i = 0; i < THRIFT_RETRY; i++) {
+			Client client = getClient();
+			try {
+				answer = gameService.validateAnswer(questionNumber, answer);
+				boolean answerCorrect = gameService.isAnswerCorrect(questionNumber, answer);
+				Question question = gameService.getQuestion(questionNumber);
+				cl.own.usi.thrift.UserAndScore userAndScore = client.validateUserAndInsertQuestionResponseAndUpdateScore(userId, questionNumber, question.getValue(), answer, answerCorrect);
+				return map(userAndScore, answerCorrect);
+			} catch (TException e) {
+				pools.invalidate(client);
+				client = null;
+			} finally {
+				if (client != null) {
+					release(client);
+				}
+			}
 		}
+		return null;
 	}
 
 	@Override
 	public UserAndScore validateUserAndGetScore(String userId) {
 		
-		try {
-			cl.own.usi.thrift.UserAndScore userAndScore = getClient().validateUserAndGetScore(userId);
-			return map(userAndScore);
-		} catch (TException e) {
-			
-			// TODO : select another node
-			return null;
+		for (int i = 0; i < THRIFT_RETRY; i++) {
+			Client client = getClient();
+			try {
+				cl.own.usi.thrift.UserAndScore userAndScore = client.validateUserAndGetScore(userId);
+				return map(userAndScore);
+			} catch (TException e) {
+				pools.invalidate(client);
+				client = null;
+			} finally {
+				if (client != null) {
+					release(client);
+				}
+			}
 		}
+		return null;
 	}
 
 	@Override
 	public String loginUser(String email, String password) {
 		
-		try {
-			return getClient().loginUser(email, password);
-		} catch (TException e) {
-			
-			// TODO : select another node
-			return null;
+		for (int i = 0; i < THRIFT_RETRY; i++) {
+			Client client = getClient();
+			try {
+				return client.loginUser(email, password);
+			} catch (TException e) {
+				pools.invalidate(client);
+				client = null;
+			} finally {
+				if (client != null) {
+					release(client);
+				}
+			}
 		}
+		return null;
 	}
 
 	@Override
 	public boolean insertUser(String email, String password, String firstname,
 			String lastname) {
 		
-		try {
-			return getClient().insertUser(email, password, firstname, lastname);
-		} catch (TException e) {
-			
-			// TODO : select another node
-			return false;
+		for (int i = 0; i < THRIFT_RETRY; i++) {
+			Client client = getClient();
+			try {
+				return client.insertUser(email, password, firstname, lastname);
+			} catch (TException e) {
+				pools.invalidate(client);
+				client = null;
+			} finally {
+				if (client != null) {
+					release(client);
+				}
+			}
 		}
+		return false;
 	}
 
 	@Override
 	public void flushUsers() {
-		try {
-			getClient().flushUsers();
-		} catch (TException e) {
-			
-			// TODO : select another node
+		
+		for (int i = 0; i < THRIFT_RETRY; i++) {
+			Client client = getClient();
+			try {
+				client.flushUsers();
+			} catch (TException e) {
+				pools.invalidate(client);
+				client = null;
+			} finally {
+				if (client != null) {
+					release(client);
+				}
+			}
 		}
 	}
 
 	@Override
 	public List<UserInfoAndScore> getTop100() {
 		
-		try {
-			List<cl.own.usi.thrift.UserInfoAndScore> users = getClient().getTop100();
-			
-			List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(users.size());
-			for (cl.own.usi.thrift.UserInfoAndScore user : users) {
-				retUsers.add(map(user));
+		for (int i = 0; i < THRIFT_RETRY; i++) {
+			Client client = getClient();
+			try {
+				List<cl.own.usi.thrift.UserInfoAndScore> users = client.getTop100();
+				
+				List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(users.size());
+				for (cl.own.usi.thrift.UserInfoAndScore user : users) {
+					retUsers.add(map(user));
+				}
+				return retUsers;
+			} catch (TException e) {
+				pools.invalidate(client);
+				client = null;
+			} finally {
+				if (client != null) {
+					release(client);
+				}
 			}
-			return retUsers;
-		} catch (TException e) {
-			
-			// TODO : select another node
-			return Collections.emptyList();
 		}
+		return null;
 	}
 
 	@Override
 	public List<UserInfoAndScore> get50Before(String userId) {
 		
-		try {
-			List<cl.own.usi.thrift.UserInfoAndScore> users = getClient().get50Before(userId);
-			
-			List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(users.size());
-			for (cl.own.usi.thrift.UserInfoAndScore user : users) {
-				retUsers.add(map(user));
+		for (int i = 0; i < THRIFT_RETRY; i++) {
+			Client client = getClient();
+			try {
+				List<cl.own.usi.thrift.UserInfoAndScore> users = client.get50Before(userId);
+				
+				List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(users.size());
+				for (cl.own.usi.thrift.UserInfoAndScore user : users) {
+					retUsers.add(map(user));
+				}
+				return retUsers;
+			} catch (TException e) {
+				pools.invalidate(client);
+				client = null;
+			} finally {
+				if (client != null) {
+					release(client);
+				}
 			}
-			return retUsers;
-		} catch (TException e) {
-			
-			// TODO : select another node
-			return Collections.emptyList();
 		}
+		return null;
 	}
 
 	@Override
 	public List<UserInfoAndScore> get50After(String userId) {
 		
-		try {
-			List<cl.own.usi.thrift.UserInfoAndScore> users = getClient().get50After(userId);
-			
-			List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(users.size());
-			for (cl.own.usi.thrift.UserInfoAndScore user : users) {
-				retUsers.add(map(user));
+		for (int i = 0; i < THRIFT_RETRY; i++) {
+			Client client = getClient();
+			try {
+				List<cl.own.usi.thrift.UserInfoAndScore> users = client.get50After(userId);
+				
+				List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(users.size());
+				for (cl.own.usi.thrift.UserInfoAndScore user : users) {
+					retUsers.add(map(user));
+				}
+				return retUsers;
+			} catch (TException e) {
+				pools.invalidate(client);
+				client = null;
+			} finally {
+				if (client != null) {
+					release(client);
+				}
 			}
-			return retUsers;
-		} catch (TException e) {
-			
-			// TODO : select another node
-			return Collections.emptyList();
 		}
-		
+		return null;
 	}
 	
 	private UserAndScore map(cl.own.usi.thrift.UserAndScore userAndScore) {
@@ -215,55 +271,124 @@ public class WorkerClientThriftImpl implements WorkerClient, InitializingBean {
 		}
 	}
 	
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		// TODO Auto-generated method stub
-		
+	public void addWorkerNode(String host, int port) {
+		WorkerHost wh = WorkerHost.create(host, port);
+		pools.addKey(wh);
 	}
 	
-	ThreadLocal<Client> threadLocalClient = new ThreadLocal<Client>();
 	
 	private Client getClient() {
 		
-		Client client = threadLocalClient.get();
-		if (client == null) {
+		Client client = null;
+		
+		try {
+			client = pools.borrow();
+		} catch (PoolException e) {
+			
+		}
+		
+		return client;
+		
+	}
+	
+	private void release(Client client) {
+		try {
+			pools.release(client);
+		} catch (PoolException e) {
+		
+		}
+	}
+	
+	private static class ThriftClientFactory implements ObjectPoolFactory<Client> {
+
+		private final WorkerHost workerHost;
+		
+		public ThriftClientFactory(WorkerHost workerHost) {
+			this.workerHost = workerHost;
+		}
+		
+		@Override
+		public Client create() throws FactoryException {
+			
 			TTransport transport;
 			try {
-				transport = new TSocket(getHost(), getPort());
+				transport = new TSocket(workerHost.getHost(), workerHost.getPort());
 				TProtocol protocol = new TBinaryProtocol(transport);
-				client = new Client(protocol);
+				Client client = new Client(protocol);
 				transport.open();
 				return client;
 			} catch (TTransportException e) {
 				e.printStackTrace();
 			}
-			threadLocalClient.set(client);	
+			return null;
 		}
-		return client;
+
+		@Override
+		public boolean validate(Client object) throws FactoryException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public void destroy(Client object) {
+			// TODO Auto-generated method stub
+		}
 		
 	}
 	
-	private static class ClientPool {
-		
-		public Client borrow() {
-			
-			return null;
+	
+	private static class ThriftMultiPool extends MultiPoolImpl<WorkerHost, Client> {
+
+		@Override
+		protected Pool<Client> createPool(WorkerHost key) {
+			Pool<Client> pool = new PoolImpl<Client>();
+			ObjectPoolFactory<Client> factory = new ThriftClientFactory(key);
+			pool.setFactory(factory);
+			return pool;
 		}
 		
-		public void release(Client client) {
-			
+		Random r = new Random();
+		protected WorkerHost getKey() {
+			return keys.get(r.nextInt(keys.size()));
 		}
 		
-		public void invalidate(Client client) {
+	}
+	
+	private static class WorkerHost {
+		private final String host;
+		private final int port;
+		private static ConcurrentMap<String, WorkerHost> workerHosts = new ConcurrentHashMap<String, WorkerHost>();
+		public static WorkerHost create(String host, int port) {
+			String key = key(host, port);
 			
+			if (!workerHosts.containsKey(key)) {
+				WorkerHost wh = new WorkerHost(host, port);
+				WorkerHost tmpWh = workerHosts.putIfAbsent(key, wh);
+				if (tmpWh == null) {
+					return wh;
+				} else {
+					return tmpWh;
+				}
+			} else {
+				return workerHosts.get(key);
+			}
 		}
 		
-		public void addHost(String host, int port) {
-			
+		private static String key(String host, int port) {
+			return host + String.valueOf(port);
 		}
 		
-		public void removeHost(String host, int port) {
-			
+		private WorkerHost(String host, int port) {
+			this.host = host;
+			this.port = port;
+		}
+
+		public String getHost() {
+			return host;
+		}
+
+		public int getPort() {
+			return port;
 		}
 		
 	}
