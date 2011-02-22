@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import cl.own.usi.gateway.client.pool.MultiPool;
 import cl.own.usi.gateway.client.pool.ObjectPoolFactory;
 import cl.own.usi.gateway.client.pool.Pool;
+import cl.own.usi.gateway.client.pool.exception.FactoryException;
 import cl.own.usi.gateway.client.pool.exception.PoolException;
 import cl.own.usi.gateway.client.pool.policy.ObjectValidationPolicy;
 import cl.own.usi.gateway.client.pool.policy.PoolSelectionPolicy;
@@ -40,12 +41,22 @@ public abstract class MultiPoolImpl<K, V> implements MultiPool<K, V> {
 		int retry = 0;
 		
 		do {
-			K key = getKey();
-			Pool<V> pool = pools.get(key);
-			object = pool.borrow();
-			if (object != null) {
-				borrowedClients.put(object, key);
-				errors.get(key).set(0);
+			K key = null;
+			try {
+				key = getKey();
+				if (key == null) {
+					throw new PoolException("No keys defined. Please addKey first");
+				}
+				Pool<V> pool = pools.get(key);
+				object = pool.borrow();
+				if (object != null) {
+					borrowedClients.put(object, key);
+					errors.get(key).set(0);
+				}
+			} catch (FactoryException e) {
+				if (key != null) {
+					removeKey(key);
+				}
 			}
 		} while (object == null && retry++ < MAX_AQUISITION_RETRY);
 		

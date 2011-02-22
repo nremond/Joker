@@ -6,6 +6,7 @@ import static cl.own.usi.gateway.netty.controller.AbstractController.URI_API_LEN
 import static cl.own.usi.gateway.netty.controller.AnswerController.URI_ANSWER;
 import static cl.own.usi.gateway.netty.controller.QuestionController.URI_QUESTION;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -80,35 +81,39 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 			throws Exception {
 
-		HttpRequest request = (HttpRequest) e.getMessage();
-
-		String URI = request.getUri();
-
-		if (URI.startsWith(URI_API)) {
-
-			URI = URI.substring(URI_API_LENGTH);
-
-			if (URI.startsWith(URI_QUESTION)) {
-				questionController.messageReceived(ctx, e);
-			} else if (URI.startsWith(URI_ANSWER)) {
-				answerController.messageReceived(ctx, e);
-			} else if (URI.startsWith(URI_RANKING)) {
-				rankingController.messageReceived(ctx, e);
-			} else if (URI.startsWith(URI_LOGIN)) {
-				loginController.messageReceived(ctx, e);
-			} else if (URI.startsWith(URI_USER)) {
-				userController.messageReceived(ctx, e);
-			} else if (URI.startsWith(URI_ADD_WORKER_NODE)) {
-				addWorkerNodeController.messageReceived(ctx, e);
-			} else if (URI.startsWith(URI_GAME)) {
-				gameController.messageReceived(ctx, e);
+		try {
+			HttpRequest request = (HttpRequest) e.getMessage();
+	
+			String URI = request.getUri();
+	
+			if (URI.startsWith(URI_API)) {
+	
+				URI = URI.substring(URI_API_LENGTH);
+	
+				if (URI.startsWith(URI_QUESTION)) {
+					questionController.messageReceived(ctx, e);
+				} else if (URI.startsWith(URI_ANSWER)) {
+					answerController.messageReceived(ctx, e);
+				} else if (URI.startsWith(URI_RANKING)) {
+					rankingController.messageReceived(ctx, e);
+				} else if (URI.startsWith(URI_LOGIN)) {
+					loginController.messageReceived(ctx, e);
+				} else if (URI.startsWith(URI_USER)) {
+					userController.messageReceived(ctx, e);
+				} else if (URI.startsWith(URI_ADD_WORKER_NODE)) {
+					addWorkerNodeController.messageReceived(ctx, e);
+				} else if (URI.startsWith(URI_GAME)) {
+					gameController.messageReceived(ctx, e);
+				} else {
+					writeResponse(e, NOT_FOUND);
+				}
+	
 			} else {
 				writeResponse(e, NOT_FOUND);
 			}
-
-		} else {
-			writeResponse(e, NOT_FOUND);
+		} catch (Throwable t) {
+			logger.warn("Error", t);
+			writeResponse(e, INTERNAL_SERVER_ERROR);
 		}
-
 	}
 }

@@ -285,11 +285,10 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		try {
 			client = pools.borrow();
 		} catch (PoolException e) {
-			
+			throw new IllegalStateException("No pool borrowed...", e);
 		}
 		
 		return client;
-		
 	}
 	
 	private void release(Client client) {
@@ -322,9 +321,8 @@ public class WorkerClientThriftImpl implements WorkerClient {
 				transports.put(client, transport);
 				return client;
 			} catch (TTransportException e) {
-				e.printStackTrace();
+				throw new FactoryException(e);
 			}
-			return null;
 		}
 
 		@Override
@@ -361,7 +359,11 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		
 		Random r = new Random();
 		protected WorkerHost getKey() {
-			return keys.get(r.nextInt(keys.size()));
+			if (keys.isEmpty()) {
+				return null;
+			} else {
+				return keys.get(r.nextInt(keys.size()));
+			}
 		}
 		
 	}
