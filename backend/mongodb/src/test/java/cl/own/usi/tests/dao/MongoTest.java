@@ -25,7 +25,7 @@ public class MongoTest {
 	private final String dbName = "joker";
 	private final String usersCollection = "users";
 
-	@Before
+	//@Before
 	public void setUp() throws Exception {
 		mongo = new Mongo("localhost", 27017);
 		db = mongo.getDB(dbName);
@@ -111,7 +111,7 @@ public class MongoTest {
 
 	}
 
-	@After
+	//@After
 	public void tearDown() {
 		mongo.close();
 	}
