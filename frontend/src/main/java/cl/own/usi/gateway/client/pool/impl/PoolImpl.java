@@ -6,6 +6,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import cl.own.usi.gateway.client.pool.ObjectPoolFactory;
@@ -27,6 +28,8 @@ public class PoolImpl<V> implements Pool<V> {
 	private final int maxPoolSize;
 	private final long maxWaitOnObjectMilli;
 	
+	private final AtomicBoolean active = new AtomicBoolean(true);
+	
 	private ObjectValidationPolicy objectValidationPolicy = ObjectValidationPolicy.VALIDATE_NONE;
 	
 	private ObjectPoolFactory<V> factory = null;
@@ -44,6 +47,9 @@ public class PoolImpl<V> implements Pool<V> {
 	}
 	
 	public V borrow() throws PoolException {
+		if (!active.get()) {
+			throw new PoolException("Pool is not active");
+		}
 		return borrow0(true);
 	}
 	
@@ -125,6 +131,23 @@ public class PoolImpl<V> implements Pool<V> {
 			throw new IllegalArgumentException();
 		} else {
 			this.objectValidationPolicy = objectValidationPolicy;
+		}
+	}
+	
+	@Override
+	public int getMaxPoolSize() {
+		return maxPoolSize;
+	}
+	
+	@Override
+	public void shutdown() {
+		if (!active.compareAndSet(true, false)) {
+			for (V object : borrowedObjects) {
+				factory.destroy(object);
+			}
+			for (V object : freeObjectsQueue) {
+				factory.destroy(object);
+			}
 		}
 	}
 

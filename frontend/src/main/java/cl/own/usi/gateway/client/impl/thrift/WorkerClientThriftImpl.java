@@ -2,6 +2,7 @@ package cl.own.usi.gateway.client.impl.thrift;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -284,11 +285,10 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		try {
 			client = pools.borrow();
 		} catch (PoolException e) {
-			
+			throw new IllegalStateException("No pool borrowed...", e);
 		}
 		
 		return client;
-		
 	}
 	
 	private void release(Client client) {
@@ -302,6 +302,8 @@ public class WorkerClientThriftImpl implements WorkerClient {
 	private static class ThriftClientFactory implements ObjectPoolFactory<Client> {
 
 		private final WorkerHost workerHost;
+		private final Map<Client, TTransport> transports = new ConcurrentHashMap<Client, TTransport>();
+		
 		
 		public ThriftClientFactory(WorkerHost workerHost) {
 			this.workerHost = workerHost;
@@ -316,26 +318,34 @@ public class WorkerClientThriftImpl implements WorkerClient {
 				TProtocol protocol = new TBinaryProtocol(transport);
 				Client client = new Client(protocol);
 				transport.open();
+				transports.put(client, transport);
 				return client;
 			} catch (TTransportException e) {
-				e.printStackTrace();
+				throw new FactoryException(e);
 			}
-			return null;
 		}
 
 		@Override
 		public boolean validate(Client object) throws FactoryException {
-			// TODO Auto-generated method stub
-			return false;
+			TTransport transport = transports.get(object);
+			if (transport != null) {
+				return transport.isOpen();
+			} else {
+				return false;
+			}
 		}
 
 		@Override
 		public void destroy(Client object) {
-			// TODO Auto-generated method stub
+			
+			TTransport transport = transports.remove(object);
+			if (transport != null) {
+				transport.close();
+			}
+			
 		}
 		
 	}
-	
 	
 	private static class ThriftMultiPool extends MultiPoolImpl<WorkerHost, Client> {
 
@@ -349,7 +359,11 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		
 		Random r = new Random();
 		protected WorkerHost getKey() {
-			return keys.get(r.nextInt(keys.size()));
+			if (keys.isEmpty()) {
+				return null;
+			} else {
+				return keys.get(r.nextInt(keys.size()));
+			}
 		}
 		
 	}
