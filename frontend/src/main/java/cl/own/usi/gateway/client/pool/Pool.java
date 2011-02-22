@@ -16,4 +16,9 @@ public interface Pool<V> {
 	void setFactory(ObjectPoolFactory<V> factory);
 	
 	void setObjectValidationPolicy(ObjectValidationPolicy objectValidationPolicy);
+	
+	int getMaxPoolSize();
+	
+	void shutdown();
+	
 }

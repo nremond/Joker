@@ -2,8 +2,11 @@ package cl.own.usi.gateway.client.pool.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import cl.own.usi.gateway.client.pool.MultiPool;
 import cl.own.usi.gateway.client.pool.ObjectPoolFactory;
@@ -18,12 +21,20 @@ public abstract class MultiPoolImpl<K, V> implements MultiPool<K, V> {
 	private ObjectPoolFactory<V> factory;
 	private ObjectValidationPolicy objectValidationPolicy = ObjectValidationPolicy.VALIDATE_NONE;
 
-	protected List<K> keys = new ArrayList<K>();
-	ConcurrentMap<K, Pool<V>> pools = new ConcurrentHashMap<K, Pool<V>>();
+	protected final List<K> keys = new ArrayList<K>();
+	private final ConcurrentMap<K, Pool<V>> pools = new ConcurrentHashMap<K, Pool<V>>();
 	
-	ConcurrentMap<V, K> borrowedClients = new ConcurrentHashMap<V, K>();
+	private final ConcurrentMap<V, K> borrowedClients = new ConcurrentHashMap<V, K>();
+
+	private final ConcurrentMap<K, AtomicInteger> errors = new ConcurrentHashMap<K, AtomicInteger>();
+	
+	private final AtomicBoolean active = new AtomicBoolean(true);
 	
 	public V borrow() throws PoolException {
+		
+		if (!active.get()) {
+			throw new PoolException("Pool is not active");
+		}
 		
 		V object = null;
 		int retry = 0;
@@ -34,6 +45,7 @@ public abstract class MultiPoolImpl<K, V> implements MultiPool<K, V> {
 			object = pool.borrow();
 			if (object != null) {
 				borrowedClients.put(object, key);
+				errors.get(key).set(0);
 			}
 		} while (object == null && retry++ < MAX_AQUISITION_RETRY);
 		
@@ -53,6 +65,10 @@ public abstract class MultiPoolImpl<K, V> implements MultiPool<K, V> {
 		if (key != null) {
 			Pool<V> pool = pools.get(key);
 			pool.invalidate(object);
+			int errorsCount = errors.get(key).incrementAndGet();
+			if (errorsCount == pool.getMaxPoolSize()) {
+				removeKey(key);
+			}
 		}
 	}
 
@@ -77,9 +93,20 @@ public abstract class MultiPoolImpl<K, V> implements MultiPool<K, V> {
 		if (!keys.contains(key)) {
 			keys.add(key);
 			pools.put(key, createPool(key));
+			errors.put(key, new AtomicInteger(0));
 		}
 	}
 
+	public synchronized void removeKey(K key) {
+		if (keys.remove(key)) {
+			
+			errors.remove(key);
+			Pool<V> pool = pools.remove(key);
+			pool.shutdown();
+			
+		}
+	}
+	
 	public void setPoolSelectionPolicy(PoolSelectionPolicy poolSelectionPolicy) {
 		// TODO Auto-generated method stub
 		
@@ -89,14 +116,15 @@ public abstract class MultiPoolImpl<K, V> implements MultiPool<K, V> {
 	
 	abstract protected Pool<V> createPool(K key);
 	
-//	Random r = new Random();
-//	protected K getKey() {
-//		return keys.get(r.nextInt(keys.size()));
-//	}
-//	
-//	protected Pool<V> createPool(K key) {
-//		Pool<V> pool = new PoolImpl<V>();
-//		pool.setFactory(factory);
-//		return pool;
-//	}
+	public void shutdown() {
+		if (active.compareAndSet(true, false)) {
+			for (Map.Entry<K, Pool<V>> entry : pools.entrySet()) {
+				entry.getValue().shutdown();
+			}
+		}
+	}
+	
+	public int getMaxPoolSize() {
+		return 0;
+	}
 }
