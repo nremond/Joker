@@ -25,6 +25,11 @@ public interface UserDAO {
 
 	List<Answer> getAnswers(User user);
 
+	/**
+	 * Log the user in
+	 * 
+	 * @return The userId is the credentials are good, null otherwise 
+	 */
 	String login(String email, String password);
 
 	void logout(User user);
