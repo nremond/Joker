@@ -2,6 +2,7 @@ package cl.own.usi.dao.impl.mongo;
 
 import java.util.List;
 
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,6 @@ public class UserDAOMongoImpl implements UserDAO {
 	DB db;
 
 	private static String usersCollection = "users";
-	private static String answersCollection = "answers";
 
 	private static DBObject emailIndex = new BasicDBObject("email", 1);
 	private static DBObject credentialsIndex = new BasicDBObject("email", 1)
@@ -133,19 +133,18 @@ public class UserDAOMongoImpl implements UserDAO {
 	@Override
 	public void insertRequest(String userId, int questionNumber) {
 
-		DBCollection dbAnswers = db.getCollection(answersCollection);
-
-		// the driver keeps a cache of the added index
-		// dbAnswers.ensureIndex(credentialsIndex, "emailIndex", true);
-
-		DBObject dbAnswer = new BasicDBObject();
 
 		// TODO finish
 	}
 
 	@Override
 	public void insertAnswer(Answer answer) {
-		// TODO Auto-generated method stub
+
+		logger.debug(ToStringBuilder.reflectionToString(answer));
+
+		DBCollection dbUsers = db.getCollection(usersCollection);
+
+		DBObject dbUser = new BasicDBObject();
 
 	}
 

@@ -31,7 +31,6 @@ public class UserServiceImpl implements UserService {
 			user.setPassword(password);
 			user.setFirstname(firstname);
 			user.setLastname(lastname);
-
 			return userDAO.insertUser(user);
 		}
 	}
@@ -46,26 +45,23 @@ public class UserServiceImpl implements UserService {
 	}
 
 	//TODO String userId in the signature
-	public void insertRequest(User user, int questionNumber) {
-		userDAO.insertRequest(user.getUserId(), questionNumber);
+	public void insertRequest(String userId, int questionNumber) {
+		userDAO.insertRequest(userId, questionNumber);
 	}
 
 	//TODO String userId in the signature
-	public void insertAnswer(User user, int questionNumber, Integer answerNumber) {
+	public void insertAnswer(String userId, int questionNumber, Integer answerNumber) {
 
-		List<Answer> answers = userDAO.getAnswers(user.getUserId());
+		List<Answer> answers = userDAO.getAnswers(userId);
 
 		if (answers.get(questionNumber - 1) != null) {
 			throw new IllegalArgumentException("User has already answered this question.");
 		} else {
-
 			Answer answer = new Answer();
 			answer.setQuestionNumber(questionNumber);
-			answer.setUserId(user.getUserId());
+			answer.setUserId(userId);
 			answer.setAnswerNumber(answerNumber);
-
 			userDAO.insertAnswer(answer);
-
 		}
 	}
 
@@ -87,5 +83,4 @@ public class UserServiceImpl implements UserService {
 		userDAO.flushUsers();
 		scoreDAO.flushUsers();
 	}
-
 }

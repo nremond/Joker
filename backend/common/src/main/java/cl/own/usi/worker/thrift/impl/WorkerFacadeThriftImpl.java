@@ -20,20 +20,20 @@ import cl.own.usi.thrift.*;
 
 @Component
 public class WorkerFacadeThriftImpl implements WorkerRPC.Iface, InitializingBean {
-	
+
 	@Autowired
 	private	UserService userService;
-	
+
 	@Autowired
 	private ScoreService scoreService;
-	
+
 	private int port = 7911;
-	
+
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		try {
 			TServerSocket serverTransport = new TServerSocket(getPort());
-			WorkerRPC.Processor processor = 
+			WorkerRPC.Processor processor =
 				new WorkerRPC.Processor(this);
 			org.apache.thrift.protocol.TBinaryProtocol.Factory protFactory = new TBinaryProtocol.Factory(
 					true, true);
@@ -44,11 +44,11 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface, InitializingBean
 			e.printStackTrace();
 		}
 	}
-	
+
 	public int getPort() {
 		return port;
 	}
-	
+
 	public void setPort(int port) {
 		this.port = port;
 	}
@@ -56,16 +56,16 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface, InitializingBean
 	@Override
 	public UserAndScore validateUserAndInsertQuestionRequest(String userId,
 			int questionNumber) throws TException {
-		
+
 		UserAndScore userAndScore = new UserAndScore();
-		
+
 		User user = userService.getUserFromUserId(userId);
 		if (user != null) {
 			userAndScore.userId = userId;
 			userAndScore.score = user.getScore();
-			userService.insertRequest(user, questionNumber);
+			userService.insertRequest(userId, questionNumber);
 		}
-		
+
 		return userAndScore;
 	}
 
@@ -73,48 +73,48 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface, InitializingBean
 	public UserAndScore validateUserAndInsertQuestionResponseAndUpdateScore(
 			String userId, int questionNumber, int questionValue, int answer,
 			boolean answerCorrect) throws TException {
-		
+
 		UserAndScore userAndScore = new UserAndScore();
-		
+
 		User user = userService.getUserFromUserId(userId);
 		if (user != null) {
-			userAndScore.userId = userId;			
-			userService.insertAnswer(user, questionNumber, answer);
+			userAndScore.userId = userId;
+			userService.insertAnswer(userId, questionNumber, answer);
 			userAndScore.score = scoreService.updateScore(questionNumber, questionValue, user, answerCorrect);
 		}
-		
+
 		return userAndScore;
-		
+
 	}
 
 	@Override
 	public UserAndScore validateUserAndGetScore(String userId)
 			throws TException {
-		
+
 		UserAndScore userAndScore = new UserAndScore();
-		
+
 		User user = userService.getUserFromUserId(userId);
 		if (user != null) {
 			userAndScore.userId = userId;
 			userAndScore.score = user.getScore();
 		}
-		
+
 		return userAndScore;
 	}
 
 	@Override
 	public String loginUser(String email, String password) throws TException {
-		
+
 		return userService.login(email, password);
-		
+
 	}
 
 	@Override
 	public boolean insertUser(String email, String password, String firstname,
 			String lastname) throws TException {
-		
+
 		return userService.insertUser(email, password, firstname, lastname);
-		
+
 	}
 
 	@Override
@@ -124,9 +124,9 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface, InitializingBean
 
 	@Override
 	public List<cl.own.usi.thrift.UserInfoAndScore> getTop100() throws TException {
-		
+
 		List<User> users = scoreService.getTop100();
-		
+
 		List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(users.size());
 		for (User user : users) {
 			retUsers.add(map(user));
@@ -137,11 +137,11 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface, InitializingBean
 
 	@Override
 	public List<UserInfoAndScore> get50Before(String userId) throws TException {
-		
+
 		User theUser = userService.getUserFromUserId(userId);
 		if (theUser != null) {
 			List<User> users = scoreService.get50Before(theUser);
-			
+
 			List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(users.size());
 			for (User user : users) {
 				retUsers.add(map(user));
@@ -150,16 +150,16 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface, InitializingBean
 		} else {
 			return null;
 		}
-		
+
 	}
 
 	@Override
 	public List<UserInfoAndScore> get50After(String userId) throws TException {
-		
+
 		User theUser = userService.getUserFromUserId(userId);
 		if (theUser != null) {
 			List<User> users = scoreService.get50After(theUser);
-			
+
 			List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(users.size());
 			for (User user : users) {
 				retUsers.add(map(user));
@@ -169,7 +169,7 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface, InitializingBean
 			return null;
 		}
 	}
-	
+
 	private cl.own.usi.thrift.UserInfoAndScore map(User user) {
 		UserInfoAndScore userInfoAndScore = new UserInfoAndScore();
 		userInfoAndScore.email = user.getEmail();
