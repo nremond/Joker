@@ -1,8 +1,14 @@
 package cl.own.usi.dao.impl.mongo;
 
+import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
+
 import java.util.List;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.handler.codec.base64.Base64;
+import org.jboss.netty.handler.codec.base64.Base64Dialect;
+import org.jboss.netty.util.CharsetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,16 +31,19 @@ public class UserDAOMongoImpl implements UserDAO {
 	@Autowired
 	DB db;
 
+	private static final String USER_ID_SALT = "123456";
+
 	private static String usersCollection = "users";
 
-	private static DBObject emailIndex = new BasicDBObject("email", 1);
+	private static DBObject userIdIndex = new BasicDBObject("userId", 1);
 	private static DBObject credentialsIndex = new BasicDBObject("email", 1)
 			.append("password", 1);
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	private DBObject toDBObject(User user) {
+	private DBObject toDBObject(final User user) {
 		DBObject dbUser = new BasicDBObject();
+		dbUser.put("userId", generateUserId(user));
 		dbUser.put("email", user.getEmail());
 		dbUser.put("password", user.getPassword());
 		dbUser.put("firstname", user.getFirstname());
@@ -44,8 +53,9 @@ public class UserDAOMongoImpl implements UserDAO {
 		return dbUser;
 	}
 
-	private User fromDBObject(DBObject dbUser) {
+	private User fromDBObject(final DBObject dbUser) {
 		User user = new User();
+		user.setUserId((String) dbUser.get("userId"));
 		user.setEmail((String) dbUser.get("email"));
 		user.setPassword((String) dbUser.get("password"));
 		user.setFirstname((String) dbUser.get("firstname"));
@@ -55,11 +65,11 @@ public class UserDAOMongoImpl implements UserDAO {
 	}
 
 	@Override
-	public boolean insertUser(User user) {
+	public boolean insertUser(final User user) {
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		// the driver keeps a cache of the added index
-		dbUsers.ensureIndex(emailIndex, "emailIndex", true);
+		dbUsers.ensureIndex(userIdIndex, "userIdIndex", true);
 		dbUsers.ensureIndex(credentialsIndex, "credentialsIndex", false);
 
 		DBObject dbUser = toDBObject(user);
@@ -80,11 +90,11 @@ public class UserDAOMongoImpl implements UserDAO {
 	}
 
 	@Override
-	public User getUserById(String userId) {
+	public User getUserById(final String userId) {
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		DBObject dbId = new BasicDBObject();
-		dbId.put("_id", userId);
+		dbId.put("userId", userId);
 
 		DBObject dbUser = dbUsers.findOne(dbId);
 		if (dbUser != null) {
@@ -98,7 +108,7 @@ public class UserDAOMongoImpl implements UserDAO {
 	}
 
 	@Override
-	public String login(String email, String password) {
+	public String login(final String email, final String password) {
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		DBObject dbCredentials = new BasicDBObject();
@@ -111,18 +121,18 @@ public class UserDAOMongoImpl implements UserDAO {
 		DBObject dbUser = dbUsers.findAndModify(dbCredentials, dblogin);
 
 		if (dbUser != null) {
-			return (String) dbUser.get("_id");
+			return (String) dbUser.get("userId");
 		} else {
 			return null;
 		}
 	}
 
 	@Override
-	public void logout(String userId) {
+	public void logout(final String userId) {
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		DBObject dbUser = new BasicDBObject();
-		dbUser.put("_id", userId);
+		dbUser.put("userId", userId);
 
 		DBObject dblogout = new BasicDBObject();
 		dblogout.put("isLogged", false);
@@ -131,14 +141,13 @@ public class UserDAOMongoImpl implements UserDAO {
 	}
 
 	@Override
-	public void insertRequest(String userId, int questionNumber) {
-
+	public void insertRequest(final String userId, final int questionNumber) {
 
 		// TODO finish
 	}
 
 	@Override
-	public void insertAnswer(Answer answer) {
+	public void insertAnswer(final Answer answer) {
 
 		logger.debug(ToStringBuilder.reflectionToString(answer));
 
@@ -149,7 +158,7 @@ public class UserDAOMongoImpl implements UserDAO {
 	}
 
 	@Override
-	public List<Answer> getAnswers(String userId) {
+	public List<Answer> getAnswers(final String userId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -158,6 +167,13 @@ public class UserDAOMongoImpl implements UserDAO {
 	public void flushUsers() {
 		// TODO Auto-generated method stub
 
+	}
+
+	private String generateUserId(final User user) {
+		ChannelBuffer chanBuff = wrappedBuffer((user.getEmail() + USER_ID_SALT)
+				.getBytes(CharsetUtil.UTF_8));
+		return Base64.encode(chanBuff, Base64Dialect.ORDERED).toString(
+				CharsetUtil.UTF_8);
 	}
 
 }

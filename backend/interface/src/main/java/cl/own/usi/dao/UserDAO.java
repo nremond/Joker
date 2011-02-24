@@ -9,7 +9,7 @@ public interface UserDAO {
 
 	/**
 	 * Insert a new user in the DB
-	 *
+	 * 
 	 * @param user
 	 *            to insert
 	 * @return true if the user has been inserted, false if a user with the same
@@ -17,7 +17,7 @@ public interface UserDAO {
 	 */
 	boolean insertUser(User user);
 
-	//TODO Remove this method, absolutly useless !!
+	// TODO Remove this method, absolutly useless !!
 	User getUserById(String userId);
 
 	void insertRequest(String userId, int questionNumber);
@@ -28,12 +28,12 @@ public interface UserDAO {
 
 	/**
 	 * Log the user in
-	 *
+	 * 
 	 * @return The userId is the credentials are good, null otherwise
 	 */
 	String login(String email, String password);
 
-	void logout(final String userId);
+	void logout(String userId);
 
 	void flushUsers();
 
