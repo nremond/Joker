@@ -88,7 +88,8 @@ public class UserDAOMongoImpl implements UserDAO {
 
 		DBObject dbUser = dbUsers.findOne(dbId);
 		if (dbUser != null) {
-			// I don't put in the query because the index is only on the _id field
+			// I don't put in the query because the index is only on the _id
+			// field
 			return (Boolean) dbUser.get("isLogged") ? fromDBObject(dbUser)
 					: null;
 		} else {
@@ -117,11 +118,11 @@ public class UserDAOMongoImpl implements UserDAO {
 	}
 
 	@Override
-	public void logout(User user) {
+	public void logout(String userId) {
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		DBObject dbUser = new BasicDBObject();
-		dbUser.put("email", user.getEmail());
+		dbUser.put("_id", userId);
 
 		DBObject dblogout = new BasicDBObject();
 		dblogout.put("isLogged", false);
@@ -130,7 +131,7 @@ public class UserDAOMongoImpl implements UserDAO {
 	}
 
 	@Override
-	public void insertRequest(User user, int questionNumber) {
+	public void insertRequest(String userId, int questionNumber) {
 
 		DBCollection dbAnswers = db.getCollection(answersCollection);
 
@@ -143,13 +144,13 @@ public class UserDAOMongoImpl implements UserDAO {
 	}
 
 	@Override
-	public void insertAnswer(User user, Answer answer) {
+	public void insertAnswer(Answer answer) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public List<Answer> getAnswers(User user) {
+	public List<Answer> getAnswers(String userId) {
 		// TODO Auto-generated method stub
 		return null;
 	}

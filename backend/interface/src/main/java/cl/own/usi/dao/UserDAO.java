@@ -9,7 +9,7 @@ public interface UserDAO {
 
 	/**
 	 * Insert a new user in the DB
-	 * 
+	 *
 	 * @param user
 	 *            to insert
 	 * @return true if the user has been inserted, false if a user with the same
@@ -17,22 +17,23 @@ public interface UserDAO {
 	 */
 	boolean insertUser(User user);
 
+	//TODO Remove this method, absolutly useless !!
 	User getUserById(String userId);
 
-	void insertRequest(User user, int questionNumber);
+	void insertRequest(String userId, int questionNumber);
 
-	void insertAnswer(User user, Answer answer);
+	void insertAnswer(final Answer answer);
 
-	List<Answer> getAnswers(User user);
+	List<Answer> getAnswers(final String userId);
 
 	/**
 	 * Log the user in
-	 * 
-	 * @return The userId is the credentials are good, null otherwise 
+	 *
+	 * @return The userId is the credentials are good, null otherwise
 	 */
 	String login(String email, String password);
 
-	void logout(User user);
+	void logout(final String userId);
 
 	void flushUsers();
 
