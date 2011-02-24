@@ -1,5 +1,7 @@
 package cl.own.usi.model;
 
+import org.apache.commons.lang.builder.ToStringBuilder;
+
 public class Answer {
 
 	String userId;
@@ -29,4 +31,11 @@ public class Answer {
 	public void setAnswerNumber(int answerNumber) {
 		this.answerNumber = answerNumber;
 	}
+
+	@Override
+	public String toString() {
+		// For debugging purpose
+		return ToStringBuilder.reflectionToString(this);
+	}
+
 }

@@ -2,6 +2,8 @@ package cl.own.usi.dao.impl.mongo;
 
 import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -98,8 +100,7 @@ public class UserDAOMongoImpl implements UserDAO {
 
 		DBObject dbUser = dbUsers.findOne(dbId);
 		if (dbUser != null) {
-			// I don't put in the query because the index is only on the _id
-			// field
+			// The index is only on the id, isLogged can't be part of the query
 			return (Boolean) dbUser.get("isLogged") ? fromDBObject(dbUser)
 					: null;
 		} else {
@@ -149,18 +150,56 @@ public class UserDAOMongoImpl implements UserDAO {
 	@Override
 	public void insertAnswer(final Answer answer) {
 
-		logger.debug(ToStringBuilder.reflectionToString(answer));
-
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
-		DBObject dbUser = new BasicDBObject();
+		DBObject dbUserId = new BasicDBObject();
+		dbUserId.put("userId", answer.getUserId());
+
+		DBObject dbAnswer = new BasicDBObject();
+		dbAnswer.put("answerNumber", answer.getAnswerNumber());
+		dbAnswer.put("questionNumber", answer.getQuestionNumber());
+
+		DBObject dbAnswers = new BasicDBObject();
+		dbAnswers.put("answers", dbAnswer);
+
+		DBObject dbPushAnswers = new BasicDBObject();
+		dbPushAnswers.put("$push", dbAnswers);
+
+		dbUsers.findAndModify(dbUserId, dbPushAnswers);
+
+		logger.debug("answer inserted, "
+				+ ToStringBuilder.reflectionToString(answer));
 
 	}
 
 	@Override
 	public List<Answer> getAnswers(final String userId) {
-		// TODO Auto-generated method stub
-		return null;
+
+		DBCollection dbUsers = db.getCollection(usersCollection);
+
+		DBObject dbId = new BasicDBObject();
+		dbId.put("userId", "userId");
+
+		DBObject dbUser = dbUsers.findOne(dbId);
+		if (dbUser != null) {
+
+			@SuppressWarnings("unchecked")
+			List<DBObject> dbAnswers = (List<DBObject>) dbUser.get("answers");
+			List<Answer> answers = new ArrayList<Answer>(dbAnswers.size());
+			for (DBObject dbAnswer : dbAnswers) {
+				Answer answer = new Answer();
+				answer.setAnswerNumber((Integer) dbAnswer.get("answerNumber"));
+				answer.setQuestionNumber((Integer) dbAnswer
+						.get("questionNumber"));
+				answer.setUserId(userId);
+				answers.add(answer);
+			}
+
+			logger.debug(answers.toString());
+			return answers;
+		} else {
+			return Collections.emptyList();
+		}
 	}
 
 	@Override
@@ -175,5 +214,11 @@ public class UserDAOMongoImpl implements UserDAO {
 		return Base64.encode(chanBuff, Base64Dialect.ORDERED).toString(
 				CharsetUtil.UTF_8);
 	}
+
+	/*
+	 * private String sha1(final String email) { MessageDigest md =
+	 * MessageDigest.getInstance("SHA"); md.update(email.getBytes()); byte[]
+	 * digest = md.digest(); return new String(digest); }
+	 */
 
 }
