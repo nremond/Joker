@@ -13,16 +13,16 @@ import cl.own.usi.service.UserService;
 
 @Service
 public class UserServiceImpl implements UserService {
-	
+
 	@Autowired
 	private UserDAO userDAO;
-	
+
 	@Autowired
 	private ScoreDAO scoreDAO;
-	
+
 	public boolean insertUser(String email, String password, String firstname,
 			String lastname) {
-		
+
 		if (email == null || password == null || firstname == null || lastname == null) {
 			throw new IllegalArgumentException("an argument is null.");
 		} else {
@@ -31,13 +31,12 @@ public class UserServiceImpl implements UserService {
 			user.setPassword(password);
 			user.setFirstname(firstname);
 			user.setLastname(lastname);
-			
 			return userDAO.insertUser(user);
 		}
 	}
 
 	public String login(String email, String password) {
-		
+
 		if (email == null || password == null) {
 			return null;
 		} else {
@@ -45,26 +44,24 @@ public class UserServiceImpl implements UserService {
 		}
 	}
 
-	public void insertRequest(User user, int questionNumber) {
-		userDAO.insertRequest(user, questionNumber);
+	//TODO String userId in the signature
+	public void insertRequest(String userId, int questionNumber) {
+		userDAO.insertRequest(userId, questionNumber);
 	}
-	
-	public void insertAnswer(User user, int questionNumber, Integer answerNumber) {
-				
-		List<Answer> answers = userDAO.getAnswers(user);
-		
+
+	//TODO String userId in the signature
+	public void insertAnswer(String userId, int questionNumber, Integer answerNumber) {
+
+		List<Answer> answers = userDAO.getAnswers(userId);
+
 		if (answers.get(questionNumber - 1) != null) {
 			throw new IllegalArgumentException("User has already answered this question.");
 		} else {
-			
 			Answer answer = new Answer();
 			answer.setQuestionNumber(questionNumber);
-			answer.setUser(user);
-			
+			answer.setUserId(userId);
 			answer.setAnswerNumber(answerNumber);
-			
-			userDAO.insertAnswer(user, answer);
-			
+			userDAO.insertAnswer(answer);
 		}
 	}
 
@@ -73,7 +70,7 @@ public class UserServiceImpl implements UserService {
 		if (user == null) {
 			return false;
 		} else {
-			userDAO.logout(user);
+			userDAO.logout(userId);
 			return true;
 		}
 	}
@@ -86,5 +83,4 @@ public class UserServiceImpl implements UserService {
 		userDAO.flushUsers();
 		scoreDAO.flushUsers();
 	}
-	
 }

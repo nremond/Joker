@@ -2,6 +2,7 @@ package cl.own.usi.dao.impl.mongo;
 
 import java.util.List;
 
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,6 @@ public class UserDAOMongoImpl implements UserDAO {
 	DB db;
 
 	private static String usersCollection = "users";
-	private static String answersCollection = "answers";
 
 	private static DBObject emailIndex = new BasicDBObject("email", 1);
 	private static DBObject credentialsIndex = new BasicDBObject("email", 1)
@@ -88,7 +88,8 @@ public class UserDAOMongoImpl implements UserDAO {
 
 		DBObject dbUser = dbUsers.findOne(dbId);
 		if (dbUser != null) {
-			// I don't put in the query because the index is only on the _id field
+			// I don't put in the query because the index is only on the _id
+			// field
 			return (Boolean) dbUser.get("isLogged") ? fromDBObject(dbUser)
 					: null;
 		} else {
@@ -117,11 +118,11 @@ public class UserDAOMongoImpl implements UserDAO {
 	}
 
 	@Override
-	public void logout(User user) {
+	public void logout(String userId) {
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		DBObject dbUser = new BasicDBObject();
-		dbUser.put("email", user.getEmail());
+		dbUser.put("_id", userId);
 
 		DBObject dblogout = new BasicDBObject();
 		dblogout.put("isLogged", false);
@@ -130,26 +131,25 @@ public class UserDAOMongoImpl implements UserDAO {
 	}
 
 	@Override
-	public void insertRequest(User user, int questionNumber) {
+	public void insertRequest(String userId, int questionNumber) {
 
-		DBCollection dbAnswers = db.getCollection(answersCollection);
-
-		// the driver keeps a cache of the added index
-		// dbAnswers.ensureIndex(credentialsIndex, "emailIndex", true);
-
-		DBObject dbAnswer = new BasicDBObject();
 
 		// TODO finish
 	}
 
 	@Override
-	public void insertAnswer(User user, Answer answer) {
-		// TODO Auto-generated method stub
+	public void insertAnswer(Answer answer) {
+
+		logger.debug(ToStringBuilder.reflectionToString(answer));
+
+		DBCollection dbUsers = db.getCollection(usersCollection);
+
+		DBObject dbUser = new BasicDBObject();
 
 	}
 
 	@Override
-	public List<Answer> getAnswers(User user) {
+	public List<Answer> getAnswers(String userId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
