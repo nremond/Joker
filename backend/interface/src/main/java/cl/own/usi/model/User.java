@@ -68,7 +68,7 @@ public class User implements Comparable<User>, Serializable {
 	// TODO NO !! move it to a UserComparator()
 	public int compareTo(User o) {
 		if (getScore() == o.getScore()) {
-			return getEmail().compareTo(o.getEmail());
+			return o.getEmail().compareTo(getEmail());
 		} else if (getScore() > o.getScore()) {
 			return -1;
 		} else {

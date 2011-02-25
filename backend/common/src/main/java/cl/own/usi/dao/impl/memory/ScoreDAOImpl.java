@@ -18,10 +18,11 @@ public class ScoreDAOImpl implements ScoreDAO {
 	private ConcurrentSkipListSet<User> rankedUsers = new ConcurrentSkipListSet<User>();
 	private ConcurrentMap<User, Integer> userBonuses = new ConcurrentHashMap<User, Integer>();
 	
-	public boolean updateScore(User user) {
+	public boolean updateScore(User user, int newScore) {
 		if (rankedUsers.contains(user)) {
 			rankedUsers.remove(user);
 		}
+		user.setScore(newScore);
 		return rankedUsers.add(user);
 	}
 

@@ -19,14 +19,15 @@ public class ScoreServiceImpl implements ScoreService {
 	private static final int HUNDRED = 100;
 
 	public int updateScore(int questionNumber, int questionValue, User user, boolean answerCorrect) {
+		int newScore = user.getScore();
 		if (answerCorrect) {
 			int bonus = scoreDAO.getUserBonus(user);
 			scoreDAO.setUserBonus(user, bonus + 1);
-			user.setScore(user.getScore() + questionValue + bonus);
+			newScore += questionValue + bonus;
 		} else {
 			scoreDAO.setUserBonus(user, 0);
 		}
-		scoreDAO.updateScore(user);
+		scoreDAO.updateScore(user, newScore);
 		return user.getScore();
 	}
 

@@ -12,7 +12,7 @@ public interface ScoreDAO {
 	 * @param user
 	 * @return
 	 */
-	boolean updateScore(User user);
+	boolean updateScore(User user, int newScore);
 	
 	/**
 	 * Return the Users having the higher score.
