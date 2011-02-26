@@ -34,16 +34,13 @@ import com.mongodb.WriteResult;
 public class UserDAOMongoImpl implements UserDAO {
 
 	@Autowired
-	DB db;
+	private DB db;
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private static DBObject userIdIndex = new BasicDBObject("userId", 1);
 	private static DBObject credentialsIndex = new BasicDBObject("email", 1)
 			.append("password", 1);
-
-	
-	
 
 	@Override
 	public boolean insertUser(final User user) {
@@ -83,8 +80,8 @@ public class UserDAOMongoImpl implements UserDAO {
 					+ dbUser.get(isLoggedField));
 
 			// The index is only on the id, isLogged can't be part of the query
-			return (Boolean) dbUser.get(isLoggedField) ? DaoHelper.fromDBObject(dbUser)
-					: null;
+			return (Boolean) dbUser.get(isLoggedField) ? DaoHelper
+					.fromDBObject(dbUser) : null;
 		} else {
 			logger.debug("fetching userId=" + userId
 					+ " is impossible, not in db");
@@ -204,8 +201,8 @@ public class UserDAOMongoImpl implements UserDAO {
 
 	@Override
 	public void flushUsers() {
-		// TODO Auto-generated method stub
-
+		DBCollection dbUsers = db.getCollection(usersCollection);
+		dbUsers.drop();
 	}
 
 }
