@@ -135,9 +135,11 @@ public class UserDAOMongoImpl implements UserDAO {
 		dbCredentials.put(passwordField, password);
 
 		DBObject dblogin = new BasicDBObject();
-		dblogin.put(isLoggedField, Boolean.TRUE);
+		dblogin.put(isLoggedField, true);
+		DBObject dbSetlogin = new BasicDBObject();
+		dbSetlogin.put("$set", dblogin);
 
-		DBObject dbUser = dbUsers.findAndModify(dbCredentials, dblogin);
+		DBObject dbUser = dbUsers.findAndModify(dbCredentials, dbSetlogin);
 
 		if (dbUser != null) {
 			logger.debug("login sucessful for " + email + "/" + password
@@ -209,20 +211,26 @@ public class UserDAOMongoImpl implements UserDAO {
 			@SuppressWarnings("unchecked")
 			List<DBObject> dbAnswers = (List<DBObject>) dbUser
 					.get(answersField);
-			List<Answer> answers = new ArrayList<Answer>(dbAnswers.size());
-			for (DBObject dbAnswer : dbAnswers) {
-				Answer answer = new Answer();
-				answer.setAnswerNumber((Integer) dbAnswer
-						.get(answerNumberField));
-				answer.setQuestionNumber((Integer) dbAnswer
-						.get(questionNumberField));
-				answer.setUserId(userId);
-				answers.add(answer);
-			}
 
-			logger.debug("fetching answers for userId=" + userId + "  "
-					+ answers.toString());
-			return answers;
+			if (dbAnswers != null) {
+				
+				List<Answer> answers = new ArrayList<Answer>(dbAnswers.size());
+				for (DBObject dbAnswer : dbAnswers) {
+					Answer answer = new Answer();
+					answer.setAnswerNumber((Integer) dbAnswer
+							.get(answerNumberField));
+					answer.setQuestionNumber((Integer) dbAnswer
+							.get(questionNumberField));
+					answer.setUserId(userId);
+					answers.add(answer);
+				}
+
+				logger.debug("fetching answers for userId=" + userId + "  "
+						+ answers.toString());
+				return answers;
+			} else {
+				return Collections.emptyList();
+			}
 		} else {
 			return Collections.emptyList();
 		}
