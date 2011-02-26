@@ -54,7 +54,7 @@ public class UserServiceImpl implements UserService {
 
 		List<Answer> answers = userDAO.getAnswers(userId);
 
-		if (answers.get(questionNumber - 1) != null) {
+		if (answers.size() >= questionNumber && answers.get(questionNumber - 1) != null) {
 			throw new IllegalArgumentException("User has already answered this question.");
 		} else {
 			Answer answer = new Answer();
