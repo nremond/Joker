@@ -2,9 +2,13 @@ package cl.own.usi.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
-public class User implements Comparable<User>, Serializable {
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+
+public class User implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -65,15 +69,9 @@ public class User implements Comparable<User>, Serializable {
 		this.score = score;
 	}
 
-	// TODO NO !! move it to a UserComparator()
-	public int compareTo(User o) {
-		if (getScore() == o.getScore()) {
-			return o.getEmail().compareTo(getEmail());
-		} else if (getScore() > o.getScore()) {
-			return -1;
-		} else {
-			return 1;
-		}
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder().append(email).toHashCode();
 	}
 
 	@Override
@@ -89,15 +87,31 @@ public class User implements Comparable<User>, Serializable {
 		if (obj.getClass() != getClass()) {
 			return false;
 		}
-		//
-		// Customer rhs = (Customer) obj;
-		// return new EqualsBuilder()
 
-		if (obj instanceof User) {
-			User other = (User) obj;
-			return getEmail().equals(other.getEmail());
-		} else {
-			return false;
+		User rhs = (User) obj;
+		return new EqualsBuilder().append(email, rhs.email).isEquals();
+
+	}
+
+	@Override
+	public String toString() {
+		return "[userId:" + userId + ",email:" + email + ",score:" + score
+				+ "]";
+	}
+
+	public static class UserComparator implements Comparator<User> {
+
+		@Override
+		public int compare(User o1, User o2) {
+			if (o1.getScore() == o2.getScore()) {
+				return o2.getEmail().compareTo(o1.getEmail());
+			} else if (o1.getScore() > o2.getScore()) {
+				return -1;
+			} else {
+				return 1;
+			}
+
 		}
 	}
+
 }

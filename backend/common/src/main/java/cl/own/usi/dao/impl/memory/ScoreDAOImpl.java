@@ -15,7 +15,7 @@ import cl.own.usi.model.User;
 @Repository
 public class ScoreDAOImpl implements ScoreDAO {
 
-	private ConcurrentSkipListSet<User> rankedUsers = new ConcurrentSkipListSet<User>();
+	private ConcurrentSkipListSet<User> rankedUsers = new ConcurrentSkipListSet<User>(new User.UserComparator());
 	private ConcurrentMap<User, Integer> userBonuses = new ConcurrentHashMap<User, Integer>();
 	
 	public void updateScore(User user, int newScore) {

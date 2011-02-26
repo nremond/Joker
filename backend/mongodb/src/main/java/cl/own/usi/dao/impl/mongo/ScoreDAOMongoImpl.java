@@ -86,9 +86,12 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 	@Override
 	public List<User> getBefore(User user, int limit) {
 
+		// TODO do we mean > or >=
+
 		DBObject criteria = new BasicDBObject();
 		criteria.put("$gt", user.getScore());
 		DBObject query = new BasicDBObject();
+		query.put(scoreField, criteria);
 
 		DBObject subset = new BasicDBObject();
 		subset.put("$slice", -limit);
@@ -106,9 +109,12 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 	@Override
 	public List<User> getAfter(User user, int limit) {
 
+		// TODO do we mean < or <=
+
 		DBObject criteria = new BasicDBObject();
-		criteria.put("$lt", user.getScore());
+		criteria.put("$lte", user.getScore());
 		DBObject query = new BasicDBObject();
+		query.put(scoreField, criteria);
 
 		DBObject subset = new BasicDBObject();
 		subset.put("$slice", limit);
