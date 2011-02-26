@@ -17,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
+import sun.security.krb5.Asn1Exception;
+
 import cl.own.usi.dao.UserDAO;
 import cl.own.usi.model.Answer;
 import cl.own.usi.model.User;
@@ -33,6 +35,8 @@ public class UserDAOMongoImpl implements UserDAO {
 	@Autowired
 	DB db;
 
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
+
 	private static final String USER_ID_SALT = "123456";
 
 	private static String usersCollection = "users";
@@ -41,28 +45,37 @@ public class UserDAOMongoImpl implements UserDAO {
 	private static DBObject credentialsIndex = new BasicDBObject("email", 1)
 			.append("password", 1);
 
-	private Logger logger = LoggerFactory.getLogger(this.getClass());
+	private static String userIdField = "userId";
+	private static String emailField = "email";
+	private static String passwordField = "password";
+	private static String firstnameField = "firstname";
+	private static String lastnameField = "lastname";
+	private static String scoreField = "score";
+	private static String isLoggedField = "isLogged";
+	private static String answersField = "answers";
+	private static String questionNumberField = "questionNumber";
+	private static String answerNumberField = "answerNumber";
 
 	private DBObject toDBObject(final User user) {
 		DBObject dbUser = new BasicDBObject();
-		dbUser.put("userId", generateUserId(user));
-		dbUser.put("email", user.getEmail());
-		dbUser.put("password", user.getPassword());
-		dbUser.put("firstname", user.getFirstname());
-		dbUser.put("lastname", user.getLastname());
-		dbUser.put("score", user.getScore());
-		dbUser.put("isLogged", false);
+		dbUser.put(userIdField, generateUserId(user));
+		dbUser.put(emailField, user.getEmail());
+		dbUser.put(passwordField, user.getPassword());
+		dbUser.put(firstnameField, user.getFirstname());
+		dbUser.put(lastnameField, user.getLastname());
+		dbUser.put(scoreField, user.getScore());
+		dbUser.put(isLoggedField, Boolean.FALSE);
 		return dbUser;
 	}
 
 	private User fromDBObject(final DBObject dbUser) {
 		User user = new User();
-		user.setUserId((String) dbUser.get("userId"));
-		user.setEmail((String) dbUser.get("email"));
-		user.setPassword((String) dbUser.get("password"));
-		user.setFirstname((String) dbUser.get("firstname"));
-		user.setLastname((String) dbUser.get("lastname"));
-		user.setScore((Integer) dbUser.get("score"));
+		user.setUserId((String) dbUser.get(userIdField));
+		user.setEmail((String) dbUser.get(emailField));
+		user.setPassword((String) dbUser.get(passwordField));
+		user.setFirstname((String) dbUser.get(firstnameField));
+		user.setLastname((String) dbUser.get(lastnameField));
+		user.setScore((Integer) dbUser.get(scoreField));
 		return user;
 	}
 
@@ -96,14 +109,19 @@ public class UserDAOMongoImpl implements UserDAO {
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		DBObject dbId = new BasicDBObject();
-		dbId.put("userId", userId);
+		dbId.put(userIdField, userId);
 
 		DBObject dbUser = dbUsers.findOne(dbId);
 		if (dbUser != null) {
+			logger.debug("fetching userId=" + userId + " and isLogged="
+					+ dbUser.get(isLoggedField));
+
 			// The index is only on the id, isLogged can't be part of the query
-			return (Boolean) dbUser.get("isLogged") ? fromDBObject(dbUser)
+			return (Boolean) dbUser.get(isLoggedField) ? fromDBObject(dbUser)
 					: null;
 		} else {
+			logger.debug("fetching userId=" + userId
+					+ " is impossible, not in db");
 			return null;
 		}
 	}
@@ -113,17 +131,22 @@ public class UserDAOMongoImpl implements UserDAO {
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		DBObject dbCredentials = new BasicDBObject();
-		dbCredentials.put("email", email);
-		dbCredentials.put("password", password);
+		dbCredentials.put(emailField, email);
+		dbCredentials.put(passwordField, password);
 
 		DBObject dblogin = new BasicDBObject();
-		dblogin.put("isLogged", true);
+		dblogin.put(isLoggedField, Boolean.TRUE);
 
 		DBObject dbUser = dbUsers.findAndModify(dbCredentials, dblogin);
 
 		if (dbUser != null) {
+			logger.debug("login sucessful for " + email + "/" + password
+					+ "->userId=" + dbUser.get("userId"));
+
 			return (String) dbUser.get("userId");
 		} else {
+			logger.debug("login failed for " + email + "/" + password);
+
 			return null;
 		}
 	}
@@ -133,10 +156,10 @@ public class UserDAOMongoImpl implements UserDAO {
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		DBObject dbUser = new BasicDBObject();
-		dbUser.put("userId", userId);
+		dbUser.put(userIdField, userId);
 
 		DBObject dblogout = new BasicDBObject();
-		dblogout.put("isLogged", false);
+		dblogout.put(isLoggedField, Boolean.FALSE);
 
 		dbUsers.findAndModify(dbUser, dblogout);
 	}
@@ -153,14 +176,14 @@ public class UserDAOMongoImpl implements UserDAO {
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		DBObject dbUserId = new BasicDBObject();
-		dbUserId.put("userId", answer.getUserId());
+		dbUserId.put(userIdField, answer.getUserId());
 
 		DBObject dbAnswer = new BasicDBObject();
-		dbAnswer.put("answerNumber", answer.getAnswerNumber());
-		dbAnswer.put("questionNumber", answer.getQuestionNumber());
+		dbAnswer.put(answerNumberField, answer.getAnswerNumber());
+		dbAnswer.put(questionNumberField, answer.getQuestionNumber());
 
 		DBObject dbAnswers = new BasicDBObject();
-		dbAnswers.put("answers", dbAnswer);
+		dbAnswers.put(answersField, dbAnswer);
 
 		DBObject dbPushAnswers = new BasicDBObject();
 		dbPushAnswers.put("$push", dbAnswers);
@@ -178,24 +201,27 @@ public class UserDAOMongoImpl implements UserDAO {
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		DBObject dbId = new BasicDBObject();
-		dbId.put("userId", "userId");
+		dbId.put(userIdField, userId);
 
 		DBObject dbUser = dbUsers.findOne(dbId);
 		if (dbUser != null) {
 
 			@SuppressWarnings("unchecked")
-			List<DBObject> dbAnswers = (List<DBObject>) dbUser.get("answers");
+			List<DBObject> dbAnswers = (List<DBObject>) dbUser
+					.get(answersField);
 			List<Answer> answers = new ArrayList<Answer>(dbAnswers.size());
 			for (DBObject dbAnswer : dbAnswers) {
 				Answer answer = new Answer();
-				answer.setAnswerNumber((Integer) dbAnswer.get("answerNumber"));
+				answer.setAnswerNumber((Integer) dbAnswer
+						.get(answerNumberField));
 				answer.setQuestionNumber((Integer) dbAnswer
-						.get("questionNumber"));
+						.get(questionNumberField));
 				answer.setUserId(userId);
 				answers.add(answer);
 			}
 
-			logger.debug(answers.toString());
+			logger.debug("fetching answers for userId=" + userId + "  "
+					+ answers.toString());
 			return answers;
 		} else {
 			return Collections.emptyList();
