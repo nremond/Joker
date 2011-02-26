@@ -1,23 +1,24 @@
 package cl.own.usi.dao.impl.mongo;
 
-import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.answerNumberField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.answersField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.emailField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.isLoggedField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.passwordField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.questionNumberField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.handler.codec.base64.Base64;
-import org.jboss.netty.handler.codec.base64.Base64Dialect;
-import org.jboss.netty.util.CharsetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
-
-import sun.security.krb5.Asn1Exception;
 
 import cl.own.usi.dao.UserDAO;
 import cl.own.usi.model.Answer;
@@ -37,47 +38,12 @@ public class UserDAOMongoImpl implements UserDAO {
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	private static final String USER_ID_SALT = "123456";
-
-	private static String usersCollection = "users";
-
 	private static DBObject userIdIndex = new BasicDBObject("userId", 1);
 	private static DBObject credentialsIndex = new BasicDBObject("email", 1)
 			.append("password", 1);
 
-	private static String userIdField = "userId";
-	private static String emailField = "email";
-	private static String passwordField = "password";
-	private static String firstnameField = "firstname";
-	private static String lastnameField = "lastname";
-	private static String scoreField = "score";
-	private static String isLoggedField = "isLogged";
-	private static String answersField = "answers";
-	private static String questionNumberField = "questionNumber";
-	private static String answerNumberField = "answerNumber";
-
-	private DBObject toDBObject(final User user) {
-		DBObject dbUser = new BasicDBObject();
-		dbUser.put(userIdField, generateUserId(user));
-		dbUser.put(emailField, user.getEmail());
-		dbUser.put(passwordField, user.getPassword());
-		dbUser.put(firstnameField, user.getFirstname());
-		dbUser.put(lastnameField, user.getLastname());
-		dbUser.put(scoreField, user.getScore());
-		dbUser.put(isLoggedField, Boolean.FALSE);
-		return dbUser;
-	}
-
-	private User fromDBObject(final DBObject dbUser) {
-		User user = new User();
-		user.setUserId((String) dbUser.get(userIdField));
-		user.setEmail((String) dbUser.get(emailField));
-		user.setPassword((String) dbUser.get(passwordField));
-		user.setFirstname((String) dbUser.get(firstnameField));
-		user.setLastname((String) dbUser.get(lastnameField));
-		user.setScore((Integer) dbUser.get(scoreField));
-		return user;
-	}
+	
+	
 
 	@Override
 	public boolean insertUser(final User user) {
@@ -87,7 +53,7 @@ public class UserDAOMongoImpl implements UserDAO {
 		dbUsers.ensureIndex(userIdIndex, "userIdIndex", true);
 		dbUsers.ensureIndex(credentialsIndex, "credentialsIndex", false);
 
-		DBObject dbUser = toDBObject(user);
+		DBObject dbUser = DaoHelper.toDBObject(user);
 
 		WriteResult wr = dbUsers.insert(dbUser);
 		String error = wr.getError();
@@ -117,7 +83,7 @@ public class UserDAOMongoImpl implements UserDAO {
 					+ dbUser.get(isLoggedField));
 
 			// The index is only on the id, isLogged can't be part of the query
-			return (Boolean) dbUser.get(isLoggedField) ? fromDBObject(dbUser)
+			return (Boolean) dbUser.get(isLoggedField) ? DaoHelper.fromDBObject(dbUser)
 					: null;
 		} else {
 			logger.debug("fetching userId=" + userId
@@ -213,7 +179,7 @@ public class UserDAOMongoImpl implements UserDAO {
 					.get(answersField);
 
 			if (dbAnswers != null) {
-				
+
 				List<Answer> answers = new ArrayList<Answer>(dbAnswers.size());
 				for (DBObject dbAnswer : dbAnswers) {
 					Answer answer = new Answer();
@@ -241,18 +207,5 @@ public class UserDAOMongoImpl implements UserDAO {
 		// TODO Auto-generated method stub
 
 	}
-
-	private String generateUserId(final User user) {
-		ChannelBuffer chanBuff = wrappedBuffer((user.getEmail() + USER_ID_SALT)
-				.getBytes(CharsetUtil.UTF_8));
-		return Base64.encode(chanBuff, Base64Dialect.ORDERED).toString(
-				CharsetUtil.UTF_8);
-	}
-
-	/*
-	 * private String sha1(final String email) { MessageDigest md =
-	 * MessageDigest.getInstance("SHA"); md.update(email.getBytes()); byte[]
-	 * digest = md.digest(); return new String(digest); }
-	 */
 
 }
