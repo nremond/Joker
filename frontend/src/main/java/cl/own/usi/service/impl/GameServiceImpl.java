@@ -326,7 +326,7 @@ public class GameServiceImpl implements GameService {
 			if (questionWorker.getQuestionNumber() <= gameSynchronization.currentQuestionToAnswer) {
 				executorUtil.getExecutorService().execute(questionWorker);
 			} else {
-				LOGGER.info(
+				LOGGER.debug(
 						"Too early question request for question {}, putting in a temporaray queue",
 						questionWorker.getQuestionNumber());
 				questionSynchronization.waitingQueue.offer(questionWorker);
