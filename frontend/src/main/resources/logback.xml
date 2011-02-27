@@ -35,7 +35,7 @@
 	</logger>
 
 	<logger name="org.jgroups">
-		<level value="info" />
+		<level value="debug" />
 	</logger>
 
 	<root>

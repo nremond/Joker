@@ -20,11 +20,15 @@ public class GatewayMain {
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(GatewayMain.class);
 
+	private GatewayMain() {
+		// no need for a constructor
+	}
+
 	public static void main(String[] args) {
 
 		final String[] springContextFile = new String[] {
-				"classpath*:gatewayApplication.xml",
-				"classpath*:jgroupsConfig.xml" };
+				"classpath*:spring/gatewayApplication.xml",
+				"classpath*:spring/jgroupsConfig.xml" };
 
 		LOGGER.info("Starting up Gateway...");
 

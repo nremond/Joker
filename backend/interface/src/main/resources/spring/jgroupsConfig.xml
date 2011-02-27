@@ -7,7 +7,6 @@
 	<bean id="jgroupsChannel" class="cl.own.usi.jgroups.NotificationBusBean"
 		lazy-init="false">
 		<property name="busName" value="joker-presence" />
-		<!--  TODO: configure another file than default udp.xml -->
-		<property name="configurationFile" value="udp.xml" />
+		<property name="configurationFile" value="jgroups-presence.xml" />
 	</bean>
 </beans>

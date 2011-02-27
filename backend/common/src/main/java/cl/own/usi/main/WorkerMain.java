@@ -12,11 +12,15 @@ public class WorkerMain {
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(WorkerMain.class);
 
+	private WorkerMain() {
+		// no need for a constructor
+	}
+
 	public static void main(String[] args) {
 
 		final String[] springContextFile = new String[] {
-				"classpath*:workerApplication.xml",
-				"classpath*:jgroupsConfig.xml" };
+				"classpath*:spring/workerApplication.xml",
+				"classpath*:spring/jgroupsConfig.xml" };
 		LOGGER.info("Starting up Worker...");
 
 		final ConfigurableApplicationContext applicationContext = new ClassPathXmlApplicationContext(
