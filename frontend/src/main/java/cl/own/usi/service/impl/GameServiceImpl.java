@@ -29,17 +29,18 @@ import cl.own.usi.service.GameService;
 @Service
 public class GameServiceImpl implements GameService {
 
-	private Logger logger = LoggerFactory.getLogger(this.getClass());
+	private static final Logger LOGGER = LoggerFactory
+			.getLogger(GameServiceImpl.class);
 
 	@Autowired
-	ExecutorUtil executorUtil;
+	private ExecutorUtil executorUtil;
 
 	@Autowired
-	GameDAO gameDAO;
+	private GameDAO gameDAO;
 
 	final ExecutorService executorService = Executors.newFixedThreadPool(2);
 
-	GameSynchronization gameSynchronization;
+	private GameSynchronization gameSynchronization;
 
 	public boolean insertGame(int usersLimit, int questionTimeLimit,
 			int pollingTimeLimit,
@@ -148,20 +149,20 @@ public class GameServiceImpl implements GameService {
 
 		public void run() {
 
-			logger.debug("Start game");
+			LOGGER.debug("Start game");
 			try {
-				logger.debug("Wait on all users");
+				LOGGER.debug("Wait on all users");
 				gameSynchronization.enoughUsersLatch.await();
-				logger.debug("Enough users have joined the game");
+				LOGGER.debug("Enough users have joined the game");
 			} catch (InterruptedException e) {
-				logger.warn("Interrupted", e);
+				LOGGER.warn("Interrupted", e);
 			}
 
 			boolean first = true;
 
 			for (int i = 1; i <= gameSynchronization.game.getQuestions().size(); i++) {
 
-				logger.info(
+				LOGGER.info(
 						"Starting question {}. Response question number {}", i,
 						gameSynchronization.currentQuestionToAnswer);
 				QuestionSynchronization questionSynchronization = gameSynchronization
@@ -173,7 +174,7 @@ public class GameServiceImpl implements GameService {
 					questionSynchronization.lock.lock();
 					gameSynchronization.currentQuestionToAnswer++;
 					for (Runnable r : questionSynchronization.waitingQueue) {
-						logger.debug("Inserting a early requester to the working queue");
+						LOGGER.debug("Inserting a early requester to the working queue");
 						executorUtil.getExecutorService().execute(r);
 					}
 					questionSynchronization.lock.unlock();
@@ -184,7 +185,7 @@ public class GameServiceImpl implements GameService {
 				questionSynchronization.questionReadyLatch.countDown();
 
 				try {
-					logger.debug(
+					LOGGER.debug(
 							"Wait to all users answer, or till the timeout {}",
 							gameSynchronization.game.getQuestionTimeLimit());
 
@@ -195,21 +196,21 @@ public class GameServiceImpl implements GameService {
 									.getQuestionTimeLimit(), TimeUnit.SECONDS);
 					questionSynchronization.questionRunning = false;
 					if (reachedZero) {
-						logger.debug("All users has answered, going to the next question.");
+						LOGGER.debug("All users has answered, going to the next question.");
 					} else {
-						logger.debug("Normal completion of the game, going further.");
+						LOGGER.debug("Normal completion of the game, going further.");
 					}
 
 				} catch (InterruptedException e) {
-					logger.warn("Interrupted", e);
+					LOGGER.warn("Interrupted", e);
 				}
 
-				logger.info("Question {} finished, going to the next question",
+				LOGGER.info("Question {} finished, going to the next question",
 						i);
 
 			}
 
-			logger.info("All questions finished, tweet and clean everything");
+			LOGGER.info("All questions finished, tweet and clean everything");
 			// TODO : Tweet.
 		}
 
@@ -319,7 +320,7 @@ public class GameServiceImpl implements GameService {
 			if (questionWorker.getQuestionNumber() <= gameSynchronization.currentQuestionToAnswer) {
 				executorUtil.getExecutorService().execute(questionWorker);
 			} else {
-				logger.info(
+				LOGGER.info(
 						"Too early question request for question {}, putting in a temporaray queue",
 						questionWorker.getQuestionNumber());
 				questionSynchronization.waitingQueue.offer(questionWorker);

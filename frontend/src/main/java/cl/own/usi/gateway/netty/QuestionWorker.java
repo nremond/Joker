@@ -13,16 +13,17 @@ import cl.own.usi.service.GameService;
 
 public class QuestionWorker implements Runnable {
 
-	private static Logger logger = LoggerFactory.getLogger(QuestionWorker.class);
-	
-	final int questionNumber;
-	final int score;
-	final MessageEvent e;
-	final String questionFirstPart;
-	final long timeAtCreation;
+	private static final Logger LOGGER = LoggerFactory
+			.getLogger(QuestionWorker.class);
 
-	GameService gameService;
-	
+	private final int questionNumber;
+	private final int score;
+	private final MessageEvent e;
+	private final String questionFirstPart;
+	private final long timeAtCreation;
+
+	private GameService gameService;
+
 	public QuestionWorker(int questionNumber, int score, MessageEvent e,
 			String questionFirstPart, GameService gameService) {
 		this.questionNumber = questionNumber;
@@ -40,8 +41,7 @@ public class QuestionWorker implements Runnable {
 		try {
 			long alreadyWaitedMili = System.currentTimeMillis()
 					- timeAtCreation;
-			if (gameService.waitOtherUsers(questionNumber,
-					alreadyWaitedMili)) {
+			if (gameService.waitOtherUsers(questionNumber, alreadyWaitedMili)) {
 
 				sb.append(",\"score\":").append(score);
 				sb.append("}");
@@ -53,13 +53,13 @@ public class QuestionWorker implements Runnable {
 				// time to wait is elapsed, return 400.
 				writeResponse(e, BAD_REQUEST);
 
-				logger.warn("Fail to wait on other users for question "
+				LOGGER.warn("Fail to wait on other users for question "
 						+ questionNumber + ", maybe long polling timeout");
 			}
 		} catch (InterruptedException ie) {
 
 			writeResponse(e, BAD_REQUEST);
-			logger.warn("Interrupted", ie);
+			LOGGER.warn("Interrupted", ie);
 
 		}
 	}

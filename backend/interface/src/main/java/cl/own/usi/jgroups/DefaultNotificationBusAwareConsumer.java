@@ -10,11 +10,11 @@ import org.slf4j.LoggerFactory;
 
 public class DefaultNotificationBusAwareConsumer implements Consumer {
 
-	protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
+	protected final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private NotificationBus notificationBus;
 
-	public void setNotificationBus(final NotificationBus notificationBus) {
+	public final void setNotificationBus(final NotificationBus notificationBus) {
 		this.notificationBus = notificationBus;
 	}
 
@@ -30,7 +30,7 @@ public class DefaultNotificationBusAwareConsumer implements Consumer {
 	 */
 	@Override
 	public void handleNotification(final Serializable n) {
-		LOGGER.debug("** Received notification: " + n);
+		logger.debug("** Received notification: " + n);
 	}
 
 	/**

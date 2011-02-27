@@ -4,16 +4,16 @@ import java.util.List;
 
 public class Question {
 
-	int number;
-	
-	String label;
-	
-	List<String> choices;
-	
-	int correctChoice;
+	private int number;
 
-	int value = 0;
-	
+	private String label;
+
+	private List<String> choices;
+
+	private int correctChoice;
+
+	private int value = 0;
+
 	public int getNumber() {
 		return number;
 	}
@@ -21,7 +21,7 @@ public class Question {
 	public void setNumber(int number) {
 		this.number = number;
 	}
-	
+
 	public String getLabel() {
 		return label;
 	}
@@ -53,5 +53,5 @@ public class Question {
 	public void setValue(int value) {
 		this.value = value;
 	}
-	
+
 }
