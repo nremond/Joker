@@ -12,6 +12,12 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/**
+ * Netty initialization stuff.
+ * 
+ * @author bperroud
+ *
+ */
 @Component
 public class GatewayServiceImpl implements InitializingBean, DisposableBean {
 

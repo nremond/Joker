@@ -9,6 +9,12 @@ import cl.own.usi.dao.GameDAO;
 import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
 
+/**
+ * In memory implementation of {@link GameDAO}.
+ * 
+ * @author bperroud
+ *
+ */
 @Repository
 public class GameDAOImpl implements GameDAO {
 

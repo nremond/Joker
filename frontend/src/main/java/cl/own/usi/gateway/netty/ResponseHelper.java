@@ -12,6 +12,12 @@ import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.util.CharsetUtil;
 
+/**
+ * Write content to the channel and close the connection.
+ * 
+ * @author bperroud
+ *
+ */
 public class ResponseHelper {
 
 	public static void writeResponse(MessageEvent e, HttpResponseStatus status) {

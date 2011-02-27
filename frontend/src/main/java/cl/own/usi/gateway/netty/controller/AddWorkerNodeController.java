@@ -12,6 +12,12 @@ import org.springframework.stereotype.Component;
 
 import cl.own.usi.gateway.client.WorkerClient;
 
+/**
+ * Controller to subscribe new worker to the client pool.
+ * 
+ * @author bperroud
+ *
+ */
 @Component
 public class AddWorkerNodeController extends AbstractController {
 

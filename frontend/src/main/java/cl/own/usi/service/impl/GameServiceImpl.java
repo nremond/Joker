@@ -26,6 +26,12 @@ import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
 import cl.own.usi.service.GameService;
 
+/**
+ * Game service implementation.
+ * 
+ * @author bperroud
+ *
+ */
 @Service
 public class GameServiceImpl implements GameService {
 

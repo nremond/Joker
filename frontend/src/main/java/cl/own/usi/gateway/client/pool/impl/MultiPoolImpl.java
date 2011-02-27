@@ -16,7 +16,14 @@ import cl.own.usi.gateway.client.pool.exception.PoolException;
 import cl.own.usi.gateway.client.pool.policy.ObjectValidationPolicy;
 import cl.own.usi.gateway.client.pool.policy.PoolSelectionPolicy;
 
-
+/**
+ * {@link MultiPool} implementation using java.util.concurrent primitives.
+ * 
+ * @author bperroud
+ *
+ * @param <K>
+ * @param <V>
+ */
 public abstract class MultiPoolImpl<K, V> implements MultiPool<K, V> {
 
 	private ObjectPoolFactory<V> factory;

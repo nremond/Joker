@@ -17,6 +17,12 @@ import org.springframework.stereotype.Component;
 import cl.own.usi.gateway.client.WorkerClient;
 import cl.own.usi.json.UserRequest;
 
+/**
+ * Controller that create the {@link User}
+ * 
+ * @author bperroud
+ * @author nicolas
+ */
 @Component
 public class UserController extends AbstractController {
 

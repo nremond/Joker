@@ -2,6 +2,12 @@ package cl.own.usi.model;
 
 import java.util.List;
 
+/**
+ * Question representation
+ * 
+ * @author bperroud
+ *
+ */
 public class Question {
 
 	int number;

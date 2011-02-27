@@ -18,6 +18,12 @@ import cl.own.usi.gateway.client.WorkerClient;
 import cl.own.usi.gateway.client.WorkerClient.UserAndScore;
 import cl.own.usi.gateway.client.WorkerClient.UserInfoAndScore;
 
+/**
+ * Controller that return the rank and scores
+ * 
+ * @author bperroud
+ * @author nicolas
+ */
 @Component
 public class RankingController extends AbstractController {
 

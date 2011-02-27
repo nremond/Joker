@@ -5,6 +5,12 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.springframework.stereotype.Component;
 
+/**
+ * Controller that logout the {@link User}
+ * 
+ * @author bperroud
+ * @author nicolas
+ */
 @Component
 public class LogoutController extends AbstractController {
 

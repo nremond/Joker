@@ -28,6 +28,12 @@ import cl.own.usi.model.Question;
 import cl.own.usi.service.GameService;
 import cl.own.usi.thrift.WorkerRPC.Client;
 
+/**
+ * Thrift client.
+ * 
+ * @author bperroud
+ *
+ */
 @Component
 public class WorkerClientThriftImpl implements WorkerClient {
 	

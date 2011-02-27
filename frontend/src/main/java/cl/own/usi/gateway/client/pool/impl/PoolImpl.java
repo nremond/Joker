@@ -15,7 +15,13 @@ import cl.own.usi.gateway.client.pool.exception.FactoryException;
 import cl.own.usi.gateway.client.pool.exception.PoolException;
 import cl.own.usi.gateway.client.pool.policy.ObjectValidationPolicy;
 
-
+/**
+ * Generic {@link Pool} implementation using java.util.concurrent primitives 
+ * 
+ * @author bperroud
+ *
+ * @param <V>
+ */
 public class PoolImpl<V> implements Pool<V> {
 	
 	private final static int DEFAULT_MAX_POOL_SIZE = 8;

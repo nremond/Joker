@@ -20,7 +20,13 @@ import cl.own.usi.gateway.client.WorkerClient.UserAndScoreAndAnswer;
 import cl.own.usi.model.Question;
 import cl.own.usi.service.GameService;
 
-
+/**
+ * Controller that validate and call for storing the answer.
+ * 
+ * @author bperroud
+ * @author nicolas
+ * 
+ */
 @Component
 public class AnswerController extends AbstractController {
 

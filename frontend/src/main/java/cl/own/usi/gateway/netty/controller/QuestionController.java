@@ -18,10 +18,14 @@ import cl.own.usi.gateway.netty.QuestionWorker;
 import cl.own.usi.model.Question;
 import cl.own.usi.service.GameService;
 
+/**
+ * Controller that send asynchronously the {@link Question}
+ * 
+ * @author bperroud
+ * @author nicolas
+ */
 @Component
 public class QuestionController extends AbstractController {
-	
-	
 	
 	public static final String URI_QUESTION = "/question/";
 	private static final int URI_QUESTION_LENGTH = URI_QUESTION.length();

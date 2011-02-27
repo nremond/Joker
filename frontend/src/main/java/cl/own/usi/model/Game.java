@@ -2,6 +2,12 @@ package cl.own.usi.model;
 
 import java.util.List;
 
+/**
+ * Game representation
+ * 
+ * @author bperroud
+ *
+ */
 public class Game {
 
 	int usersLimit;

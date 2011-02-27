@@ -5,6 +5,12 @@ import java.util.List;
 import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
 
+/**
+ * GameDAO 
+ * 
+ * @author bperroud
+ *
+ */
 public interface GameDAO {
 
 	/**

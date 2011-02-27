@@ -12,8 +12,13 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-
+/**
+ * Abstract Controller.
+ * 
+ * @author bperroud
+ * @author nicolas
+ *
+ */
 public abstract class AbstractController {
 
 	protected static final String COOKIE_AUTH_NAME = "session_key";

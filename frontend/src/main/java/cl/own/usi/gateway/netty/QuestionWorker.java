@@ -11,6 +11,12 @@ import org.slf4j.LoggerFactory;
 
 import cl.own.usi.service.GameService;
 
+/**
+ * Thread that write asynchronously write the question to the channel.
+ * 
+ * @author bperroud
+ *
+ */
 public class QuestionWorker implements Runnable {
 
 	private static Logger logger = LoggerFactory.getLogger(QuestionWorker.class);
