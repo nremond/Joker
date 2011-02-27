@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+
+	<bean id="jgroupsChannel" class="cl.own.usi.jgroups.NotificationBusBean"
+		lazy-init="false">
+		<property name="busName" value="joker-presence" />
+		<!--  TODO: configure another file than default udp.xml -->
+		<property name="configurationFile" value="udp.xml" />
+	</bean>
+</beans>

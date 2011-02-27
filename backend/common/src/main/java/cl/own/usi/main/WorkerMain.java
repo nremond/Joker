@@ -14,7 +14,9 @@ public class WorkerMain {
 
 	public static void main(String[] args) {
 
-		final String springContextFile = "classpath*:workerApplication.xml";
+		final String[] springContextFile = new String[] {
+				"classpath*:workerApplication.xml",
+				"classpath*:jgroupsConfig.xml" };
 		LOGGER.info("Starting up Worker...");
 
 		final ConfigurableApplicationContext applicationContext = new ClassPathXmlApplicationContext(
