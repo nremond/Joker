@@ -12,7 +12,7 @@
 		<File>backend.log</File>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover, keep at maximum 14 files -->
-			<fileNamePattern>worker-%d{yyyy-MM-dd}.log</fileNamePattern>
+			<fileNamePattern>backend-%d{yyyy-MM-dd}.log</fileNamePattern>
 			<maxHistory>14</maxHistory>
 		</rollingPolicy>
 

@@ -222,6 +222,7 @@
 						<target>1.6</target>
 					</configuration>
 				</plugin>
+				
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-eclipse-plugin</artifactId>
@@ -236,6 +237,12 @@
 					<groupId>org.apache.thrift.tools</groupId>
 					<artifactId>maven-thrift-plugin</artifactId>
 					<version>0.1.10</version>
+				</plugin>
+				
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-shade-plugin</artifactId>
+					<version>1.4</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
