@@ -22,7 +22,9 @@ public class GatewayMain {
 
 	public static void main(String[] args) {
 
-		final String springContextFile = "classpath*:gatewayApplication.xml";
+		final String[] springContextFile = new String[] {
+				"classpath*:gatewayApplication.xml",
+				"classpath*:jgroupsConfig.xml" };
 
 		LOGGER.info("Starting up Gateway...");
 

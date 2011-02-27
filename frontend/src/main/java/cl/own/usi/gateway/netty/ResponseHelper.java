@@ -20,6 +20,10 @@ import org.jboss.netty.util.CharsetUtil;
  */
 public class ResponseHelper {
 
+	private ResponseHelper() {
+		// Utility class => hide default constructor
+	}
+
 	public static void writeResponse(MessageEvent e, HttpResponseStatus status) {
 		HttpResponse response = new DefaultHttpResponse(HTTP_1_0, status);
 		ChannelFuture future = e.getChannel().write(response);
@@ -37,5 +41,5 @@ public class ResponseHelper {
 		ChannelFuture future = e.getChannel().write(response);
 		future.addListener(ChannelFutureListener.CLOSE);
 	}
-	
+
 }
