@@ -37,6 +37,9 @@
 	<logger name="org.jgroups">
 		<level value="debug" />
 	</logger>
+	<logger name="org.jgroups.protocols.FD">
+		<level value="warn" />
+	</logger>
 
 	<root>
 		<level value="warn" />
