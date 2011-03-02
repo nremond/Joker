@@ -28,7 +28,7 @@ public class GatewayChannelListener extends DefaultNotificationBusAwareConsumer 
 			logger.info("*** MEMBER JOINED: {}, requesting state transfer", mbr);
 
 			final Serializable memberState = getNotificationBus()
-					.getCacheFromMember(mbr, 10000, 2);
+					.getCacheFromMember(mbr, 15000, 4);
 
 			logger.info("State for member {} is {}", mbr, memberState);
 
