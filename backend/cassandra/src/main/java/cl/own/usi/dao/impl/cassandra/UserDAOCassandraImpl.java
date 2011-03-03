@@ -84,8 +84,7 @@ public class UserDAOCassandraImpl implements UserDAO{
             logger.debug("user " + user.getEmail()
 					+ " was successfully inserted");
         } catch (HectorException e) {
-            e.printStackTrace();
-            logger.error("An error occured while inserting user"+e);
+            logger.error("An error occured while inserting user", e);
             return false;
         }
 		return true;
@@ -126,7 +125,7 @@ public class UserDAOCassandraImpl implements UserDAO{
 	@Override
 	public void insertAnswer(Answer answer) {
 
-		System.out.println("insertAnswwer ("+answer.getAnswerNumber()+","+
+		logger.debug("insertAnswwer ("+answer.getAnswerNumber()+","+
 											 answer.getQuestionNumber()+","+
 											 answer.getUserId()+")");
 		try{
@@ -142,8 +141,7 @@ public class UserDAOCassandraImpl implements UserDAO{
 					+ ToStringBuilder.reflectionToString(answer));
 			
 		} catch (HectorException e) {
-            e.printStackTrace();
-            logger.error("An error occured while inserting answer"+e);  
+            logger.error("An error occured while inserting answer", e);  
         }	
 	}
 
@@ -216,7 +214,7 @@ public class UserDAOCassandraImpl implements UserDAO{
 		ColumnSlice<String,ByteBuffer> cs = result.get();
 		
 		if(cs.getColumns().size() != 0){
-			Mutator<String> mutator = HFactory.createMutator(keyspace, StringSerializer.get());
+			Mutator<String> mutator = HFactory.createMutator(keyspace, ss);
         	mutator.addInsertion(userId, usersColumnFamily, 
         						 HFactory.createColumn(isLoggedColumn, bs.toByteBuffer(Boolean.FALSE), ss, bbs));	
         	mutator.execute();  
