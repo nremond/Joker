@@ -1,5 +1,6 @@
 package cl.own.usi.dao.impl.mongo;
 
+import static cl.own.usi.dao.impl.mongo.DaoHelper.emailField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.scoreField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
@@ -31,7 +32,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 	// TODO is there more field to order by ? what if they have the same score ?
 	private static DBObject orderBy = new BasicDBObject()
-			.append(scoreField, -1);
+			.append(scoreField, -1).append(emailField, 1);
 
 	public void updateScore(User user, int newScore) {
 
@@ -85,9 +86,6 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 	@Override
 	public List<User> getBefore(User user, int limit) {
-
-		// TODO do we mean > or >=
-
 		DBObject criteria = new BasicDBObject();
 		criteria.put("$gt", user.getScore());
 		DBObject query = new BasicDBObject();
@@ -108,11 +106,8 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 	@Override
 	public List<User> getAfter(User user, int limit) {
-
-		// TODO do we mean < or <=
-
 		DBObject criteria = new BasicDBObject();
-		criteria.put("$lte", user.getScore());
+		criteria.put("$lt", user.getScore());
 		DBObject query = new BasicDBObject();
 		query.put(scoreField, criteria);
 

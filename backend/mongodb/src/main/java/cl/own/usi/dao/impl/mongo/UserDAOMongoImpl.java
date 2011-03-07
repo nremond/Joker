@@ -38,12 +38,12 @@ public class UserDAOMongoImpl implements UserDAO {
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	private static DBObject userIdIndex = new BasicDBObject("userId", 1);
-	private static DBObject credentialsIndex = new BasicDBObject("email", 1)
+	private static DBObject userIdIndex = new BasicDBObject(userIdField, 1);
+	private static DBObject credentialsIndex = new BasicDBObject(emailField, 1)
 			.append("password", 1);
 
-	
-	
+
+
 
 	@Override
 	public boolean insertUser(final User user) {
