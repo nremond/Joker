@@ -8,12 +8,12 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import me.prettyprint.hector.api.mutation.Mutator;
-
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.base64.Base64;
 import org.jboss.netty.handler.codec.base64.Base64Dialect;
 import org.jboss.netty.util.CharsetUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import cl.own.usi.model.User;
 
@@ -21,7 +21,8 @@ public class CassandraHelper {
 
 	private static final String USER_ID_SALT = "123456";
 	
-
+	private static Logger logger = LoggerFactory.getLogger(CassandraHelper.class);
+	
 	public static byte[] serialize(Object obj) {
 		try {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -30,7 +31,7 @@ public class CassandraHelper {
 			oout.close();
 			return out.toByteArray();
 		} catch (IOException e) {
-			System.err.println("Serialization error: " + e);
+			logger.error("Serialization error", e);
 		}
 		return null;
 	}
@@ -43,7 +44,7 @@ public class CassandraHelper {
 			oin.close();
 			return retval;
 		} catch (Exception e) {
-			System.err.println("Serialization error: " + e);
+			logger.error("Deserialization error", e);
 		}
 		return null;
 	}

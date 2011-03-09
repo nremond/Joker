@@ -1,16 +1,7 @@
 package cl.own.usi.dao.impl.cassandra;
 
-import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.isLoggedColumn;
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.usersColumnFamily;
-import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.emailsColumnFamily;
-import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.emailColumn;
-import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.firstnameColumn;
-import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.lastnameColumn;
-import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.passwordColumn;
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.scoreColumn;
-import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.answerNumberColumn;
-import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.questionNumberColumn;
-import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.userIdColumn;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -67,10 +58,10 @@ public class ScoreDAOCassandraImpl implements ScoreDAO{
         	mutator.addInsertion(user.getUserId(), usersColumnFamily, 
         						 HFactory.createColumn(scoreColumn, is.toByteBuffer(newScore), ss, bbs));	
         	mutator.execute();  
-        	logger.debug("Score of user "+user.getEmail()+" updated to "+newScore);
+        	logger.debug("Score of user {} updated to {}", user.getEmail(), newScore);
 		}
 		else{
-			logger.debug("User "+user.getEmail()+ "was not found in DB");
+			logger.debug("User {} was not found in DB", user.getEmail());
 		}
 	}
 

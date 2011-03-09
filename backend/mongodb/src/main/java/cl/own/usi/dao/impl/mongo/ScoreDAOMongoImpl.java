@@ -48,8 +48,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		DBObject dbUser = dbUsers.findAndModify(dbUserId, dbSetScore);
 
-		logger.debug("update score of user:" + userIdField + "to :" + newScore
-				+ " actual score set in DB:" + dbUser.get(scoreField));
+		logger.debug("update score of user: {} to: {} actual score set in DB: {}", new Object[] {userIdField, newScore, dbUser.get(scoreField)});
 	}
 
 	private List<User> getUsers(DBObject query, DBObject querySubset,
@@ -79,7 +78,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		List<User> users = getUsers(query, querySubset, limit);
 
-		logger.debug("get the " + limit + " top scores : " + users);
+		logger.debug("get the {} top scores : {}", limit, users);
 
 		return users;
 	}
@@ -98,8 +97,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		List<User> users = getUsers(query, querySubset, limit);
 
-		logger.debug("get the " + limit + " users before " + user.getUserId()
-				+ " :  " + users);
+		logger.debug("get the {} " + limit + " users before {} : {} ", new Object[] {limit, user.getUserId(), users});
 
 		return users;
 	}
@@ -118,8 +116,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		List<User> users = getUsers(query, querySubset, limit);
 
-		logger.debug("get the " + limit + " users after " + user.getUserId()
-				+ " :  " + users);
+		logger.debug("get the {} " + limit + " users after {} : {} ", new Object[] {limit, user.getUserId(), users});
 
 		return users;
 	}

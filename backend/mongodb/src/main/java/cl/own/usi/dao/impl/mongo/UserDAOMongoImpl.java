@@ -60,12 +60,10 @@ public class UserDAOMongoImpl implements UserDAO {
 
 		// E11000 -> duplicate key
 		if (StringUtils.hasText(error) && error.indexOf("E11000") == 0) {
-			logger.debug("user " + user.getEmail()
-					+ " was already in the collection, insertion aborted");
+			logger.debug("user {} was already in the collection, insertion aborted", user.getEmail());
 			return false;
 		} else {
-			logger.debug("user " + user.getEmail()
-					+ " was successfully inserted");
+			logger.debug("user {} was successfully inserted", user.getEmail());
 			return true;
 		}
 	}
@@ -79,15 +77,13 @@ public class UserDAOMongoImpl implements UserDAO {
 
 		DBObject dbUser = dbUsers.findOne(dbId);
 		if (dbUser != null) {
-			logger.debug("fetching userId=" + userId + " and isLogged="
-					+ dbUser.get(isLoggedField));
+			logger.debug("fetching userId={} and isLogged={}", userId, dbUser.get(isLoggedField));
 
 			// The index is only on the id, isLogged can't be part of the query
 			return (Boolean) dbUser.get(isLoggedField) ? DaoHelper.fromDBObject(dbUser)
 					: null;
 		} else {
-			logger.debug("fetching userId=" + userId
-					+ " is impossible, not in db");
+			logger.debug("fetching userId={} is impossible, not in db", userId);
 			return null;
 		}
 	}
@@ -108,12 +104,11 @@ public class UserDAOMongoImpl implements UserDAO {
 		DBObject dbUser = dbUsers.findAndModify(dbCredentials, dbSetlogin);
 
 		if (dbUser != null) {
-			logger.debug("login sucessful for " + email + "/" + password
-					+ "->userId=" + dbUser.get("userId"));
+			logger.debug("login sucessful for {}/{}->userId={}", new Object[] {email, password, dbUser.get("userId")});
 
 			return (String) dbUser.get("userId");
 		} else {
-			logger.debug("login failed for " + email + "/" + password);
+			logger.debug("login failed for {}/{}", email, password);
 
 			return null;
 		}
@@ -158,8 +153,7 @@ public class UserDAOMongoImpl implements UserDAO {
 
 		dbUsers.findAndModify(dbUserId, dbPushAnswers);
 
-		logger.debug("answer inserted, "
-				+ ToStringBuilder.reflectionToString(answer));
+		logger.debug("answer inserted, {}", /*ToStringBuilder.reflectionToString(*/answer/*)*/);
 
 	}
 
@@ -191,8 +185,7 @@ public class UserDAOMongoImpl implements UserDAO {
 					answers.add(answer);
 				}
 
-				logger.debug("fetching answers for userId=" + userId + "  "
-						+ answers.toString());
+				logger.debug("fetching answers for userId={} {}", userId, answers);
 				return answers;
 			} else {
 				return Collections.emptyList();

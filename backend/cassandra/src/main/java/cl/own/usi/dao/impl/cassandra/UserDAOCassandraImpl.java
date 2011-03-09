@@ -35,7 +35,6 @@ import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
 import me.prettyprint.hector.api.query.SuperSliceQuery;
 
-import org.apache.commons.lang.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,8 +80,7 @@ public class UserDAOCassandraImpl implements UserDAO{
 			mutator.addInsertion(user.getEmail(), emailsColumnFamily, HFactory.createColumn(passwordColumn, ss.toByteBuffer(user.getPassword()), ss, bbs));
 			
             mutator.execute();  
-            logger.debug("user " + user.getEmail()
-					+ " was successfully inserted");
+            logger.debug("user {} was successfully inserted", user.getEmail());
         } catch (HectorException e) {
             logger.error("An error occured while inserting user", e);
             return false;
@@ -111,8 +109,7 @@ public class UserDAOCassandraImpl implements UserDAO{
 			return user;
 		}
 		else{
-			logger.debug("fetching userId=" + userId
-					+ " is impossible, not in db");
+			logger.debug("fetching userId={} is impossible, not in db", userId);
 			return null;
 		}
 	}
@@ -125,9 +122,7 @@ public class UserDAOCassandraImpl implements UserDAO{
 	@Override
 	public void insertAnswer(Answer answer) {
 
-		logger.debug("insertAnswwer ("+answer.getAnswerNumber()+","+
-											 answer.getQuestionNumber()+","+
-											 answer.getUserId()+")");
+		logger.debug("insertAnswer ({}, {}, {})", new Object[] {answer.getAnswerNumber(), answer.getQuestionNumber(), answer.getUserId()});
 		try{
 			Mutator<String> mutator = HFactory.createMutator(keyspace, ss);
 	
@@ -137,8 +132,7 @@ public class UserDAOCassandraImpl implements UserDAO{
 			mutator.addInsertion(answer.getUserId(), "Answers",HFactory.createSuperColumn(UUID.randomUUID().toString(), columnList, ss, ss, bbs));
 			
 			mutator.execute();  
-			logger.debug("answer inserted, "
-					+ ToStringBuilder.reflectionToString(answer));
+			logger.debug("answer inserted, {}", answer);
 			
 		} catch (HectorException e) {
             logger.error("An error occured while inserting answer", e);  
@@ -193,12 +187,11 @@ public class UserDAOCassandraImpl implements UserDAO{
 	        	mutator.addInsertion(userID, usersColumnFamily, 
 	        						 HFactory.createColumn(isLoggedColumn, bs.toByteBuffer(Boolean.TRUE), ss, bbs));	
 	        	mutator.execute();  
-	        	logger.debug("login sucessful for " + email + "/" + password
-						+ "->userId=" + userID);       	
+	        	logger.debug("login sucessful for {}/{}->userId={}", new Object[] {email, password, userID});       	
 	        	return userID;
 			}
 		}
-		logger.debug("login failed for " + email + "/" + password);
+		logger.debug("login failed for {}/{}", email, password);
 		return null;
 	}
 
@@ -218,7 +211,7 @@ public class UserDAOCassandraImpl implements UserDAO{
         	mutator.addInsertion(userId, usersColumnFamily, 
         						 HFactory.createColumn(isLoggedColumn, bs.toByteBuffer(Boolean.FALSE), ss, bbs));	
         	mutator.execute();  
-        	logger.debug("User "+userId+" successfully logout");
+        	logger.debug("User {} successfully logout", userId);
 		}
 	}
 
