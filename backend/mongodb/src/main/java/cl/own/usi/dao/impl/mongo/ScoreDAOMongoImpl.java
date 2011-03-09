@@ -97,7 +97,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		List<User> users = getUsers(query, querySubset, limit);
 
-		logger.debug("get the {} " + limit + " users before {} : {} ", new Object[] {limit, user.getUserId(), users});
+		logger.debug("get the {} users before {} : {} ", new Object[] {limit, user.getUserId(), users});
 
 		return users;
 	}
@@ -116,7 +116,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		List<User> users = getUsers(query, querySubset, limit);
 
-		logger.debug("get the {} " + limit + " users after {} : {} ", new Object[] {limit, user.getUserId(), users});
+		logger.debug("get the {} users after {} : {} ", new Object[] {limit, user.getUserId(), users});
 
 		return users;
 	}
