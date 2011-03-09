@@ -5,10 +5,7 @@
      http://www.springframework.org/schema/context
      http://www.springframework.org/schema/context/spring-context-3.0.xsd">
 	<context:annotation-config />
-	
-	<bean class="cl.own.usi.service.impl.ScoreServiceImpl"/>
-	<bean class="cl.own.usi.service.impl.UserServiceImpl"/>
-	
-	<context:component-scan base-package="cl.own.usi.worker" />
+		
+	<context:component-scan base-package="cl.own.usi.dao.impl.cassandra" />
 	
 </beans>

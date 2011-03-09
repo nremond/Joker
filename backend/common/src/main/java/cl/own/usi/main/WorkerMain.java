@@ -20,6 +20,7 @@ public class WorkerMain {
 
 		final String[] springContextFile = new String[] {
 				"classpath*:spring/workerApplication.xml",
+				"classpath*:spring/dao.xml",
 				"classpath*:spring/jgroupsConfig.xml" };
 		LOGGER.info("Starting up Worker...");
 

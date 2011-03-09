@@ -16,6 +16,7 @@
 	<modules>
 		<module>interface</module>
 		<module>common</module>
+		<module>memory</module>
 		<module>mongodb</module>
 		<module>cassandra</module>
 	</modules>
