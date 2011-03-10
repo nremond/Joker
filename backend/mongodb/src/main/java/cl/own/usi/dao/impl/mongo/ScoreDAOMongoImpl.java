@@ -1,5 +1,6 @@
 package cl.own.usi.dao.impl.mongo;
 
+import static cl.own.usi.dao.impl.mongo.DaoHelper.bonusField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.emailField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.scoreField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
@@ -48,7 +49,9 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		DBObject dbUser = dbUsers.findAndModify(dbUserId, dbSetScore);
 
-		logger.debug("update score of user: {} to: {} actual score set in DB: {}", new Object[] {userIdField, newScore, dbUser.get(scoreField)});
+		logger.debug(
+				"update score of user: {} to: {} actual score set in DB: {}",
+				new Object[] { userIdField, newScore, dbUser.get(scoreField) });
 	}
 
 	private List<User> getUsers(DBObject query, DBObject querySubset,
@@ -97,7 +100,8 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		List<User> users = getUsers(query, querySubset, limit);
 
-		logger.debug("get the {} users before {} : {} ", new Object[] {limit, user.getUserId(), users});
+		logger.debug("get the {} users before {} : {} ", new Object[] { limit,
+				user.getUserId(), users });
 
 		return users;
 	}
@@ -116,21 +120,38 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		List<User> users = getUsers(query, querySubset, limit);
 
-		logger.debug("get the {} users after {} : {} ", new Object[] {limit, user.getUserId(), users});
+		logger.debug("get the {} users after {} : {} ", new Object[] { limit,
+				user.getUserId(), users });
 
 		return users;
 	}
 
 	@Override
 	public int getUserBonus(User user) {
-		// TODO Auto-generated method stub
-		return 0;
+
+		DBCollection dbUsers = db.getCollection(usersCollection);
+
+		DBObject dbId = new BasicDBObject();
+		dbId.put(userIdField, user.getUserId());
+
+		DBObject dbUser = dbUsers.findOne(dbId);
+		Integer bonus = (Integer) dbUser.get(bonusField);
+
+		return bonus == null ? 0 : bonus.intValue();
 	}
 
 	@Override
 	public void setUserBonus(User user, int newBonus) {
-		// TODO Auto-generated method stub
+		
+		DBCollection dbUsers = db.getCollection(usersCollection);
 
+		DBObject dbUser = new BasicDBObject();
+		dbUser.put(userIdField, user.getUserId());
+
+		DBObject dbBonus = new BasicDBObject();
+		dbBonus.put(bonusField, newBonus);
+
+		dbUsers.findAndModify(dbUser, dbBonus);
 	}
 
 	@Override
