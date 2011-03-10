@@ -1,5 +1,6 @@
 package cl.own.usi.dao.impl.mongo;
 
+import static cl.own.usi.dao.impl.mongo.DaoHelper.emailField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.scoreField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
@@ -31,7 +32,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 	// TODO is there more field to order by ? what if they have the same score ?
 	private static DBObject orderBy = new BasicDBObject()
-			.append(scoreField, -1);
+			.append(scoreField, -1).append(emailField, 1);
 
 	public void updateScore(User user, int newScore) {
 
@@ -47,8 +48,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		DBObject dbUser = dbUsers.findAndModify(dbUserId, dbSetScore);
 
-		logger.debug("update score of user:" + userIdField + "to :" + newScore
-				+ " actual score set in DB:" + dbUser.get(scoreField));
+		logger.debug("update score of user: {} to: {} actual score set in DB: {}", new Object[] {userIdField, newScore, dbUser.get(scoreField)});
 	}
 
 	private List<User> getUsers(DBObject query, DBObject querySubset,
@@ -78,16 +78,13 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		List<User> users = getUsers(query, querySubset, limit);
 
-		logger.debug("get the " + limit + " top scores : " + users);
+		logger.debug("get the {} top scores : {}", limit, users);
 
 		return users;
 	}
 
 	@Override
 	public List<User> getBefore(User user, int limit) {
-
-		// TODO do we mean > or >=
-
 		DBObject criteria = new BasicDBObject();
 		criteria.put("$gt", user.getScore());
 		DBObject query = new BasicDBObject();
@@ -100,19 +97,15 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		List<User> users = getUsers(query, querySubset, limit);
 
-		logger.debug("get the " + limit + " users before " + user.getUserId()
-				+ " :  " + users);
+		logger.debug("get the {} users before {} : {} ", new Object[] {limit, user.getUserId(), users});
 
 		return users;
 	}
 
 	@Override
 	public List<User> getAfter(User user, int limit) {
-
-		// TODO do we mean < or <=
-
 		DBObject criteria = new BasicDBObject();
-		criteria.put("$lte", user.getScore());
+		criteria.put("$lt", user.getScore());
 		DBObject query = new BasicDBObject();
 		query.put(scoreField, criteria);
 
@@ -123,8 +116,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		List<User> users = getUsers(query, querySubset, limit);
 
-		logger.debug("get the " + limit + " users after " + user.getUserId()
-				+ " :  " + users);
+		logger.debug("get the {} users after {} : {} ", new Object[] {limit, user.getUserId(), users});
 
 		return users;
 	}

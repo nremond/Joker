@@ -26,6 +26,21 @@
 		<level value="debug" />
 	</logger>
 
+	<logger name="org.jboss.netty">
+		<level value="info" />
+	</logger>
+
+	<logger name="org.springframework">
+		<level value="info" />
+	</logger>
+
+	<logger name="org.jgroups">
+		<level value="debug" />
+	</logger>
+	<logger name="org.jgroups.protocols.FD">
+		<level value="warn" />
+	</logger>
+
 	<root>
 		<level value="warn" />
 		<appender-ref ref="STDOUT" />

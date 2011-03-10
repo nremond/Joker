@@ -26,10 +26,17 @@
 				<updatePolicy>never</updatePolicy>
 			</releases>
 			<snapshots>
-				<enabled>true</enabled>
+				<enabled>false</enabled>
 				<updatePolicy>never</updatePolicy>
 			</snapshots>
 		</repository>
+		
+		<repository>
+			<id>maven.noisette</id>
+			<name>Noisette Custom repo</name>
+			<url>http://maven.noisette.ch/</url>
+		</repository>
+		
 	</repositories>
 
 	<pluginRepositories>
@@ -85,6 +92,12 @@
 				<artifactId>jackson-core-lgpl</artifactId>
 				<version>1.7.2</version>
 			</dependency>
+			
+			<dependency>
+				<groupId>org.jgroups</groupId>
+				<artifactId>jgroups</artifactId>
+				<version>2.12.0.CR4</version>
+			</dependency>
 
 			<!-- commons-logging sucks, scope it as provided to exclude it fully -->
 			<dependency>
@@ -96,6 +109,11 @@
 			<dependency>
 				<groupId>org.slf4j</groupId>
 				<artifactId>jcl-over-slf4j</artifactId>
+				<version>1.6.1</version>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>log4j-over-slf4j</artifactId>
 				<version>1.6.1</version>
 			</dependency>
 			<dependency>
@@ -163,11 +181,22 @@
 				<artifactId>libthrift</artifactId>
 				<version>0.5.0</version>
 			</dependency>
+			
+			<dependency>
+			  <groupId>com.google.guava</groupId>
+			  <artifactId>guava</artifactId>
+			  <version>r08</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
 	<dependencies>
 		<!-- inherited deps are available in all child modules -->
+		<dependency>
+		  <groupId>com.google.guava</groupId>
+		  <artifactId>guava</artifactId>
+		</dependency>
+		
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
@@ -198,6 +227,7 @@
 						<target>1.6</target>
 					</configuration>
 				</plugin>
+				
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-eclipse-plugin</artifactId>
@@ -212,6 +242,12 @@
 					<groupId>org.apache.thrift.tools</groupId>
 					<artifactId>maven-thrift-plugin</artifactId>
 					<version>0.1.10</version>
+				</plugin>
+				
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-shade-plugin</artifactId>
+					<version>1.4</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>

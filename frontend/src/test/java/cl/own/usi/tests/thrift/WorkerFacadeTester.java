@@ -12,7 +12,12 @@ import org.slf4j.LoggerFactory;
 
 import cl.own.usi.thrift.WorkerRPC.Client;
 
-
+/**
+ * Thrift test class.
+ * 
+ * @author bperroud
+ *
+ */
 public class WorkerFacadeTester {
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass());

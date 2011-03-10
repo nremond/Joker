@@ -111,8 +111,8 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 			} else {
 				writeResponse(e, NOT_FOUND);
 			}
-		} catch (Throwable t) {
-			logger.warn("Error", t);
+		} catch (Exception ex) {
+			logger.warn("Exception thrown", ex);
 			writeResponse(e, INTERNAL_SERVER_ERROR);
 		}
 	}

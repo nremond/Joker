@@ -6,7 +6,7 @@ HOST="localhost"
 NBUSERS=10
 QUESTIONTIMELIMIT=60
 
-curl "http://${HOST}:${PORT}/api/join/localhost/7911";
+#curl "http://${HOST}:${PORT}/api/join/localhost/7911";
 
 # Create a game with 3 questions
 curl -X POST -d "{ \"questions\" : [ { \"goodchoice\" : 1, \"label\" : \"Question1\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\", \"choix5\", \"choix6\", \"choix7\", \"choix8\", \"choix9\", \"choix10\" ] }, { \"goodchoice\" : 2, \"label\" : \"Question2\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\", \"choix5\", \"choix6\", \"choix7\", \"choix8\", \"choix9\", \"choix10\" ] }, { \"goodchoice\" : 1, \"label\" : \"Question3\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\", \"choix5\", \"choix6\", \"choix7\", \"choix8\", \"choix9\", \"choix10\" ] } ], \"parameters\" : { \"longpollingduration\" : 600, \"nbusersthreshold\" : ${NBUSERS}, \"questiontimeframe\" : ${QUESTIONTIMELIMIT}, \"nbquestions\" : 3, \"flushusertable\" : true, \"trackeduseridmail\" : \"unused\" } }" "http://${HOST}:${PORT}/api/game"

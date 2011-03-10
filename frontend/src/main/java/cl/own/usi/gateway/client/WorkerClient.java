@@ -2,6 +2,12 @@ package cl.own.usi.gateway.client;
 
 import java.util.List;
 
+/**
+ * Client interface to interact with remote workers.
+ * 
+ * @author bperroud
+ *
+ */
 public interface WorkerClient {
 	
 	UserAndScore validateUserAndInsertQuestionRequest(String userId, int questionNumber);

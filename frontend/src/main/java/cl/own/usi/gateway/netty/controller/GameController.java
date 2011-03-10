@@ -22,8 +22,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import cl.own.usi.gateway.client.WorkerClient;
+import cl.own.usi.model.Game;
 import cl.own.usi.service.GameService;
 
+/**
+ * Controller that create the {@link Game}
+ * 
+ * @author bperroud
+ * @author nicolas
+ *
+ */
 @Component
 public class GameController extends AbstractController {
 

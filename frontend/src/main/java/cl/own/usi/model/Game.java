@@ -2,13 +2,19 @@ package cl.own.usi.model;
 
 import java.util.List;
 
+/**
+ * Game representation
+ * 
+ * @author bperroud
+ *
+ */
 public class Game {
 
-	int usersLimit;
-	int questionTimeLimit;
-	int pollingTimeLimit;
-	
-	List<Question> questions;
+	private int usersLimit;
+	private int questionTimeLimit;
+	private int pollingTimeLimit;
+
+	private List<Question> questions;
 
 	public int getUsersLimit() {
 		return usersLimit;
@@ -41,6 +47,5 @@ public class Game {
 	public void setQuestions(List<Question> questions) {
 		this.questions = questions;
 	}
-	
-	
+
 }

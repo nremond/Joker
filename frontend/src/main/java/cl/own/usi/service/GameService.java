@@ -8,6 +8,12 @@ import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
 import cl.own.usi.model.User;
 
+/**
+ * Game service.
+ * 
+ * @author bperroud
+ *
+ */
 public interface GameService {
 
 	/**

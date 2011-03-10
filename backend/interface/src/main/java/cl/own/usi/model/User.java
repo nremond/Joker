@@ -12,12 +12,12 @@ public class User implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	String userId;
-	String email;
-	String password;
-	String firstname;
-	String lastname;
-	int score = 0;
+	private String userId;
+	private String email;
+	private String password;
+	private String firstname;
+	private String lastname;
+	private int score = 0;
 
 	public String getUserId() {
 		return userId;

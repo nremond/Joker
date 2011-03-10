@@ -6,6 +6,14 @@ import java.util.concurrent.Executors;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
+import cl.own.usi.gateway.netty.QuestionWorker;
+
+/**
+ * Centralisation of {@link QuestionWorker} threads
+ * 
+ * @author bperroud
+ *
+ */
 @Component
 public class ExecutorUtil implements InitializingBean {
 

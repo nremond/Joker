@@ -23,8 +23,15 @@ import org.springframework.stereotype.Component;
 
 import cl.own.usi.gateway.client.WorkerClient;
 import cl.own.usi.json.LoginRequest;
+import cl.own.usi.model.User;
 import cl.own.usi.service.GameService;
 
+/**
+ * Controller that authenticate the {@link User}
+ * 
+ * @author bperroud
+ * @author nicolas
+ */
 @Component
 public class LoginController extends AbstractController {
 

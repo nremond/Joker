@@ -1,56 +1,86 @@
 package cl.own.usi.worker.thrift.impl;
 
+import java.io.Serializable;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TBinaryProtocol.Factory;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import cl.own.usi.jgroups.DefaultNotificationBusAwareConsumer;
 import cl.own.usi.model.User;
+import cl.own.usi.network.InetAddressHelper;
 import cl.own.usi.service.ScoreService;
 import cl.own.usi.service.UserService;
-import cl.own.usi.thrift.*;
+import cl.own.usi.thrift.UserAndScore;
+import cl.own.usi.thrift.UserInfoAndScore;
+import cl.own.usi.thrift.WorkerRPC;
+import cl.own.usi.worker.WorkerState;
 
 @Component
-public class WorkerFacadeThriftImpl implements WorkerRPC.Iface, InitializingBean {
+public class WorkerFacadeThriftImpl extends DefaultNotificationBusAwareConsumer
+		implements WorkerRPC.Iface, InitializingBean {
 
 	@Autowired
-	private	UserService userService;
+	private UserService userService;
 
 	@Autowired
 	private ScoreService scoreService;
 
 	private int port = 7911;
 
+	private WorkerFacadeThriftThread thriftThread;
+
+	private static final Logger LOGGER = LoggerFactory
+			.getLogger(WorkerFacadeThriftImpl.class);
+
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		try {
-			TServerSocket serverTransport = new TServerSocket(getPort());
-			WorkerRPC.Processor processor =
-				new WorkerRPC.Processor(this);
-			org.apache.thrift.protocol.TBinaryProtocol.Factory protFactory = new TBinaryProtocol.Factory(
-					true, true);
+			final TServerSocket serverTransport = new TServerSocket(port);
+			final WorkerRPC.Processor processor = new WorkerRPC.Processor(this);
+			final Factory protFactory = new TBinaryProtocol.Factory(true, true);
 
-			TServer server = new TThreadPoolServer(processor, serverTransport, protFactory);
-			server.serve();
+			final TServer server = new TThreadPoolServer(processor,
+					serverTransport, protFactory);
+
+			thriftThread = new WorkerFacadeThriftThread(server);
+			thriftThread.start();
+
 		} catch (TTransportException e) {
-			e.printStackTrace();
+			LOGGER.warn("Transport exception caught", e);
 		}
 	}
 
-	public int getPort() {
-		return port;
+	public void setPort(final int port) {
+		this.port = port;
 	}
 
-	public void setPort(int port) {
-		this.port = port;
+	/**
+	 * Return the current worker state requested through JGroups message.
+	 */
+	@Override
+	public Serializable getCache() {
+		LOGGER.debug("Get cache requested");
+
+		final InetAddress localAddress = InetAddressHelper.getCurrentIP();
+
+		if (thriftThread == null || !thriftThread.isServing()) {
+			return new WorkerState(localAddress, port, false);
+		} else {
+			return new WorkerState(localAddress, port, true);
+		}
 	}
 
 	@Override
@@ -80,7 +110,8 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface, InitializingBean
 		if (user != null) {
 			userAndScore.userId = userId;
 			userService.insertAnswer(userId, questionNumber, answer);
-			userAndScore.score = scoreService.updateScore(questionNumber, questionValue, user, answerCorrect);
+			userAndScore.score = scoreService.updateScore(questionNumber,
+					questionValue, user, answerCorrect);
 		}
 
 		return userAndScore;
@@ -123,11 +154,12 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface, InitializingBean
 	}
 
 	@Override
-	public List<cl.own.usi.thrift.UserInfoAndScore> getTop100() throws TException {
+	public List<UserInfoAndScore> getTop100() throws TException {
 
 		List<User> users = scoreService.getTop100();
 
-		List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(users.size());
+		List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(
+				users.size());
 		for (User user : users) {
 			retUsers.add(map(user));
 		}
@@ -142,7 +174,8 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface, InitializingBean
 		if (theUser != null) {
 			List<User> users = scoreService.get50Before(theUser);
 
-			List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(users.size());
+			List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(
+					users.size());
 			for (User user : users) {
 				retUsers.add(map(user));
 			}
@@ -160,7 +193,8 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface, InitializingBean
 		if (theUser != null) {
 			List<User> users = scoreService.get50After(theUser);
 
-			List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(users.size());
+			List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(
+					users.size());
 			for (User user : users) {
 				retUsers.add(map(user));
 			}

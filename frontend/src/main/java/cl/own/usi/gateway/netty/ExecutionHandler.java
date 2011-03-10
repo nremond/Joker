@@ -11,6 +11,12 @@ import org.jboss.netty.handler.execution.ChannelEventRunnable;
 import org.jboss.netty.util.ExternalResourceReleasable;
 import org.jboss.netty.util.internal.ExecutorUtil;
 
+/**
+ * Custom execution handler that only forward MessageEvent to the handlers.
+ * 
+ * @author bperroud
+ *
+ */
 public class ExecutionHandler implements ChannelUpstreamHandler,
 		ExternalResourceReleasable {
 
@@ -33,11 +39,8 @@ public class ExecutionHandler implements ChannelUpstreamHandler,
 
 	public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e)
 			throws Exception {
-		
 		if (e instanceof MessageEvent) {
 			executor.execute(new ChannelEventRunnable(ctx, e));
 		}
-		
 	}
-
 }

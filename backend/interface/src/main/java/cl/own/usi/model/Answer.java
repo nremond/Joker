@@ -4,9 +4,9 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 
 public class Answer {
 
-	String userId;
-	int questionNumber;
-	int answerNumber = -1;
+	private String userId;
+	private int questionNumber;
+	private int answerNumber = -1;
 
 	public String getUserId() {
 		return userId;

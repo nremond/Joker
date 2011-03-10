@@ -7,14 +7,28 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+/**
+ * Main class for the gateway.
+ * 
+ * Run it !!
+ * 
+ * @author bperroud
+ *
+ */
 public class GatewayMain {
 
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(GatewayMain.class);
 
+	private GatewayMain() {
+		// no need for a constructor
+	}
+
 	public static void main(String[] args) {
 
-		final String springContextFile = "classpath*:gatewayApplication.xml";
+		final String[] springContextFile = new String[] {
+				"classpath*:spring/gatewayApplication.xml",
+				"classpath*:spring/jgroupsConfig.xml" };
 
 		LOGGER.info("Starting up Gateway...");
 

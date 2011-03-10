@@ -36,11 +36,7 @@ public class UserDAOImpl implements UserDAO {
 		user.setUserId(generateUserId(user));
 		User oldUser = users.putIfAbsent(user.getEmail(), user);
 
-		if (oldUser != null) {
-			return false;
-		} else {
-			return true;
-		}
+		return oldUser == null;
 	}
 
 	public User getUserById(String userId) {

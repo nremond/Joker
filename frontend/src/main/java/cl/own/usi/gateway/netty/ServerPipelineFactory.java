@@ -14,6 +14,15 @@ import org.springframework.stereotype.Component;
 
 import static org.jboss.netty.channel.Channels.*;
 
+/**
+ * Netty pipeline.
+ * 
+ * Upstream pipeline decodes the message, send it to an execution worker and handle it. 
+ * Downstream pipeline reencode the message.
+ * 
+ * @author bperroud
+ *
+ */
 @Component
 public class ServerPipelineFactory implements ChannelPipelineFactory, InitializingBean {
 
