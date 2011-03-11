@@ -30,6 +30,7 @@ import cl.own.usi.gateway.netty.controller.UserController;
 /**
  * No inversion of control ... but it may be enough for use.
  * 
+ * @author bperroud
  * @author nicolas
  */
 @Component

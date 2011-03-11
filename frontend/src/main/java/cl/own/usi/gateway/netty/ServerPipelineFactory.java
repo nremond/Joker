@@ -6,6 +6,7 @@ import java.util.concurrent.Executors;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.ChannelUpstreamHandler;
+import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.springframework.beans.factory.InitializingBean;
@@ -55,7 +56,7 @@ public class ServerPipelineFactory implements ChannelPipelineFactory, Initializi
 
 		pipeline.addLast("decoder", new HttpRequestDecoder());
 		// Uncomment the following line if you don't want to handle HttpChunks.
-//		pipeline.addLast("aggregator", new HttpChunkAggregator(1048576));
+		pipeline.addLast("aggregator", new HttpChunkAggregator(1048576));
 		pipeline.addLast("encoder", new HttpResponseEncoder());
 		// Remove the following line if you don't want automatic content
 		// compression.
