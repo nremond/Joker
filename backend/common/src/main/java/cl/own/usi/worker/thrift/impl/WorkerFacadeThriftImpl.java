@@ -27,10 +27,11 @@ import cl.own.usi.thrift.UserAndScore;
 import cl.own.usi.thrift.UserInfoAndScore;
 import cl.own.usi.thrift.WorkerRPC;
 import cl.own.usi.worker.WorkerState;
+import cl.own.usi.worker.management.NetworkReachable;
 
 @Component
 public class WorkerFacadeThriftImpl extends DefaultNotificationBusAwareConsumer
-		implements WorkerRPC.Iface, InitializingBean {
+		implements WorkerRPC.Iface, InitializingBean, NetworkReachable {
 
 	@Autowired
 	private UserService userService;
@@ -47,6 +48,7 @@ public class WorkerFacadeThriftImpl extends DefaultNotificationBusAwareConsumer
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
+		 
 		try {
 			final TServerSocket serverTransport = new TServerSocket(port);
 			final WorkerRPC.Processor processor = new WorkerRPC.Processor(this);
@@ -67,14 +69,14 @@ public class WorkerFacadeThriftImpl extends DefaultNotificationBusAwareConsumer
 		this.port = port;
 	}
 
+	InetAddress localAddress = InetAddressHelper.getCurrentIP();
+	
 	/**
 	 * Return the current worker state requested through JGroups message.
 	 */
 	@Override
 	public Serializable getCache() {
 		LOGGER.debug("Get cache requested");
-
-		final InetAddress localAddress = InetAddressHelper.getCurrentIP();
 
 		if (thriftThread == null || !thriftThread.isServing()) {
 			return new WorkerState(localAddress, port, false);
@@ -212,6 +214,16 @@ public class WorkerFacadeThriftImpl extends DefaultNotificationBusAwareConsumer
 		userInfoAndScore.score = user.getScore();
 		userInfoAndScore.userId = null;
 		return userInfoAndScore;
+	}
+
+	@Override
+	public String getHost() {
+		return localAddress.getHostAddress();
+	}
+
+	@Override
+	public int getPort() {
+		return port;
 	}
 
 }

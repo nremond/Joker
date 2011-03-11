@@ -1,5 +1,6 @@
 package cl.own.usi.network;
 
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
@@ -44,7 +45,7 @@ public class InetAddressHelper {
 				final List<InterfaceAddress> interfaceAddresses = netint
 						.getInterfaceAddresses();
 				for (InterfaceAddress interfaceAddress : interfaceAddresses) {
-					if (!interfaceAddress.getAddress().isLoopbackAddress()) {
+					if (!interfaceAddress.getAddress().isLoopbackAddress() && interfaceAddress.getAddress() instanceof Inet4Address) {
 						return interfaceAddress.getAddress();
 					}
 				}
