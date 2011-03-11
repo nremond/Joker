@@ -22,7 +22,7 @@ public class GatewayNotificationThread implements Runnable, InitializingBean {
 	private int initialDelay = 2;
 	private int period = 30;
 	private String gatewayHost = "localhost";
-	private int gatewayPort = 80;
+	private int gatewayPort = 9080;
 	
 	private String workerHost;
 	private int workerPort = 7911;
