@@ -1,12 +1,5 @@
 package cl.own.usi.dao.impl.mongo;
 
-import static cl.own.usi.dao.impl.mongo.DaoHelper.emailField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.firstnameField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.isLoggedField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.lastnameField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.passwordField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.scoreField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
 import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
 
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -14,10 +7,10 @@ import org.jboss.netty.handler.codec.base64.Base64;
 import org.jboss.netty.handler.codec.base64.Base64Dialect;
 import org.jboss.netty.util.CharsetUtil;
 
+import cl.own.usi.model.User;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
-
-import cl.own.usi.model.User;
 
 public class DaoHelper {
 
@@ -31,7 +24,8 @@ public class DaoHelper {
 	public static String answersField = "answers";
 	public static String questionNumberField = "questionNumber";
 	public static String answerNumberField = "answerNumber";
-
+	public static String bonusField = "bonus";
+	
 	public static String usersCollection = "users";
 	
 	private static final String USER_ID_SALT = "123456";
