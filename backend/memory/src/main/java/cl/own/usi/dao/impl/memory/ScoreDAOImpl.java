@@ -44,10 +44,12 @@ public class ScoreDAOImpl implements ScoreDAO {
 		NavigableSet<User> usersBefore = rankedUsers.headSet(user, false);
 		int i = 0;
 		for (User userBefore : usersBefore) {
-			if (i++ < limit) {
-				users.add(userBefore);
-			} else {
-				break;
+			if (userBefore.getScore() > user.getScore()) {
+				if (i < limit) {
+					users.add(userBefore);
+				} else {
+					break;
+				}
 			}
 		}
 		return users;
@@ -58,10 +60,12 @@ public class ScoreDAOImpl implements ScoreDAO {
 		NavigableSet<User> usersAfter = rankedUsers.tailSet(user, false);
 		int i = 0;
 		for (User userAfter : usersAfter) {
-			if (i++ < limit) {
-				users.add(userAfter);
-			} else {
-				break;
+			if (userAfter.getScore() < user.getScore()) {
+				if (i++ < limit) {
+					users.add(userAfter);
+				} else {
+					break;
+				}
 			}
 		}
 		return users;
