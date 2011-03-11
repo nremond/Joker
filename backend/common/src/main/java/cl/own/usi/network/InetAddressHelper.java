@@ -45,7 +45,7 @@ public class InetAddressHelper {
 				final List<InterfaceAddress> interfaceAddresses = netint
 						.getInterfaceAddresses();
 				for (InterfaceAddress interfaceAddress : interfaceAddresses) {
-					if (!interfaceAddress.getAddress().isLoopbackAddress() && interfaceAddress.getAddress() instanceof Inet4Address) {
+					if (!interfaceAddress.getAddress().isLoopbackAddress()) {
 						return interfaceAddress.getAddress();
 					}
 				}
