@@ -96,8 +96,15 @@ public class GameServiceImpl implements GameService {
 				question.setLabel(entry.getKey());
 				question.setChoices(new ArrayList<String>(entry.getValue()
 						.size()));
-				// TODO : get real question's value.
-				question.setValue(r.nextInt(50));
+				int value = 1;
+				if (number > 5 && number <= 10) {
+					value = 5;
+				} else if (number > 10 && number <= 15) {
+					value = 10;
+				} else if (number > 15) {
+					value = 15;
+				}
+				question.setValue(value);
 				int i = 1;
 				for (Map.Entry<String, Boolean> answer : entry.getValue()
 						.entrySet()) {

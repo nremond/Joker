@@ -7,6 +7,8 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_IMPLEMEN
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +23,8 @@ import cl.own.usi.gateway.client.WorkerClient;
 @Component
 public class AddWorkerNodeController extends AbstractController {
 
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
+
 	@Autowired
 	private WorkerClient workerClient;
 	
@@ -34,6 +38,7 @@ public class AddWorkerNodeController extends AbstractController {
 			String host = splits[3];
 			int port = Integer.parseInt(splits[4]);
 			workerClient.addWorkerNode(host, port);
+			logger.debug("New worker join the cluster {}:{}", host, port);
 			writeResponse(e, CREATED);
 		} else {
 			writeResponse(e, NOT_IMPLEMENTED);
