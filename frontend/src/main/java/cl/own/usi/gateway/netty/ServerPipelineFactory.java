@@ -56,7 +56,7 @@ public class ServerPipelineFactory implements ChannelPipelineFactory, Initializi
 
 		pipeline.addLast("decoder", new HttpRequestDecoder());
 		// Uncomment the following line if you don't want to handle HttpChunks.
-		pipeline.addLast("aggregator", new HttpChunkAggregator(1048576));
+		pipeline.addLast("aggregator", new HttpChunkAggregator(4096));
 		pipeline.addLast("encoder", new HttpResponseEncoder());
 		// Remove the following line if you don't want automatic content
 		// compression.
