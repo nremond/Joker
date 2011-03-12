@@ -17,7 +17,8 @@ public interface GameDAO {
 	 * @return The freshly created game
 	 */
 	Game insertGame(int usersLimit, int questionTimeLimit,
-			int pollingTimeLimit, List<Question> questions);
+			int pollingTimeLimit, int synchroTimeLimit, 
+			int numberOfQuestion, List<Question> questions);
 
 	/**
 	 * When a game is created by a node, a new game is persisted. So all nodes

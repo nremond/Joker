@@ -44,18 +44,19 @@ public class GameServiceImpl implements GameService {
 	@Autowired
 	private GameDAO gameDAO;
 
-	final ExecutorService executorService = Executors.newFixedThreadPool(2);
+	final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
 	private GameSynchronization gameSynchronization;
 
 	public boolean insertGame(int usersLimit, int questionTimeLimit,
-			int pollingTimeLimit,
+			int pollingTimeLimit, int synchroTimeLimit, int numberOfQuestion, 
 			List<Map<String, Map<String, Boolean>>> questions) {
 
 		resetPreviousGame();
 
 		Game game = gameDAO.insertGame(usersLimit, questionTimeLimit,
-				pollingTimeLimit, mapToQuestion(questions));
+				pollingTimeLimit, synchroTimeLimit, numberOfQuestion, 
+				mapToQuestion(questions));
 
 		gameSynchronization = new GameSynchronization(game);
 
@@ -146,6 +147,7 @@ public class GameServiceImpl implements GameService {
 	public boolean enterGame(String userId) {
 		if (gameSynchronization != null) {
 			gameSynchronization.enoughUsersLatch.countDown();
+			gameSynchronization.waitForFirstLogin.countDown();
 			return true;
 		} else {
 			return false;
@@ -163,17 +165,34 @@ public class GameServiceImpl implements GameService {
 		public void run() {
 
 			LOGGER.debug("Start game");
+
 			try {
-				LOGGER.debug("Wait on all users");
-				gameSynchronization.enoughUsersLatch.await();
-				LOGGER.debug("Enough users have joined the game");
+				LOGGER.debug("Wait for first login");
+				gameSynchronization.waitForFirstLogin.await();
+				LOGGER.debug("First user have joined the game");
 			} catch (InterruptedException e) {
 				LOGGER.warn("Interrupted", e);
+				return;
 			}
+			
 
+			try {
+				LOGGER.debug("Wait on all users");
+				boolean awaited = gameSynchronization.enoughUsersLatch.await(gameSynchronization.game.getPollingTimeLimit(), TimeUnit.SECONDS);
+				if (awaited) {
+					LOGGER.debug("Enough users have joined the game");
+				} else {
+					LOGGER.debug("Waiting time is ellapsed, starting anyway");
+				}
+			} catch (InterruptedException e) {
+				LOGGER.warn("Interrupted", e);
+				return;
+			}
+			
 			boolean first = true;
-
-			for (int i = 1; i <= gameSynchronization.game.getQuestions().size(); i++) {
+			
+			
+			for (int i = 1; i <= gameSynchronization.game.getNumberOfQuestion(); i++) {
 
 				LOGGER.info(
 						"Starting question {}. Response question number {}", i,
@@ -216,6 +235,7 @@ public class GameServiceImpl implements GameService {
 
 				} catch (InterruptedException e) {
 					LOGGER.warn("Interrupted", e);
+					return;
 				}
 
 				LOGGER.info("Question {} finished, going to the next question",
@@ -254,10 +274,13 @@ public class GameServiceImpl implements GameService {
 
 	private class GameSynchronization {
 
+		private final CountDownLatch waitForFirstLogin;
+
 		private final CountDownLatch enoughUsersLatch;
 
 		private final Map<Question, QuestionSynchronization> questionSynchronizations;
 
+		volatile int currentQuestionToRequest = 1;
 		volatile int currentQuestionToAnswer = 1;
 
 		private final Game game;
@@ -275,18 +298,14 @@ public class GameServiceImpl implements GameService {
 			}
 
 			enoughUsersLatch = new CountDownLatch(game.getUsersLimit());
+			waitForFirstLogin = new CountDownLatch(1);
 		}
-
-		// QuestionSynchronization getCurrentQuestionSynchronization() {
-		// return
-		// questionSynchronizations.get(game.getQuestions().get(currentQuestionToAnswer
-		// - 1));
-		// }
 
 		QuestionSynchronization getQuestionSynchronization(int questionNumber) {
 			return questionSynchronizations.get(game.getQuestions().get(
 					questionNumber - 1));
 		}
+		
 	}
 
 	private static class QuestionSynchronization {

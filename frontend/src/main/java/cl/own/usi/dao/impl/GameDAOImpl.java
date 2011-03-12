@@ -21,14 +21,16 @@ public class GameDAOImpl implements GameDAO {
 	private Game game;
 
 	public Game insertGame(int usersLimit, int questionTimeLimit,
-			int pollingTimeLimit, List<Question> questions) {
+			int pollingTimeLimit, int synchroTimeLimit, int numberOfQuestion, List<Question> questions) {
 
 		game = new Game();
 
 		game.setUsersLimit(usersLimit);
 		game.setQuestionTimeLimit(questionTimeLimit);
 		game.setPollingTimeLimit(pollingTimeLimit);
-
+		game.setSynchroTimeLimit(synchroTimeLimit);
+		game.setNumberOfQuestion(numberOfQuestion);
+		
 		game.setQuestions(new ArrayList<Question>(questions));
 
 		return game;

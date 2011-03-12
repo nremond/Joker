@@ -13,6 +13,8 @@ public class Game {
 	private int usersLimit;
 	private int questionTimeLimit;
 	private int pollingTimeLimit;
+	private int synchroTimeLimit;
+	private int numberOfQuestion = 20;
 
 	private List<Question> questions;
 
@@ -46,6 +48,22 @@ public class Game {
 
 	public void setQuestions(List<Question> questions) {
 		this.questions = questions;
+	}
+
+	public int getSynchroTimeLimit() {
+		return synchroTimeLimit;
+	}
+
+	public void setSynchroTimeLimit(int synchroTimeLimit) {
+		this.synchroTimeLimit = synchroTimeLimit;
+	}
+
+	public int getNumberOfQuestion() {
+		return numberOfQuestion;
+	}
+
+	public void setNumberOfQuestion(int numberOfQuestion) {
+		this.numberOfQuestion = numberOfQuestion;
 	}
 
 }

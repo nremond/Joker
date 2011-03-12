@@ -23,11 +23,13 @@ public interface GameService {
 	 * @param usersLimit
 	 * @param questionTimeLimit
 	 * @param pollingTimeLimit
+	 * @param synchroTimeLimit
+	 * @param numberOfQuestion
 	 * @param questions
 	 * @return
 	 */
 	boolean insertGame(int usersLimit, int questionTimeLimit,
-			int pollingTimeLimit,
+			int pollingTimeLimit, int synchroTimeLimit, int numberOfQuestion, 
 			List<Map<String, Map<String, Boolean>>> questions);
 
 	/**
