@@ -14,6 +14,7 @@ import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -29,9 +30,15 @@ import cl.own.usi.thrift.WorkerRPC;
 import cl.own.usi.worker.WorkerState;
 import cl.own.usi.worker.management.NetworkReachable;
 
+/**
+ * Server-side implementation of the Thrift interface.
+ * 
+ * @author bperroud
+ *
+ */
 @Component
 public class WorkerFacadeThriftImpl extends DefaultNotificationBusAwareConsumer
-		implements WorkerRPC.Iface, InitializingBean, NetworkReachable {
+		implements WorkerRPC.Iface, InitializingBean, NetworkReachable, DisposableBean {
 
 	@Autowired
 	private UserService userService;
@@ -224,6 +231,14 @@ public class WorkerFacadeThriftImpl extends DefaultNotificationBusAwareConsumer
 	@Override
 	public int getPort() {
 		return port;
+	}
+
+	@Override
+	public void destroy() throws Exception {
+		
+		if (thriftThread != null) {
+			thriftThread.requestShutdown();
+		}
 	}
 
 }

@@ -28,5 +28,10 @@ public class WorkerFacadeThriftThread extends Thread {
 			serving = false;
 		}
 	}
+	
+	public void requestShutdown() {
+		server.stop();
+		serving = false;
+	}
 
 }
