@@ -37,8 +37,12 @@ public class AddWorkerNodeController extends AbstractController {
 		if (splits.length == 5) {
 			String host = splits[3];
 			int port = Integer.parseInt(splits[4]);
-			workerClient.addWorkerNode(host, port);
-			logger.debug("New worker join the cluster {}:{}", host, port);
+			boolean added = workerClient.addWorkerNode(host, port);
+			if (added) {
+				logger.debug("New worker join the cluster {}:{}", host, port);
+			} else {
+				logger.debug("Worker still alive {}:{}", host, port);
+			}
 			writeResponse(e, CREATED);
 		} else {
 			writeResponse(e, NOT_IMPLEMENTED);
