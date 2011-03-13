@@ -7,5 +7,6 @@
 	<context:annotation-config />
 		
 	<context:component-scan base-package="cl.own.usi.dao.impl.cassandra" />
+	<context:component-scan base-package="cl.own.usi.dao.impl.hazelcast" />
 	
 </beans>

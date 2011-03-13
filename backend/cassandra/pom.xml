@@ -61,5 +61,12 @@
 			<artifactId>hector-core</artifactId>
 			<version>0.7.0-27</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>com.hazelcast</groupId>
+			<artifactId>hazelcast</artifactId>
+			<version>1.9.2</version>
+		</dependency>
+
 	</dependencies>
 </project>

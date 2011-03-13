@@ -24,10 +24,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import cl.own.usi.dao.ScoreDAO;
+import cl.own.usi.dao.Top100ScoreDAO;
 import cl.own.usi.model.User;
 
 @Repository
-public class ScoreDAOCassandraImpl implements ScoreDAO{
+public class ScoreDAOCassandraImpl implements ScoreDAO {
 
 	@Autowired
 	Cluster cluster;
@@ -35,12 +36,16 @@ public class ScoreDAOCassandraImpl implements ScoreDAO{
 	@Autowired
 	Keyspace keyspace;
 	
+	@Autowired
+	Top100ScoreDAO top100ScoreDAO;
+	
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	final static StringSerializer ss = StringSerializer.get();
 	final static ByteBufferSerializer bbs = ByteBufferSerializer.get();
 	final static IntegerSerializer is = IntegerSerializer.get();
 	final static BooleanSerializer bs = BooleanSerializer.get();
+	
 	
 	@Override
 	public void updateScore(User user, int newScore) {
@@ -63,12 +68,13 @@ public class ScoreDAOCassandraImpl implements ScoreDAO{
 		else{
 			logger.debug("User {} was not found in DB", user.getEmail());
 		}
+		
+		top100ScoreDAO.setNewScore(user, newScore);
 	}
 
 	@Override
 	public List<User> getTop(int limit) {
-		// TODO Auto-generated method stub
-		return null;
+		return top100ScoreDAO.getTop100();
 	}
 	
 
@@ -98,8 +104,8 @@ public class ScoreDAOCassandraImpl implements ScoreDAO{
 
 	@Override
 	public void flushUsers() {
-		// TODO Auto-generated method stub
 		
+		top100ScoreDAO.flushUsers();
 	}
 
 }
