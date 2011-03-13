@@ -31,7 +31,7 @@ public class ScoreServiceImpl implements ScoreService {
 			scoreDAO.setUserBonus(user, 0);
 		}
 		scoreDAO.updateScore(user, newScore);
-		return user.getScore();
+		return newScore;
 	}
 
 	public List<User> getTop100() {
