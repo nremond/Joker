@@ -41,6 +41,6 @@ public interface WorkerClient {
 		public String lastname;
 	}
 	
-	void addWorkerNode(String host, int port);
+	boolean addWorkerNode(String host, int port);
 	
 }

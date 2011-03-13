@@ -72,7 +72,6 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		for (int i = 0; i < THRIFT_RETRY; i++) {
 			Client client = getClient();
 			try {
-				answer = gameService.validateAnswer(questionNumber, answer);
 				boolean answerCorrect = gameService.isAnswerCorrect(questionNumber, answer);
 				Question question = gameService.getQuestion(questionNumber);
 				cl.own.usi.thrift.UserAndScore userAndScore = client.validateUserAndInsertQuestionResponseAndUpdateScore(userId, questionNumber, question.getValue(), answer, answerCorrect);
@@ -278,9 +277,9 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		}
 	}
 	
-	public void addWorkerNode(String host, int port) {
+	public boolean addWorkerNode(String host, int port) {
 		WorkerHost wh = WorkerHost.create(host, port);
-		pools.addKey(wh);
+		return pools.addKey(wh);
 	}
 	
 	

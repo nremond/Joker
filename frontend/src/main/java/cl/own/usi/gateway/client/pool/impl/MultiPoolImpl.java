@@ -107,11 +107,14 @@ public abstract class MultiPoolImpl<K, V> implements MultiPool<K, V> {
 		}
 	}
 
-	public synchronized void addKey(K key) {
+	public synchronized boolean addKey(K key) {
 		if (!keys.contains(key)) {
 			keys.add(key);
 			pools.put(key, createPool(key));
 			errors.put(key, new AtomicInteger(0));
+			return true;
+		} else {
+			return false;
 		}
 	}
 
