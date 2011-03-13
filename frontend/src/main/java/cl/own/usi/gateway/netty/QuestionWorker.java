@@ -26,7 +26,6 @@ public class QuestionWorker implements Runnable {
 	private final int score;
 	private final MessageEvent e;
 	private final String questionFirstPart;
-	private final long timeAtCreation;
 
 	private GameService gameService;
 
@@ -36,7 +35,6 @@ public class QuestionWorker implements Runnable {
 		this.score = score;
 		this.e = e;
 		this.questionFirstPart = questionFirstPart;
-		this.timeAtCreation = System.currentTimeMillis();
 		this.gameService = gameService;
 	}
 
@@ -45,9 +43,8 @@ public class QuestionWorker implements Runnable {
 		StringBuilder sb = new StringBuilder(questionFirstPart);
 
 		try {
-			long alreadyWaitedMili = System.currentTimeMillis()
-					- timeAtCreation;
-			if (gameService.waitOtherUsers(questionNumber, alreadyWaitedMili)) {
+
+			if (gameService.waitOtherUsers(questionNumber)) {
 
 				sb.append(",\"score\":").append(score);
 				sb.append("}");

@@ -48,7 +48,7 @@ public interface GameService {
 	 * @return
 	 * @throws InterruptedException
 	 */
-	boolean waitOtherUsers(int questionNumber, long alreadyWaitedMili) throws InterruptedException;
+	boolean waitOtherUsers(int questionNumber) throws InterruptedException;
 
 	/**
 	 * Stipulate a {@link User} request the {@link Question}
@@ -70,10 +70,19 @@ public interface GameService {
 	 */
 	boolean userAnswer(int questionNumber);
 
+	/**
+	 * Async sending the question to the user
+	 * 
+	 * @param questionWorker
+	 */
 	void scheduleQuestionReply(QuestionWorker questionWorker);
 	
-	Integer validateAnswer(int questionNumber, Integer answer);
-	
+	/**
+	 * Validates the answer and tells if the answer is correct or not
+	 * @param questionNumber
+	 * @param answer
+	 * @return
+	 */
 	boolean isAnswerCorrect(int questionNumber, Integer answer);
 	
 }
