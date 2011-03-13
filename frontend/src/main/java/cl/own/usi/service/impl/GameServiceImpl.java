@@ -75,9 +75,6 @@ public class GameServiceImpl implements GameService {
 				QuestionSynchronization questionSynchronization = entry
 						.getValue();
 				questionSynchronization.questionReadyLatch.countDown();
-				for (int i = 0; i < oldGameSynchronization.game.getUsersLimit(); i++) {
-					questionSynchronization.allUsersAnswerLatch.countDown();
-				}
 				// TODO : remove thread from pool.
 			}
 		}
@@ -221,17 +218,11 @@ public class GameServiceImpl implements GameService {
 							"Wait to all users answer, or till the timeout {}",
 							gameSynchronization.game.getQuestionTimeLimit());
 
-					// Wait either all users answer the question, or the time
-					// limit
-					boolean reachedZero = questionSynchronization.allUsersAnswerLatch
-							.await(gameSynchronization.game
-									.getQuestionTimeLimit(), TimeUnit.SECONDS);
-					gameSynchronization.currentQuestionRunning = false;
-					if (reachedZero) {
-						LOGGER.debug("All users has answered, going to the next question.");
-					} else {
-						LOGGER.debug("Normal completion of the game, going further.");
-					}
+					// Wait the quest time limit
+					LOGGER.debug("Question wait time ...");
+					Thread.sleep(gameSynchronization.game
+							.getQuestionTimeLimit() * 1000);
+					LOGGER.debug("Question wait time ... done");
 
 					LOGGER.debug("Synchrotime ...");
 					// mmmh, weird specs...
@@ -318,29 +309,20 @@ public class GameServiceImpl implements GameService {
 	private static class QuestionSynchronization {
 
 		private final CountDownLatch questionReadyLatch;
-		private final CountDownLatch allUsersAnswerLatch;
 
 		private final Queue<Runnable> waitingQueue = new LinkedBlockingQueue<Runnable>();
 		private final Lock lock = new ReentrantLock();
 
 		public QuestionSynchronization(int userLimit) {
 			questionReadyLatch = new CountDownLatch(1);
-			allUsersAnswerLatch = new CountDownLatch(userLimit);
 		}
 
 	}
 
 	@Override
 	public boolean userAnswer(int questionNumber) {
-
-		QuestionSynchronization questionSynchronization = getQuestionSync(questionNumber);
-
-		if (questionSynchronization != null) {
-			questionSynchronization.allUsersAnswerLatch.countDown();
-			return true;
-		} else {
-			return false;
-		}
+		// void.
+		return true;
 	}
 
 	public void scheduleQuestionReply(QuestionWorker questionWorker) {
