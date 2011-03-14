@@ -106,7 +106,7 @@ public class AnswerController extends AbstractController {
 						}
 						sb.append(", \"good_answer\" : \""
 								+ question.getChoices().get(
-										question.getCorrectChoice())
+										question.getCorrectChoice() - 1)
 								+ "\", \"score\" : "
 								+ userAndScoreAndAnswer.score + "}");
 

@@ -26,7 +26,7 @@ do
 	(val=$i; curl -X POST -d "{ \"mail\" : \"$val\", \"password\" : \"$val\" }" -D $val.txt "http://${HOST}:${PORT}/api/login";
 	session=$(cat $val.txt | grep "Set-Cookie" | sed -e "s/^Set-Cookie: session_key=\(.*\)\$/\1/" | sed -e "s/\"//g");
 	j=1
-	while [[ $j -le 20 ]]
+	while [[ $j -le ${QUESTIONTIMELIMIT} ]]
 	do
 		curl -b "session_key=\"$session\"" "http://${HOST}:${PORT}/api/question/${j}";
 		#let "e = $RANDOM % ${QUESTIONTIMELIMIT} / 2"; sleep ${e};
