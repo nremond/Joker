@@ -9,9 +9,9 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  * Main class for the gateway.
- * 
+ *
  * Run it !!
- * 
+ *
  * @author bperroud
  *
  */
@@ -26,9 +26,7 @@ public class GatewayMain {
 
 	public static void main(String[] args) {
 
-		final String[] springContextFile = new String[] {
-				"classpath*:spring/gatewayApplication.xml",
-				"classpath*:spring/jgroupsConfig.xml" };
+		final String[] springContextFile = new String[] { "classpath*:spring/gatewayApplication.xml", };
 
 		LOGGER.info("Starting up Gateway...");
 

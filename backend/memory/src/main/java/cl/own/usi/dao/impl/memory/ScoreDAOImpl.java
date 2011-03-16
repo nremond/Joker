@@ -7,17 +7,23 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import cl.own.usi.dao.ScoreDAO;
+import cl.own.usi.dao.UserDAO;
 import cl.own.usi.model.User;
 
 @Repository
 public class ScoreDAOImpl implements ScoreDAO {
 
-	private ConcurrentSkipListSet<User> rankedUsers = new ConcurrentSkipListSet<User>(new User.UserComparator());
+	@Autowired
+	private UserDAO userDAO;
+
+	private ConcurrentSkipListSet<User> rankedUsers = new ConcurrentSkipListSet<User>(
+			new User.UserComparator());
 	private ConcurrentMap<User, Integer> userBonuses = new ConcurrentHashMap<User, Integer>();
-	
+
 	public void updateScore(User user, int newScore) {
 		if (rankedUsers.contains(user)) {
 			rankedUsers.remove(user);
@@ -71,7 +77,8 @@ public class ScoreDAOImpl implements ScoreDAO {
 		return users;
 	}
 
-	public int getUserBonus(User user) {
+	public int getUserBonus(String userId) {
+		User user = userDAO.getUserById(userId);
 		Integer bonus = userBonuses.get(user);
 		if (bonus == null) {
 			return 0;
@@ -80,14 +87,30 @@ public class ScoreDAOImpl implements ScoreDAO {
 		}
 	}
 
-	public void setUserBonus(User user, int newBonus) {
-		userBonuses.put(user, newBonus);
-	}
-
 	@Override
 	public void flushUsers() {
 		rankedUsers.clear();
 		userBonuses.clear();
+	}
+
+	@Override
+	public int setBadAnswer(String userId) {
+		User user = userDAO.getUserById(userId);
+		userBonuses.put(user, 0);
+		return user.getScore();
+	}
+
+	@Override
+	public int setGoodAnswer(String userId, int questionValue) {
+		User user = userDAO.getUserById(userId);
+		Integer bonus = userBonuses.get(user);
+		bonus = (bonus == null) ? 0 : bonus;
+
+		userBonuses.put(user, bonus + 1);
+		int newScore = user.getScore() + questionValue + bonus;
+		user.setScore(newScore);
+
+		return newScore;
 	}
 
 }

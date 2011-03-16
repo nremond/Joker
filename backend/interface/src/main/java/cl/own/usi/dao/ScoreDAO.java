@@ -41,9 +41,20 @@ public interface ScoreDAO {
 	 */
 	List<User> getAfter(User user, int limit);
 
-	int getUserBonus(User user);
 
-	void setUserBonus(User user, int newBonus);
+	/**
+	 * add the bonus to the current score, increase the score by one and return the new score
+	 * @param userId
+	 * @return current score = score + bonus
+	 */
+	int setGoodAnswer(String userId, int questionValue);
+	
+	/**
+	 * Reset user bonus and return his current score
+	 * @param userId
+	 * @return current user score
+	 */
+	int setBadAnswer(String userId);
 
 	void flushUsers();
 

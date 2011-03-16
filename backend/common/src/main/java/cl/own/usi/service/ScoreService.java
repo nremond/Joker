@@ -14,7 +14,7 @@ public interface ScoreService {
 	 * @param answerCorrect
 	 * @return
 	 */
-	int updateScore(int questionNumber, int questionValue, User user, boolean answerCorrect);
+	int updateScore(int questionNumber, int questionValue, String userId, boolean answerCorrect);
 	
 	/**
 	 * Return the 100 top {@link User}
