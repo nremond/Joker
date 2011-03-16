@@ -49,7 +49,6 @@ public class UserServiceImpl implements UserService {
 		userDAO.insertRequest(userId, questionNumber);
 	}
 
-	//TODO String userId in the signature
 	public void insertAnswer(String userId, int questionNumber, Integer answerNumber) {
 
 		List<Answer> answers = userDAO.getAnswers(userId);

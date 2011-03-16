@@ -139,6 +139,10 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		DBObject user = dbUsers.findAndModify(dbUser, dbBonus);
 		Integer score = (Integer) user.get(scoreField);
+
+		logger.debug("setBadAnswer for user {} whose score is now {}", userId,
+				score);
+
 		return score.intValue();
 	}
 
@@ -164,7 +168,13 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		dbScoreAndBonus.put(bonusField, bonus + 1);
 
 		dbUser = dbUsers.findAndModify(dbId, dbScoreAndBonus);
-		return (Integer) dbUser.get(scoreField);
+		int newScore = (Integer) dbUser.get(scoreField);
+
+		logger.debug(
+				"setGoodAnswer for user {} whose previous score was {} and is now {}",
+				new Object[] { userId, score, newScore });
+
+		return newScore;
 	}
 
 	@Override
