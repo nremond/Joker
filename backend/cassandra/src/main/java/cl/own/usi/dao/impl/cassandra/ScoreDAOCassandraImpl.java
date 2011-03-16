@@ -91,7 +91,7 @@ public class ScoreDAOCassandraImpl implements ScoreDAO {
 	}
 
 	@Override
-	public int getUserBonus(User user) {
+	public int getUserBonus(String userId) {
 		// TODO Auto-generated method stub
 		return 0;
 	}

@@ -41,7 +41,8 @@ public interface ScoreDAO {
 	 */
 	List<User> getAfter(User user, int limit);
 
-	int getUserBonus(User user);
+	
+	int getUserBonus(String userId);
 
 	void setUserBonus(User user, int newBonus);
 

@@ -127,12 +127,12 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 	}
 
 	@Override
-	public int getUserBonus(User user) {
+	public int getUserBonus(String userId) {
 
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		DBObject dbId = new BasicDBObject();
-		dbId.put(userIdField, user.getUserId());
+		dbId.put(userIdField, userId);
 
 		DBObject dbUser = dbUsers.findOne(dbId);
 		Integer bonus = (Integer) dbUser.get(bonusField);

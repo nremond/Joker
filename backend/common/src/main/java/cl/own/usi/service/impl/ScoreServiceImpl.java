@@ -24,7 +24,7 @@ public class ScoreServiceImpl implements ScoreService {
 		if (answerCorrect) {
 			// TODO can't we refactor in one DAO call ? like
 			// increaseUserBonus(userId, delta)
-			int bonus = scoreDAO.getUserBonus(user);
+			int bonus = scoreDAO.getUserBonus(user.getUserId());
 			scoreDAO.setUserBonus(user, bonus + 1);
 			newScore += questionValue + bonus;
 		} else {
