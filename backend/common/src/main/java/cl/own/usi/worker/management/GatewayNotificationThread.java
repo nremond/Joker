@@ -36,7 +36,7 @@ public class GatewayNotificationThread implements Runnable, InitializingBean {
 	private int workerPort = 7911;
 
 	@Autowired
-	NetworkReachable workerMain;
+	private NetworkReachable workerMain;
 
 	private ScheduledExecutorService executor;
 	private HostConfiguration hostConfig = new HostConfiguration();
