@@ -20,6 +20,11 @@ import org.jboss.netty.util.CharsetUtil;
  */
 public class ResponseHelper {
 
+	private static final String HEADER_SERVER_LABEL = "Server";
+	private static final String HEADER_SERVER_VALUE = "Joker1.0";
+	private static final String HEADER_CONNECTION_LABEL = "Connection";
+	private static final String HEADER_CONNECTION_VALUE = "close";
+
 	private ResponseHelper() {
 		// Utility class => hide default constructor
 	}
@@ -34,12 +39,15 @@ public class ResponseHelper {
 			HttpResponseStatus status) {
 
 		ChannelBuffer buf = ChannelBuffers.copiedBuffer(s, CharsetUtil.UTF_8);
-
+		
 		HttpResponse response = new DefaultHttpResponse(HTTP_1_0, status);
+		response.setHeader(HEADER_SERVER_LABEL, HEADER_SERVER_VALUE);
+		response.setHeader(HEADER_CONNECTION_LABEL, HEADER_CONNECTION_VALUE);
 		response.setContent(buf);
 
 		ChannelFuture future = e.getChannel().write(response);
 		future.addListener(ChannelFutureListener.CLOSE);
 	}
+		
 
 }
