@@ -32,43 +32,47 @@ public class ScoreDAOCassandraImpl implements ScoreDAO {
 
 	@Autowired
 	Cluster cluster;
-	
+
 	@Autowired
 	Keyspace keyspace;
-	
+
 	@Autowired
 	Top100ScoreDAO top100ScoreDAO;
-	
+
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
-	
-	final static StringSerializer ss = StringSerializer.get();
-	final static ByteBufferSerializer bbs = ByteBufferSerializer.get();
-	final static IntegerSerializer is = IntegerSerializer.get();
-	final static BooleanSerializer bs = BooleanSerializer.get();
-	
-	
+
+	final StringSerializer ss = StringSerializer.get();
+	final ByteBufferSerializer bbs = ByteBufferSerializer.get();
+	final IntegerSerializer is = IntegerSerializer.get();
+	final BooleanSerializer bs = BooleanSerializer.get();
+
 	@Override
 	public void updateScore(User user, int newScore) {
-		SliceQuery<String, String, ByteBuffer> q = HFactory.createSliceQuery(keyspace, ss, ss, bbs);
-		
+		SliceQuery<String, String, ByteBuffer> q = HFactory.createSliceQuery(
+				keyspace, ss, ss, bbs);
+
 		q.setColumnFamily(usersColumnFamily);
 		q.setKey(user.getUserId());
 		q.setColumnNames(scoreColumn);
-		
+
 		QueryResult<ColumnSlice<String, ByteBuffer>> result = q.execute();
-		ColumnSlice<String,ByteBuffer> cs = result.get();
-		
-		if(cs.getColumns().size() != 0){
-			Mutator<String> mutator = HFactory.createMutator(keyspace, StringSerializer.get());
-        	mutator.addInsertion(user.getUserId(), usersColumnFamily, 
-        						 HFactory.createColumn(scoreColumn, is.toByteBuffer(newScore), ss, bbs));	
-        	mutator.execute();  
-        	logger.debug("Score of user {} updated to {}", user.getEmail(), newScore);
-		}
-		else{
+		ColumnSlice<String, ByteBuffer> cs = result.get();
+
+		if (cs.getColumns().size() != 0) {
+			Mutator<String> mutator = HFactory.createMutator(keyspace,
+					StringSerializer.get());
+			mutator.addInsertion(
+					user.getUserId(),
+					usersColumnFamily,
+					HFactory.createColumn(scoreColumn,
+							is.toByteBuffer(newScore), ss, bbs));
+			mutator.execute();
+			logger.debug("Score of user {} updated to {}", user.getEmail(),
+					newScore);
+		} else {
 			logger.debug("User {} was not found in DB", user.getEmail());
 		}
-		
+
 		top100ScoreDAO.setNewScore(user, newScore);
 	}
 
@@ -76,7 +80,6 @@ public class ScoreDAOCassandraImpl implements ScoreDAO {
 	public List<User> getTop(int limit) {
 		return top100ScoreDAO.getTop100();
 	}
-	
 
 	@Override
 	public List<User> getBefore(User user, int limit) {
@@ -91,21 +94,20 @@ public class ScoreDAOCassandraImpl implements ScoreDAO {
 	}
 
 	@Override
-	public int getUserBonus(String userId) {
+	public void flushUsers() {
+		top100ScoreDAO.flushUsers();
+	}
+
+	@Override
+	public int setBadAnswer(String userId) {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
-	public void setUserBonus(User user, int newBonus) {
+	public int setGoodAnswer(String userId, int questionValue) {
 		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void flushUsers() {
-		
-		top100ScoreDAO.flushUsers();
+		return 0;
 	}
 
 }

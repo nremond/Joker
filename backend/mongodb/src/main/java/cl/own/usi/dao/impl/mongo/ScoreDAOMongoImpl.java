@@ -127,37 +127,49 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 	}
 
 	@Override
-	public int getUserBonus(String userId) {
+	public int setBadAnswer(String userId) {
 
-		DBCollection dbUsers = db.getCollection(usersCollection);
-
-		DBObject dbId = new BasicDBObject();
-		dbId.put(userIdField, userId);
-
-		DBObject dbUser = dbUsers.findOne(dbId);
-		Integer bonus = (Integer) dbUser.get(bonusField);
-
-		return bonus == null ? 0 : bonus.intValue();
-	}
-
-	@Override
-	public void setUserBonus(User user, int newBonus) {
-		
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		DBObject dbUser = new BasicDBObject();
-		dbUser.put(userIdField, user.getUserId());
+		dbUser.put(userIdField, userId);
 
 		DBObject dbBonus = new BasicDBObject();
-		dbBonus.put(bonusField, newBonus);
+		dbBonus.put(bonusField, 0);
 
-		dbUsers.findAndModify(dbUser, dbBonus);
+		DBObject user = dbUsers.findAndModify(dbUser, dbBonus);
+		Integer score = (Integer) user.get(scoreField);
+		return score.intValue();
+	}
+
+	@Override
+	public int setGoodAnswer(String userId, int questionValue) {
+		// TODO this implement is not good, we have to do this in one shot
+
+		DBCollection dbUsers = db.getCollection(usersCollection);
+
+		// Get the current score and bonus
+		DBObject dbId = new BasicDBObject();
+		dbId.put(userIdField, userId);
+		DBObject dbUser = dbUsers.findOne(dbId);
+
+		Integer bonus = (Integer) dbUser.get(bonusField);
+		bonus = (bonus == null) ? 0 : bonus;
+
+		int score = (Integer) dbUser.get(scoreField);
+
+		// new score = bonus + score and increment the bonus
+		DBObject dbScoreAndBonus = new BasicDBObject();
+		dbScoreAndBonus.put(scoreField, score + bonus + questionValue);
+		dbScoreAndBonus.put(bonusField, bonus + 1);
+
+		dbUser = dbUsers.findAndModify(dbId, dbScoreAndBonus);
+		return (Integer) dbUser.get(scoreField);
 	}
 
 	@Override
 	public void flushUsers() {
 		// TODO Auto-generated method stub
-
 	}
 
 }
