@@ -34,12 +34,11 @@ import cl.own.usi.worker.management.NetworkReachable;
  * Server-side implementation of the Thrift interface.
  * 
  * @author bperroud
- * 
+ *
  */
 @Component
 public class WorkerFacadeThriftImpl extends DefaultNotificationBusAwareConsumer
-		implements WorkerRPC.Iface, InitializingBean, NetworkReachable,
-		DisposableBean {
+		implements WorkerRPC.Iface, InitializingBean, NetworkReachable, DisposableBean {
 
 	@Autowired
 	private UserService userService;
@@ -56,7 +55,7 @@ public class WorkerFacadeThriftImpl extends DefaultNotificationBusAwareConsumer
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-
+		 
 		try {
 			final TServerSocket serverTransport = new TServerSocket(port);
 			final WorkerRPC.Processor processor = new WorkerRPC.Processor(this);
@@ -78,7 +77,7 @@ public class WorkerFacadeThriftImpl extends DefaultNotificationBusAwareConsumer
 	}
 
 	InetAddress localAddress = InetAddressHelper.getCurrentIP();
-
+	
 	/**
 	 * Return the current worker state requested through JGroups message.
 	 */
@@ -116,10 +115,13 @@ public class WorkerFacadeThriftImpl extends DefaultNotificationBusAwareConsumer
 
 		UserAndScore userAndScore = new UserAndScore();
 
-		userAndScore.userId = userId;
-		userService.insertAnswer(userId, questionNumber, answer);
-		userAndScore.score = scoreService.updateScore(questionNumber,
-				questionValue, userId, answerCorrect);
+		User user = userService.getUserFromUserId(userId);
+		if (user != null) {
+			userAndScore.userId = userId;
+			userService.insertAnswer(userId, questionNumber, answer);
+			userAndScore.score = scoreService.updateScore(questionNumber,
+					questionValue, user, answerCorrect);
+		}
 
 		return userAndScore;
 
@@ -233,7 +235,7 @@ public class WorkerFacadeThriftImpl extends DefaultNotificationBusAwareConsumer
 
 	@Override
 	public void destroy() throws Exception {
-
+		
 		if (thriftThread != null) {
 			thriftThread.requestShutdown();
 		}

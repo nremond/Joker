@@ -102,9 +102,10 @@ public class AnswerController extends AbstractController {
 						} else {
 							sb.append("false");
 						}
+
 						sb.append(", \"good_answer\" : \"");
 						sb.append(question.getChoices().get(
-								question.getCorrectChoice()));
+								question.getCorrectChoice() - 1));
 						sb.append("\", \"score\" : ");
 						sb.append(userAndScoreAndAnswer.score);
 						sb.append("}");
@@ -119,5 +120,4 @@ public class AnswerController extends AbstractController {
 		}
 
 	}
-
 }

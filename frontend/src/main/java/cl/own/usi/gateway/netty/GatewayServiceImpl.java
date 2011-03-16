@@ -7,38 +7,37 @@ import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
  * Netty initialization stuff.
- * 
+ *
  * @author bperroud
  *
  */
 @Component
 public class GatewayServiceImpl implements InitializingBean, DisposableBean {
 
-	private int port = 9080;
-	
+	private int port;
+
 	@Autowired
 	private ChannelPipelineFactory channelPipelineFactory;
 
 	private Channel serverChannel;
 	private ServerBootstrap bootstrap;
-	
-	public int getPort() {
-		return port;
-	}
 
+	private static final Logger LOGGER = LoggerFactory
+			.getLogger(GatewayServiceImpl.class);
+
+	@Value(value = "${frontend.nettyPort:9080}")
 	public void setPort(int port) {
 		this.port = port;
-	}
-
-	public ChannelPipelineFactory getChannelPipelineFactory() {
-		return channelPipelineFactory;
 	}
 
 	public void setChannelPipelineFactory(
@@ -47,29 +46,26 @@ public class GatewayServiceImpl implements InitializingBean, DisposableBean {
 	}
 
 	public void afterPropertiesSet() throws Exception {
-		
-		if (getChannelPipelineFactory() == null) {
-			throw new NullPointerException("pipelineFactory");
-		}
-		
-		bootstrap = new ServerBootstrap(
-				new NioServerSocketChannelFactory(
-						Executors.newCachedThreadPool(),
-						Executors.newCachedThreadPool()));
+
+		LOGGER.info("Netty configured for listening on port {}", port);
+
+		bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(
+				Executors.newCachedThreadPool(),
+				Executors.newCachedThreadPool()));
 
 		// Set up the event pipeline factory.
-		bootstrap.setPipelineFactory(getChannelPipelineFactory());
+		bootstrap.setPipelineFactory(channelPipelineFactory);
 
 		// Bind and start to accept incoming connections.
-		serverChannel = bootstrap.bind(new InetSocketAddress(getPort()));
-		
+		serverChannel = bootstrap.bind(new InetSocketAddress(port));
+
 	}
 
 	public void destroy() throws Exception {
-		
+
 		serverChannel.unbind();
-		
+
 		bootstrap.releaseExternalResources();
-		
+
 	}
 }
