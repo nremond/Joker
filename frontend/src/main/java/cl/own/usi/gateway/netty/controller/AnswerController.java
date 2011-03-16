@@ -91,7 +91,8 @@ public class AnswerController extends AbstractController {
 							.validateUserAndInsertQuestionResponseAndUpdateScore(
 									userId, questionNumber, answer);
 
-					if (userAndScoreAndAnswer.userId == null) {
+					if (userAndScoreAndAnswer == null
+							|| userAndScoreAndAnswer.userId == null) {
 						writeResponse(e, BAD_REQUEST);
 						getLogger().info("Invalid userId " + userId);
 					} else {
