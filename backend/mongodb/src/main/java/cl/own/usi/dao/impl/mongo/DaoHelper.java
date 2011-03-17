@@ -25,12 +25,11 @@ public class DaoHelper {
 	public static String questionNumberField = "questionNumber";
 	public static String answerNumberField = "answerNumber";
 	public static String bonusField = "bonus";
-	
+
 	public static String usersCollection = "users";
-	
+
 	private static final String USER_ID_SALT = "123456";
-	
-	
+
 	public static DBObject toDBObject(final User user) {
 		DBObject dbUser = new BasicDBObject();
 		dbUser.put(userIdField, DaoHelper.generateUserId(user));
@@ -40,6 +39,7 @@ public class DaoHelper {
 		dbUser.put(lastnameField, user.getLastname());
 		dbUser.put(scoreField, user.getScore());
 		dbUser.put(isLoggedField, Boolean.FALSE);
+		dbUser.put(bonusField, 0);
 		return dbUser;
 	}
 
@@ -53,7 +53,6 @@ public class DaoHelper {
 		user.setScore((Integer) dbUser.get(scoreField));
 		return user;
 	}
-	
 
 	public static String generateUserId(final User user) {
 		ChannelBuffer chanBuff = wrappedBuffer((user.getEmail() + USER_ID_SALT)

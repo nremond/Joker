@@ -19,7 +19,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import cl.own.usi.jgroups.DefaultNotificationBusAwareConsumer;
 import cl.own.usi.model.User;
 import cl.own.usi.network.InetAddressHelper;
 import cl.own.usi.service.ScoreService;
@@ -27,18 +26,17 @@ import cl.own.usi.service.UserService;
 import cl.own.usi.thrift.UserAndScore;
 import cl.own.usi.thrift.UserInfoAndScore;
 import cl.own.usi.thrift.WorkerRPC;
-import cl.own.usi.worker.WorkerState;
 import cl.own.usi.worker.management.NetworkReachable;
 
 /**
  * Server-side implementation of the Thrift interface.
  * 
  * @author bperroud
- *
+ * 
  */
 @Component
-public class WorkerFacadeThriftImpl extends DefaultNotificationBusAwareConsumer
-		implements WorkerRPC.Iface, InitializingBean, NetworkReachable, DisposableBean {
+public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
+		InitializingBean, NetworkReachable, DisposableBean {
 
 	@Autowired
 	private UserService userService;
@@ -55,7 +53,7 @@ public class WorkerFacadeThriftImpl extends DefaultNotificationBusAwareConsumer
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		 
+
 		try {
 			final TServerSocket serverTransport = new TServerSocket(port);
 			final WorkerRPC.Processor processor = new WorkerRPC.Processor(this);
@@ -77,20 +75,6 @@ public class WorkerFacadeThriftImpl extends DefaultNotificationBusAwareConsumer
 	}
 
 	InetAddress localAddress = InetAddressHelper.getCurrentIP();
-	
-	/**
-	 * Return the current worker state requested through JGroups message.
-	 */
-	@Override
-	public Serializable getCache() {
-		LOGGER.debug("Get cache requested");
-
-		if (thriftThread == null || !thriftThread.isServing()) {
-			return new WorkerState(localAddress, port, false);
-		} else {
-			return new WorkerState(localAddress, port, true);
-		}
-	}
 
 	@Override
 	public UserAndScore validateUserAndInsertQuestionRequest(String userId,
@@ -114,14 +98,10 @@ public class WorkerFacadeThriftImpl extends DefaultNotificationBusAwareConsumer
 			boolean answerCorrect) throws TException {
 
 		UserAndScore userAndScore = new UserAndScore();
-
-		User user = userService.getUserFromUserId(userId);
-		if (user != null) {
-			userAndScore.userId = userId;
-			userService.insertAnswer(userId, questionNumber, answer);
-			userAndScore.score = scoreService.updateScore(questionNumber,
-					questionValue, user, answerCorrect);
-		}
+		userAndScore.userId = userId;
+		userService.insertAnswer(userId, questionNumber, answer);
+		userAndScore.score = scoreService.updateScore(questionNumber,
+				questionValue, userId, answerCorrect);
 
 		return userAndScore;
 
@@ -235,7 +215,7 @@ public class WorkerFacadeThriftImpl extends DefaultNotificationBusAwareConsumer
 
 	@Override
 	public void destroy() throws Exception {
-		
+
 		if (thriftThread != null) {
 			thriftThread.requestShutdown();
 		}
