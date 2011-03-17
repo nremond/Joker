@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import cl.own.usi.dao.ScoreDAO;
 import cl.own.usi.dao.UserDAO;
 import cl.own.usi.model.User;
+import cl.own.usi.model.comparator.UserScoreComparator;
 
 @Repository
 public class ScoreDAOImpl implements ScoreDAO {
@@ -21,7 +22,7 @@ public class ScoreDAOImpl implements ScoreDAO {
 	private UserDAO userDAO;
 
 	private ConcurrentSkipListSet<User> rankedUsers = new ConcurrentSkipListSet<User>(
-			new User.UserComparator());
+			new UserScoreComparator());
 	private ConcurrentMap<User, Integer> userBonuses = new ConcurrentHashMap<User, Integer>();
 
 	public List<User> getTop(int limit) {
