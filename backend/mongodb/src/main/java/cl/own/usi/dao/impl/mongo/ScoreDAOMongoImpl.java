@@ -33,7 +33,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	// Spec : les classements sont ordonnés par lastname/firstname/mail
+	// Spec : les classements sont ordonnes par lastname/firstname/mail
 	private static DBObject orderBy = new BasicDBObject()
 			.append(scoreField, -1).append(lastnameField, 1)
 			.append(firstnameField, 1).append(emailField, 1);
