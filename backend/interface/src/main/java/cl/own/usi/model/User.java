@@ -2,7 +2,6 @@ package cl.own.usi.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
@@ -97,21 +96,6 @@ public class User implements Serializable {
 	public String toString() {
 		return "[userId:" + userId + ",email:" + email + ",score:" + score
 				+ "]";
-	}
-
-	public static class UserComparator implements Comparator<User> {
-
-		@Override
-		public int compare(User o1, User o2) {
-			if (o1.getScore() == o2.getScore()) {
-				return o2.getEmail().compareTo(o1.getEmail());
-			} else if (o1.getScore() > o2.getScore()) {
-				return -1;
-			} else {
-				return 1;
-			}
-
-		}
 	}
 
 }
