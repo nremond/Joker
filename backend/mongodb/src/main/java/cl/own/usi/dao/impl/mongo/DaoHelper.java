@@ -39,7 +39,7 @@ public class DaoHelper {
 		dbUser.put(lastnameField, user.getLastname());
 		dbUser.put(scoreField, user.getScore());
 		dbUser.put(isLoggedField, Boolean.FALSE);
-		dbUser.put(bonusField, 0);
+		dbUser.put(bonusField, Integer.valueOf(0));
 		return dbUser;
 	}
 

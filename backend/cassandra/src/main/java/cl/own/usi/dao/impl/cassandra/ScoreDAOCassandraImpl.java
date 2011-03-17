@@ -46,35 +46,35 @@ public class ScoreDAOCassandraImpl implements ScoreDAO {
 	final IntegerSerializer is = IntegerSerializer.get();
 	final BooleanSerializer bs = BooleanSerializer.get();
 
-	@Override
-	public void updateScore(User user, int newScore) {
-		SliceQuery<String, String, ByteBuffer> q = HFactory.createSliceQuery(
-				keyspace, ss, ss, bbs);
-
-		q.setColumnFamily(usersColumnFamily);
-		q.setKey(user.getUserId());
-		q.setColumnNames(scoreColumn);
-
-		QueryResult<ColumnSlice<String, ByteBuffer>> result = q.execute();
-		ColumnSlice<String, ByteBuffer> cs = result.get();
-
-		if (cs.getColumns().size() != 0) {
-			Mutator<String> mutator = HFactory.createMutator(keyspace,
-					StringSerializer.get());
-			mutator.addInsertion(
-					user.getUserId(),
-					usersColumnFamily,
-					HFactory.createColumn(scoreColumn,
-							is.toByteBuffer(newScore), ss, bbs));
-			mutator.execute();
-			logger.debug("Score of user {} updated to {}", user.getEmail(),
-					newScore);
-		} else {
-			logger.debug("User {} was not found in DB", user.getEmail());
-		}
-
-		top100ScoreDAO.setNewScore(user, newScore);
-	}
+//	@Override
+//	public void updateScore(User user, int newScore) {
+//		SliceQuery<String, String, ByteBuffer> q = HFactory.createSliceQuery(
+//				keyspace, ss, ss, bbs);
+//
+//		q.setColumnFamily(usersColumnFamily);
+//		q.setKey(user.getUserId());
+//		q.setColumnNames(scoreColumn);
+//
+//		QueryResult<ColumnSlice<String, ByteBuffer>> result = q.execute();
+//		ColumnSlice<String, ByteBuffer> cs = result.get();
+//
+//		if (cs.getColumns().size() != 0) {
+//			Mutator<String> mutator = HFactory.createMutator(keyspace,
+//					StringSerializer.get());
+//			mutator.addInsertion(
+//					user.getUserId(),
+//					usersColumnFamily,
+//					HFactory.createColumn(scoreColumn,
+//							is.toByteBuffer(newScore), ss, bbs));
+//			mutator.execute();
+//			logger.debug("Score of user {} updated to {}", user.getEmail(),
+//					newScore);
+//		} else {
+//			logger.debug("User {} was not found in DB", user.getEmail());
+//		}
+//
+//		top100ScoreDAO.setNewScore(user, newScore);
+//	}
 
 	@Override
 	public List<User> getTop(int limit) {

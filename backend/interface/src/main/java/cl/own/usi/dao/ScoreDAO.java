@@ -6,14 +6,7 @@ import cl.own.usi.model.User;
 
 public interface ScoreDAO {
 
-	/**
-	 * For a given User, update its score with the given delta.
-	 * 
-	 * TODO Wouldn't it be safe to send a delta instead of the new score ?
-	 * 
-	 * @param user
-	 */
-	void updateScore(User user, int newScore);
+
 
 	/**
 	 * Return the Users having the higher score.

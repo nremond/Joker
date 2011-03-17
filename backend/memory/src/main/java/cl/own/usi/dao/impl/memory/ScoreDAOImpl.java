@@ -24,14 +24,6 @@ public class ScoreDAOImpl implements ScoreDAO {
 			new User.UserComparator());
 	private ConcurrentMap<User, Integer> userBonuses = new ConcurrentHashMap<User, Integer>();
 
-	public void updateScore(User user, int newScore) {
-		if (rankedUsers.contains(user)) {
-			rankedUsers.remove(user);
-		}
-		user.setScore(newScore);
-		rankedUsers.add(user);
-	}
-
 	public List<User> getTop(int limit) {
 		List<User> users = new ArrayList<User>(limit);
 		int i = 0;
@@ -108,7 +100,12 @@ public class ScoreDAOImpl implements ScoreDAO {
 
 		userBonuses.put(user, bonus + 1);
 		int newScore = user.getScore() + questionValue + bonus;
+
+		if (rankedUsers.contains(user)) {
+			rankedUsers.remove(user);
+		}
 		user.setScore(newScore);
+		rankedUsers.add(user);
 
 		return newScore;
 	}
