@@ -35,6 +35,7 @@ public class CassandraConfiguration implements InitializingBean{
 	final static public String answersColumnFamily = "Answers";
 	final static public String emailsColumnFamily = "Emails";
 	final static public String requestsColumnFamily = "Requests";
+	final static public String scoreColumnFamily = "Scores";
 	
 	//Column name
 	final static String userIdColumn = "userId";
@@ -43,6 +44,7 @@ public class CassandraConfiguration implements InitializingBean{
 	final static String firstnameColumn = "firstname";
 	final static String lastnameColumn = "lastname";
 	final static String scoreColumn = "score";
+	final static String bonusColumn = "bonus";
 	final static String isLoggedColumn = "isLogged";
 	final static String answersColumn = "answers";
 	final static String questionNumberColumn = "questionNumber";
@@ -94,11 +96,11 @@ public class CassandraConfiguration implements InitializingBean{
 	        emails_CfDef.setName(emailsColumnFamily);
 	        emails_CfDef.setKeyspace(dbKeyspace);
 	        
-	        //Definition of the column family Requests
-	        /*CfDef request_CfDef = new CfDef();
-	        request_CfDef.setColumn_type("Standard");
-	        request_CfDef.setName(requestsColumnFamily);
-	        request_CfDef.setKeyspace(dbKeyspace);*/
+	        //Definition of the column family Score
+	        CfDef score_CfDef = new CfDef();
+	        score_CfDef.setColumn_type("Standard");
+	        score_CfDef.setName(scoreColumnFamily);
+	        score_CfDef.setKeyspace(dbKeyspace);
 	        
 	        //Definition of the column family Answers
 	        CfDef answers_CfDef = new CfDef();
@@ -122,6 +124,7 @@ public class CassandraConfiguration implements InitializingBean{
 			columnfamily_list.add(users_CfDef);
 			columnfamily_list.add(emails_CfDef);
 			columnfamily_list.add(answers_CfDef);
+			columnfamily_list.add(score_CfDef);
 			keyspace_definition.setCf_defs(columnfamily_list);
 	                
 	        client.system_add_keyspace(keyspace_definition);

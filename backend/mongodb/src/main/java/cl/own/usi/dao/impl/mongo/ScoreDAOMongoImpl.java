@@ -2,6 +2,8 @@ package cl.own.usi.dao.impl.mongo;
 
 import static cl.own.usi.dao.impl.mongo.DaoHelper.bonusField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.emailField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.firstnameField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.lastnameField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.scoreField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
@@ -31,28 +33,10 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	// TODO is there more field to order by ? what if they have the same score ?
+	// Spec : les classements sont ordonnes par lastname/firstname/mail
 	private static DBObject orderBy = new BasicDBObject()
-			.append(scoreField, -1).append(emailField, 1);
-
-	public void updateScore(User user, int newScore) {
-
-		DBCollection dbUsers = db.getCollection(usersCollection);
-
-		DBObject dbUserId = new BasicDBObject();
-		dbUserId.put(userIdField, user.getUserId());
-
-		DBObject dbScore = new BasicDBObject();
-		dbScore.put(scoreField, newScore);
-		DBObject dbSetScore = new BasicDBObject();
-		dbSetScore.put("$set", dbScore);
-
-		DBObject dbUser = dbUsers.findAndModify(dbUserId, dbSetScore);
-
-		logger.debug(
-				"update score of user: {} to: {} actual score set in DB: {}",
-				new Object[] { userIdField, newScore, dbUser.get(scoreField) });
-	}
+			.append(scoreField, -1).append(lastnameField, 1)
+			.append(firstnameField, 1).append(emailField, 1);
 
 	private List<User> getUsers(DBObject query, DBObject querySubset,
 			int expectedSize) {
@@ -136,8 +120,10 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		DBObject dbBonus = new BasicDBObject();
 		dbBonus.put(bonusField, 0);
+		DBObject dbSetBonus = new BasicDBObject();
+		dbSetBonus.put("$set", dbBonus);
 
-		DBObject user = dbUsers.findAndModify(dbUser, dbBonus);
+		DBObject user = dbUsers.findAndModify(dbUser, dbSetBonus);
 		Integer score = (Integer) user.get(scoreField);
 
 		logger.debug("setBadAnswer for user {} whose score is now {}", userId,
@@ -157,17 +143,18 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		dbId.put(userIdField, userId);
 		DBObject dbUser = dbUsers.findOne(dbId);
 
-		Integer bonus = (Integer) dbUser.get(bonusField);
-		bonus = (bonus == null) ? 0 : bonus;
-
+		int bonus = (Integer) dbUser.get(bonusField);
 		int score = (Integer) dbUser.get(scoreField);
 
-		// new score = bonus + score and increment the bonus
 		DBObject dbScoreAndBonus = new BasicDBObject();
-		dbScoreAndBonus.put(scoreField, score + bonus + questionValue);
-		dbScoreAndBonus.put(bonusField, bonus + 1);
+		dbScoreAndBonus.put(scoreField,
+				Integer.valueOf(score + bonus + questionValue));
+		dbScoreAndBonus.put(bonusField, Integer.valueOf(bonus + 1));
 
-		dbUser = dbUsers.findAndModify(dbId, dbScoreAndBonus);
+		DBObject dbSetScoreAndBonus = new BasicDBObject();
+		dbSetScoreAndBonus.put("$set", dbScoreAndBonus);
+
+		dbUser = dbUsers.findAndModify(dbId, dbSetScoreAndBonus);
 		int newScore = (Integer) dbUser.get(scoreField);
 
 		logger.debug(
