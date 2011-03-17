@@ -63,6 +63,11 @@ public class UserDAOCassandraImpl implements UserDAO{
 	@Override
 	public boolean insertUser(User user) {
 		try {
+			if(isEmailInDatabase(user.getEmail())){
+				logger.debug("user {} was already in the database, insertion aborted", user.getEmail());
+				return false;
+			}
+			
             Mutator<String> mutator = HFactory.createMutator(keyspace, StringSerializer.get());
           
             String userID = CassandraHelper.generateUserId(user);
@@ -86,6 +91,18 @@ public class UserDAOCassandraImpl implements UserDAO{
             return false;
         }
 		return true;
+	}
+	
+	private boolean isEmailInDatabase(String email){
+		SliceQuery<String, String, ByteBuffer> q = HFactory.createSliceQuery(keyspace, ss, ss, bbs);	
+		q.setKey(email);
+		q.setColumnFamily(emailsColumnFamily);
+		q.setColumnNames(userIdColumn);
+		
+		QueryResult<ColumnSlice<String, ByteBuffer>> result = q.execute();
+		ColumnSlice<String,ByteBuffer> cs = result.get();
+	
+		return cs.getColumns().size() != 0;
 	}
 
 	@Override
