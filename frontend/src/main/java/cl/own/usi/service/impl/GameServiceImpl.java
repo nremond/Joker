@@ -240,8 +240,13 @@ public class GameServiceImpl implements GameService {
 						i);
 
 			}
-
-			LOGGER.info("All questions finished, tweet and clean everything");
+			
+			
+			LOGGER.info("All questions finished. Ranking requests are now allowed");
+			
+			gameSynchronization.rankingRequestAllowed = true;
+			
+			LOGGER.info("Tweet and clean everything");
 			// TODO : Tweet.
 		}
 
@@ -284,6 +289,7 @@ public class GameServiceImpl implements GameService {
 		volatile int currentQuestionToRequest = 1;
 		volatile int currentQuestionToAnswer = 1;
 		volatile boolean currentQuestionRunning = false;
+		volatile boolean rankingRequestAllowed = false;
 		
 		private final Game game;
 
@@ -385,6 +391,11 @@ public class GameServiceImpl implements GameService {
 				return question.getCorrectChoice() == answer;
 			}
 		}
+	}
+
+	@Override
+	public boolean isRankingRequestAllowed() {
+		return gameSynchronization == null || gameSynchronization.rankingRequestAllowed;
 	}
 
 }

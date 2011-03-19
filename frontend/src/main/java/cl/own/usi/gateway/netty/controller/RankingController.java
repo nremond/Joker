@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import cl.own.usi.gateway.client.WorkerClient;
 import cl.own.usi.gateway.client.WorkerClient.UserAndScore;
 import cl.own.usi.gateway.client.WorkerClient.UserInfoAndScore;
+import cl.own.usi.service.GameService;
 
 /**
  * Controller that return the rank and scores
@@ -30,6 +31,9 @@ public class RankingController extends AbstractController {
 	@Autowired
 	private WorkerClient workerClient;
 
+	@Autowired
+	private GameService gameService;
+
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 			throws Exception {
@@ -42,41 +46,44 @@ public class RankingController extends AbstractController {
 			getLogger().info("User not authorized");
 		} else {
 
-			UserAndScore userAndScore = workerClient
-					.validateUserAndGetScore(userId);
-
-			if (userAndScore.userId == null) {
+			if (!gameService.isRankingRequestAllowed()) {
 				writeResponse(e, BAD_REQUEST);
-				getLogger().info("Invalid userId " + userId);
 			} else {
+				UserAndScore userAndScore = workerClient
+						.validateUserAndGetScore(userId);
 
-				StringBuilder sb = new StringBuilder("{");
+				if (userAndScore.userId == null) {
+					writeResponse(e, UNAUTHORIZED);
+					getLogger().info("Invalid userId " + userId);
+				} else {
 
-				sb.append(" \"my_score\" : ").append(userAndScore.score)
-						.append(", ");
+					StringBuilder sb = new StringBuilder("{");
 
-				sb.append(" \"top_scores\" : { ");
-				List<UserInfoAndScore> topUsers = workerClient.getTop100();
-				appendUsersScores(topUsers, sb);
-				sb.append(" }, ");
+					sb.append(" \"my_score\" : ").append(userAndScore.score)
+							.append(", ");
 
-				sb.append(" \"before_me\" : { ");
-				List<UserInfoAndScore> beforeScores = workerClient
-						.get50Before(userId);
-				appendUsersScores(beforeScores, sb);
-				sb.append(" }, ");
+					sb.append(" \"top_scores\" : { ");
+					List<UserInfoAndScore> topUsers = workerClient.getTop100();
+					appendUsersScores(topUsers, sb);
+					sb.append(" }, ");
 
-				sb.append(" \"after_me\" : { ");
-				List<UserInfoAndScore> afterScores = workerClient
-						.get50After(userId);
-				appendUsersScores(afterScores, sb);
-				sb.append(" } ");
+					sb.append(" \"before_me\" : { ");
+					List<UserInfoAndScore> beforeScores = workerClient
+							.get50Before(userId);
+					appendUsersScores(beforeScores, sb);
+					sb.append(" }, ");
 
-				sb.append(" } ");
+					sb.append(" \"after_me\" : { ");
+					List<UserInfoAndScore> afterScores = workerClient
+							.get50After(userId);
+					appendUsersScores(afterScores, sb);
+					sb.append(" } ");
 
-				writeStringToReponse(sb.toString(), e, OK);
+					sb.append(" } ");
+
+					writeStringToReponse(sb.toString(), e, OK);
+				}
 			}
-
 		}
 	}
 

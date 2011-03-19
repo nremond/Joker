@@ -85,4 +85,10 @@ public interface GameService {
 	 */
 	boolean isAnswerCorrect(int questionNumber, Integer answer);
 	
+	/**
+	 * Tells if the ranking request is allowed or not.
+	 * @return
+	 */
+	boolean isRankingRequestAllowed();
+	
 }
