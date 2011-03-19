@@ -48,6 +48,8 @@ public class GameServiceImpl implements GameService {
 
 	private GameSynchronization gameSynchronization;
 
+	private static final int FIRST_QUESTION = 1;
+	
 	public boolean insertGame(int usersLimit, int questionTimeLimit,
 			int pollingTimeLimit, int synchroTimeLimit, int numberOfQuestion, 
 			List<Map<String, Map<String, Boolean>>> questions) {
@@ -85,7 +87,7 @@ public class GameServiceImpl implements GameService {
 	private List<Question> mapToQuestion(
 			List<Map<String, Map<String, Boolean>>> questions) {
 		List<Question> list = new ArrayList<Question>();
-		int number = 1;
+		int number = FIRST_QUESTION;
 		for (Map<String, Map<String, Boolean>> element : questions) {
 			for (Map.Entry<String, Map<String, Boolean>> entry : element
 					.entrySet()) {
@@ -141,7 +143,6 @@ public class GameServiceImpl implements GameService {
 
 	public boolean enterGame(String userId) {
 		if (gameSynchronization != null) {
-			gameSynchronization.enoughUsersLatch.countDown();
 			gameSynchronization.waitForFirstLogin.countDown();
 			return true;
 		} else {
@@ -172,12 +173,12 @@ public class GameServiceImpl implements GameService {
 			
 
 			try {
-				LOGGER.debug("Wait on all users");
+				LOGGER.debug("Wait on all users login and requesting the first question.");
 				boolean awaited = gameSynchronization.enoughUsersLatch.await(gameSynchronization.game.getPollingTimeLimit(), TimeUnit.SECONDS);
 				if (awaited) {
-					LOGGER.debug("Enough users have joined the game");
+					LOGGER.debug("Enough users have joined the game and requested the first question.");
 				} else {
-					LOGGER.debug("Waiting time is ellapsed, starting anyway");
+					LOGGER.debug("Waiting time is ellapsed, starting anyway.");
 				}
 			} catch (InterruptedException e) {
 				LOGGER.warn("Interrupted", e);
@@ -187,7 +188,7 @@ public class GameServiceImpl implements GameService {
 			boolean first = true;
 			
 			
-			for (int i = 1; i <= gameSynchronization.game.getNumberOfQuestion(); i++) {
+			for (int i = FIRST_QUESTION; i <= gameSynchronization.game.getNumberOfQuestion(); i++) {
 
 				gameSynchronization.currentQuestionToRequest = i + 1;
 				
@@ -263,7 +264,11 @@ public class GameServiceImpl implements GameService {
 		if (gameSynchronization == null) {
 			return false;
 		} else {
-			return questionNumber == gameSynchronization.currentQuestionToRequest;
+			boolean questionValid = questionNumber == gameSynchronization.currentQuestionToRequest;
+			if (questionValid && gameSynchronization.currentQuestionToRequest == FIRST_QUESTION) {
+				gameSynchronization.enoughUsersLatch.countDown();
+			}
+			return questionValid;
 		}
 	}
 
