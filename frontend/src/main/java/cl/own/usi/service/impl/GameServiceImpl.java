@@ -183,10 +183,7 @@ public class GameServiceImpl implements GameService {
 			} catch (InterruptedException e) {
 				LOGGER.warn("Interrupted", e);
 				return;
-			}
-			
-			boolean first = true;
-			
+			}			
 			
 			for (int i = FIRST_QUESTION; i <= gameSynchronization.game.getNumberOfQuestion(); i++) {
 
@@ -199,17 +196,6 @@ public class GameServiceImpl implements GameService {
 						.getQuestionSynchronization(i);
 
 				gameSynchronization.currentQuestionRunning = true;
-
-				if (!first) {
-					questionSynchronization.lock.lock();
-					gameSynchronization.currentQuestionToAnswer++;
-					for (Runnable r : questionSynchronization.waitingQueue) {
-						LOGGER.debug("Inserting a early requester to the working queue");
-						executorUtil.getExecutorService().execute(r);
-					}
-					questionSynchronization.lock.unlock();
-				}
-				first = false;
 
 				// Send questions to the users
 				questionSynchronization.questionReadyLatch.countDown();
@@ -226,9 +212,26 @@ public class GameServiceImpl implements GameService {
 					LOGGER.debug("Question wait time ... done");
 
 					LOGGER.debug("Synchrotime ...");
-					// mmmh, weird specs...
-					Thread.sleep(gameSynchronization.game
-							.getSynchroTimeLimit() * 1000);
+					
+					long starttime = System.currentTimeMillis();
+					
+					questionSynchronization.lock.lock();
+					gameSynchronization.currentQuestionToAnswer++;
+					for (Runnable r : questionSynchronization.waitingQueue) {
+						LOGGER.debug("Inserting a early requester to the working queue");
+						executorUtil.getExecutorService().execute(r);
+					}
+					questionSynchronization.lock.unlock();
+					
+					long stoptime = System.currentTimeMillis();
+					
+					long synchrotime = (gameSynchronization.game
+					.getSynchroTimeLimit() * 1000) + starttime - stoptime;
+					if (synchrotime > 0) {
+						// mmmh, weird specs...
+						Thread.sleep(synchrotime);
+					}
+					
 					LOGGER.debug("Synchrotime ... done");
 					
 				} catch (InterruptedException e) {
@@ -338,7 +341,7 @@ public class GameServiceImpl implements GameService {
 
 	public void scheduleQuestionReply(QuestionWorker questionWorker) {
 
-		if (questionWorker.getQuestionNumber() <= gameSynchronization.currentQuestionToAnswer) {
+		if (questionWorker.getQuestionNumber() <= gameSynchronization.currentQuestionToRequest) {
 			executorUtil.getExecutorService().execute(questionWorker);
 		} else {
 			QuestionSynchronization questionSynchronization = getQuestionSync(questionWorker
@@ -347,7 +350,7 @@ public class GameServiceImpl implements GameService {
 			questionSynchronization.lock.lock();
 
 			// double check
-			if (questionWorker.getQuestionNumber() <= gameSynchronization.currentQuestionToAnswer) {
+			if (questionWorker.getQuestionNumber() <= gameSynchronization.currentQuestionToRequest) {
 				executorUtil.getExecutorService().execute(questionWorker);
 			} else {
 				LOGGER.debug(

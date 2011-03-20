@@ -22,6 +22,7 @@ import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import cl.own.usi.gateway.client.WorkerClient;
@@ -46,6 +47,14 @@ public class GameController extends AbstractController {
 	@Autowired
 	private WorkerClient workerClient;
 	
+	private String authentificationKey;
+	
+	@Value(value = "${frontend.authentificationkey:1234}")
+	public void setAuthentificationKey(String authentificationKey) {
+		this.authentificationKey = authentificationKey;
+	}
+	
+	
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 	throws Exception {
@@ -63,7 +72,25 @@ public class GameController extends AbstractController {
 				return;
 			}
 			
-			JSONArray jsonQuestions = (JSONArray) object
+			String authenticationKey = (String) object
+				.get("authentication_key");
+			
+			if (!this.authentificationKey.equals(authenticationKey)) {
+				logger.error("Bad authentificationKey");
+				writeResponse(e, BAD_REQUEST);
+				return;
+			}
+			
+			JSONObject allParameters = (JSONObject) object
+				.get("parameters");
+			
+			if (allParameters == null) {
+				logger.error("No content or bad content for allParameters");
+				writeResponse(e, BAD_REQUEST);
+				return;
+			}
+			
+			JSONArray jsonQuestions = (JSONArray) allParameters
 					.get("questions");
 			if (jsonQuestions == null) {
 				logger.error("No content or bad content for questions");
@@ -71,7 +98,7 @@ public class GameController extends AbstractController {
 				return;
 			}
 			
-			JSONObject parameters = (JSONObject) object
+			JSONObject parameters = (JSONObject) allParameters
 					.get("parameters");
 			if (parameters == null) {
 				logger.error("No content or bad content for parameters");

@@ -189,7 +189,8 @@ public class BasicInjectorMain {
 
 		HttpClient httpClient = new HttpClient();
 
-		String postBody = "{ \"questions\" : [ { \"goodchoice\" : 1, \"label\" : \"Question1\", \"choices\" : [ \""
+		String postBody = "{ \"authentication_key\" : \"1234\", \"parameters\" : { \"questions\" " +
+				": [ { \"goodchoice\" : 1, \"label\" : \"Question1\", \"choices\" : [ \""
 				+ "choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 2, \"label\" : \"Question2\""
 				+ ", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 1, \"label\""
 				+ " : \"Question3\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\""
@@ -226,7 +227,7 @@ public class BasicInjectorMain {
 				+ ", "
 				+ "\"flushusertable\" : "
 				+ FLUSHUSERSTABLE
-				+ ", \"trackeduseridmail\" : \"unused\" } }";
+				+ ", \"trackeduseridmail\" : \"unused\" } } }";
 
 		String postUrl = "http://" + HOST + ":" + PORT + "/api/game";
 
@@ -329,7 +330,7 @@ public class BasicInjectorMain {
 								cookieHeader = new Header("Cookie", headerValue);
 							}
 						} else {
-							LOGGER.warn("Already logged");
+							LOGGER.warn("Problem at login with response code {}", httpResponseCode);
 						}
 
 					} finally {
@@ -376,7 +377,7 @@ public class BasicInjectorMain {
 								// OK :)
 
 							} else {
-								LOGGER.error("Error answering the question");
+								LOGGER.error("Error answering the question with response code {}", httpResponseCode);
 							}
 
 						} finally {
@@ -405,7 +406,7 @@ public class BasicInjectorMain {
 							LOGGER.info("Everything went fine for user {}", email);
 
 						} else {
-							LOGGER.error("Error requesting the ranking");
+							LOGGER.error("Error requesting the ranking with response code {}", httpResponseCode);
 						}
 
 					} finally {
