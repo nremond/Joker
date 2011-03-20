@@ -1,0 +1,117 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:			 joker
+# Required-Start:	 $network
+# Required-Stop:	 $network
+# Default-Start:	 
+# Default-Stop:		 2 3 4 5
+# Description:		 Joker application
+# Short-Description: Manage the joker application
+### END INIT INFO
+
+DEFAULTS_FILE=/etc/default/joker
+FOLDER=/home/user/joker/
+FRONTEND_APP=joker-frontend-shaded.jar
+BACKEND_APP=joker-backend-shaded.jar
+NAME=joker
+USER=user
+JAVA=/usr/bin/java
+PIDFILE=/var/run/joker.pid
+
+SA1=/usr/lib/sysstat/sa1
+# collect stats every 1 second for 12 hours (60 * 60 * 12)
+SA1_OPTS="1 43200"
+SYSSTAT_PIDFILE=/var/run/sysstat.pid
+
+# Default parameters
+ENABLE_STATS="false"
+MODE="backend"
+
+. /lib/lsb/init-functions
+
+# Include joker defaults if available
+if test -f "$DEFAULTS_FILE"; then
+	. $DEFAULTS_FILE
+fi
+
+RETVAL=0
+set -e
+
+start_frontend() {
+	log_begin_msg "Starting $NAME frontend..."
+	if start-stop-daemon --start --quiet --oknodo --pidfile $PIDFILE --chuid $USER --background --chdir $FOLDER --make-pidfile --exec $JAVA -- $JVM_OPTS -jar $FRONTEND_APP; then
+		log_end_msg 0
+	else
+		log_end_msg 1
+	fi
+}
+
+start_backend() {
+	log_daemon_msg "Starting $NAME backend..."
+	if start-stop-daemon --start --quiet --oknodo --pidfile $PIDFILE --chuid $USER --background --chdir $FOLDER --make-pidfile --exec $JAVA -- $JVM_OPTS -jar $BACKEND_APP; then
+		log_end_msg 0
+	else
+		log_end_msg 1
+	fi
+}
+
+stop_joker() {
+	log_daemon_msg "Stopping Joker service"
+	if start-stop-daemon --stop --quiet --oknodo --pidfile $SYSSTAT_PIDFILE; then
+		log_end_msg 0
+	else
+		log_end_msg 1
+	fi
+}
+
+start_sysstat() {
+	log_daemon_msg "Starting Joker stats"
+	if start-stop-daemon --start --quiet --oknodo --pidfile $SYSSTAT_PIDFILE --background --make-pidfile --exec $SA1 -- $SA1_OPTS; then
+		log_end_msg 0
+	else
+		log_end_msg 1
+	fi
+
+}
+
+stop_sysstat() {
+	log_daemon_msg "Stopping Joker stats"
+	if start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE; then
+		log_end_msg 0
+	else
+		log_end_msg 1
+	fi	
+}
+
+case "$1" in
+	start)
+		log_begin_msg "Starting $NAME: "
+		case "$MODE" in
+		frontend)
+			start_frontend
+		;;
+		backend)
+			start_backend
+		;;
+		*)
+			echo "Unknown mode $MODE"
+			log_end_msg 1
+		;;
+		esac
+		
+		if [ "$ENABLE_STATS" = "true" ]; then
+			start_sysstat
+		fi
+		;;
+	stop)
+		log_begin_msg "Stopping $NAME: "
+		stop_joker
+		
+		stop_sysstat
+		;;
+	*)
+		echo "Usage: $0 {start|stop}" >&2
+		exit 1
+		;;
+esac
