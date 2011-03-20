@@ -17,11 +17,13 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import cl.own.usi.dao.GameDAO;
 import cl.own.usi.gateway.netty.QuestionWorker;
 import cl.own.usi.gateway.utils.ExecutorUtil;
+import cl.own.usi.gateway.utils.Twitter;
 import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
 import cl.own.usi.service.GameService;
@@ -49,6 +51,15 @@ public class GameServiceImpl implements GameService {
 	private GameSynchronization gameSynchronization;
 
 	private static final int FIRST_QUESTION = 1;
+	
+	private static final String TWITTER_MESSAGE = "Notre Appli supporte %d joueurs #challengeUSI2011";
+	
+	private boolean twitt = false;
+	
+	@Value(value = "${frontend.twitt:false}")
+	public void setTwitt(boolean twitt) {
+		this.twitt = twitt;
+	}
 	
 	public boolean insertGame(int usersLimit, int questionTimeLimit,
 			int pollingTimeLimit, int synchroTimeLimit, int numberOfQuestion, 
@@ -250,7 +261,12 @@ public class GameServiceImpl implements GameService {
 			gameSynchronization.rankingRequestAllowed = true;
 			
 			LOGGER.info("Tweet and clean everything");
-			// TODO : Tweet.
+			
+			if (twitt) {
+				Twitter twitter = new Twitter();
+				twitter.twitt(String.format(TWITTER_MESSAGE, gameSynchronization.game.getUsersLimit()));
+			}
+			
 		}
 
 	}
