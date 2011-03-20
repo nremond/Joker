@@ -28,9 +28,11 @@ public class Twitter {
 	private String httpProxyHost;
 	private int httpProxyPort;
 	
-	@Value(value = "${frontend.httpProxyHost}")
+	@Value(value = "${frontend.httpProxyHost:}")
 	public void setHttpProxyHost(String httpProxyHost) {
-		this.httpProxyHost = httpProxyHost;
+		if (!"".equals(httpProxyHost)) { // don't know how to inject null...
+			this.httpProxyHost = httpProxyHost;
+		}
 	}
 	
 	@Value(value = "${frontend.httpProxyPort:8080}")
