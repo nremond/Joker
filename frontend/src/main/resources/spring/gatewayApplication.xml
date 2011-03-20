@@ -15,4 +15,7 @@
 
 	<context:property-placeholder location="file:${config.location}"
 		ignore-resource-not-found="true" />
+		
+	<bean class="cl.own.usi.gateway.utils.Twitter"/>
+	
 </beans>

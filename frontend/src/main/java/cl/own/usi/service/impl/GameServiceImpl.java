@@ -46,7 +46,10 @@ public class GameServiceImpl implements GameService {
 	@Autowired
 	private GameDAO gameDAO;
 
-	final ExecutorService executorService = Executors.newSingleThreadExecutor();
+	@Autowired
+	private Twitter twitter;
+	
+	private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
 	private GameSynchronization gameSynchronization;
 
@@ -263,7 +266,6 @@ public class GameServiceImpl implements GameService {
 			LOGGER.info("Tweet and clean everything");
 			
 			if (twitt) {
-				Twitter twitter = new Twitter();
 				twitter.twitt(String.format(TWITTER_MESSAGE, gameSynchronization.game.getUsersLimit()));
 			}
 			
