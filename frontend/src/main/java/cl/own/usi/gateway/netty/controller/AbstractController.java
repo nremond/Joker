@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Abstract Controller.
- * 
+ *
  * @author bperroud
  * @author nicolas
  *
@@ -24,11 +24,11 @@ public abstract class AbstractController {
 	protected static final String COOKIE_AUTH_NAME = "session_key";
 	public static final String URI_API = "/api";
 	public static final int URI_API_LENGTH = URI_API.length();
-	
+
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
 	abstract public void messageReceived(ChannelHandlerContext ctx,
 			MessageEvent e) throws Exception;
-
-	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	protected Logger getLogger() {
 		return logger;

@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 import cl.own.usi.gateway.netty.controller.AddWorkerNodeController;
 import cl.own.usi.gateway.netty.controller.AnswerController;
+import cl.own.usi.gateway.netty.controller.AuditController;
 import cl.own.usi.gateway.netty.controller.GameController;
 import cl.own.usi.gateway.netty.controller.LoginController;
 import cl.own.usi.gateway.netty.controller.LogoutController;
@@ -29,7 +30,7 @@ import cl.own.usi.gateway.netty.controller.UserController;
 
 /**
  * No inversion of control ... but it may be enough for use.
- * 
+ *
  * @author bperroud
  * @author nicolas
  */
@@ -46,12 +47,13 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 		super.exceptionCaught(ctx, e);
 	}
 
-	protected static final String URI_GAME = "/game";
-	protected static final String URI_LOGIN = "/login";
-	protected static final String URI_RANKING = "/ranking";
-	protected static final String URI_USER = "/user";
-	protected static final String URI_LOGOUT = "/logout";
-	protected static final String URI_ADD_WORKER_NODE = "/join";
+	private static final String URI_GAME = "/game";
+	private static final String URI_LOGIN = "/login";
+	private static final String URI_RANKING = "/ranking";
+	private static final String URI_USER = "/user";
+	private static final String URI_LOGOUT = "/logout";
+	private static final String URI_ADD_WORKER_NODE = "/join";
+	private static final String URI_AUDIT = "/audit";
 
 	@Autowired
 	private QuestionController questionController;
@@ -74,7 +76,10 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 	// TODO
 	@Autowired
 	private LogoutController logoutController;
-	
+
+	@Autowired
+	private AuditController auditController;
+
 	@Autowired
 	private AddWorkerNodeController addWorkerNodeController;
 
@@ -84,13 +89,13 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 
 		try {
 			HttpRequest request = (HttpRequest) e.getMessage();
-	
+
 			String URI = request.getUri();
-	
+
 			if (URI.startsWith(URI_API)) {
-	
+
 				URI = URI.substring(URI_API_LENGTH);
-	
+
 				if (URI.startsWith(URI_QUESTION)) {
 					questionController.messageReceived(ctx, e);
 				} else if (URI.startsWith(URI_ANSWER)) {
@@ -105,10 +110,12 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 					addWorkerNodeController.messageReceived(ctx, e);
 				} else if (URI.startsWith(URI_GAME)) {
 					gameController.messageReceived(ctx, e);
+				} else if (URI.startsWith(URI_AUDIT)) {
+					auditController.messageReceived(ctx, e);
 				} else {
 					writeResponse(e, NOT_FOUND);
 				}
-	
+
 			} else {
 				writeResponse(e, NOT_FOUND);
 			}

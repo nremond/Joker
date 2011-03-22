@@ -1,6 +1,5 @@
 package cl.own.usi.worker.thrift.impl;
 
-import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,9 +29,9 @@ import cl.own.usi.worker.management.NetworkReachable;
 
 /**
  * Server-side implementation of the Thrift interface.
- * 
+ *
  * @author bperroud
- * 
+ *
  */
 @Component
 public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
