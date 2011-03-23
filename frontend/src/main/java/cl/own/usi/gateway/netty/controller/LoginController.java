@@ -9,8 +9,9 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_IMPLEMEN
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_0;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.jboss.netty.channel.ChannelFuture;
@@ -22,9 +23,10 @@ import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.util.CharsetUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import cl.own.usi.gateway.client.WorkerClient;
@@ -47,10 +49,10 @@ public class LoginController extends AbstractController {
 	@Autowired
 	private WorkerClient workerClient;
 
-	private final ObjectMapper jsonObjectMapper = new ObjectMapper();
+	@Value(value = "classpath:template/login.html")
+	private Resource loginTemplate;
 
-	// TODO
-	private static String path = "C:/cygwin/home/nre/Joker/template";
+	private final ObjectMapper jsonObjectMapper = new ObjectMapper();
 
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
@@ -87,7 +89,9 @@ public class LoginController extends AbstractController {
 			BufferedReader in = null;
 			StringBuffer buff = new StringBuffer();
 			try {
-				in = new BufferedReader(new FileReader(path + "/login.html"));
+				final InputStream inputStream = loginTemplate.getInputStream();
+
+				in = new BufferedReader(new InputStreamReader(inputStream));
 				String str;
 				while ((str = in.readLine()) != null) {
 					buff.append(str);
@@ -95,7 +99,8 @@ public class LoginController extends AbstractController {
 				}
 
 			} catch (IOException exp) {
-				getLogger().error("The html template couldn't be found at {}");
+				getLogger().error("The html template couldn't be found at {}",
+						loginTemplate);
 			} finally {
 				if (in != null) {
 					in.close();
