@@ -1,11 +1,16 @@
 package cl.own.usi.gateway.netty.controller;
 
 import static cl.own.usi.gateway.netty.ResponseHelper.writeResponse;
+import static cl.own.usi.gateway.netty.ResponseHelper.writeStringToReponse;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.SET_COOKIE;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CREATED;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_IMPLEMENTED;
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_0;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.jboss.netty.channel.ChannelFuture;
@@ -17,6 +22,7 @@ import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.util.CharsetUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -28,7 +34,7 @@ import cl.own.usi.service.GameService;
 
 /**
  * Controller that authenticate the {@link User}
- * 
+ *
  * @author bperroud
  * @author nicolas
  */
@@ -42,6 +48,9 @@ public class LoginController extends AbstractController {
 	private WorkerClient workerClient;
 
 	private final ObjectMapper jsonObjectMapper = new ObjectMapper();
+
+	// TODO
+	private static String path = "C:/cygwin/home/nre/Joker/template";
 
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
@@ -69,9 +78,31 @@ public class LoginController extends AbstractController {
 				future.addListener(ChannelFutureListener.CLOSE);
 			} else {
 				writeResponse(e, BAD_REQUEST);
-				getLogger().warn("User not found for session "
-						+ loginRequest.getMail());
+				getLogger().warn(
+						"User not found for session " + loginRequest.getMail());
 			}
+
+		} else if (request.getMethod() == HttpMethod.GET) {
+
+			BufferedReader in = null;
+			StringBuffer buff = new StringBuffer();
+			try {
+				in = new BufferedReader(new FileReader(path + "/login.html"));
+				String str;
+				while ((str = in.readLine()) != null) {
+					buff.append(str);
+					buff.append("\n");
+				}
+
+			} catch (IOException exp) {
+				getLogger().error("The html template couldn't be found at {}");
+			} finally {
+				if (in != null) {
+					in.close();
+				}
+			}
+
+			writeStringToReponse(buff.toString(), e, CREATED);
 
 		} else {
 			writeResponse(e, NOT_IMPLEMENTED);

@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"> 
+<html>
+<head>
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+<head/>
+<body>
+	<form action="/" id="loginForm">
+		Mail: <input type="text" name="mail" /><br />
+		Password: <input type="password" name="password" /><br />
+		<input type="submit" value="Login"  />
+	</form>
+	
+	<!-- the result of the search will be rendered inside this div -->
+	<div id="result"></div>
+	
+	<script>
+	  // attach a submit handler to the form
+	  $("#loginForm").submit(function(event) {
+
+		// stop form from submitting normally
+		event.preventDefault(); 
+			
+		// get some values from elements on the page:
+		var form = $( this );
+		var	mail = form.find( 'input[name="mail"]' ).val();
+		var	password = form.find( 'input[name="password"]' ).val();
+		
+		
+		var url = "/api/login";
+
+		
+		// Send the data using post and put the results in a div
+		$.post( url, "{ \"mail\":"+mail+ ",\"password\":"+password+" }" ,
+		  function( data ) {
+	 
+			 var content = $( data ).find( '#content' );
+			  $( "#result" ).html( content );
+		  }
+		, "json");
+	  });
+	</script>
+		
+	
+</body>
+</html>
