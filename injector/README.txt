@@ -1,8 +1,8 @@
 Injector usage : 
 
 java \
-	-Dcom.ning.http.client.AsyncHttpClient.defaultMaxTotalConnections=10000 \
-	-Dcom.ning.http.client.AsyncHttpClient.defaultMaxConnectionsPerHost=10000 \
+	-Dcom.ning.http.client.AsyncHttpClientConfig.defaultMaxTotalConnections=10000 \
+	-Dcom.ning.http.client.AsyncHttpClientConfig.defaultMaxConnectionsPerHost=10000 \
 	-jar joker-injector-shaded.jar "gateway host" [ "(int)gateway port" [ "(int)number of users" ] ]
 
 
