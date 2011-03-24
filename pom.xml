@@ -54,6 +54,7 @@
 	<modules>
 		<module>frontend</module>
 		<module>backend</module>
+		<module>injector</module>
 	</modules>
 
 	<dependencyManagement>
