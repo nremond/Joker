@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
+import com.ning.http.client.AsyncHttpClientConfig;
 import com.ning.http.client.Response;
 
 /**
@@ -66,6 +67,7 @@ public class BasicInjectorMain {
 	private final static int LOGINTIMEOUT = 20;
 
 	private static int NBUSERS = DEFAULT_NBUSERS;
+	private static int MAXNOFILES = 395240;
 	
 	/*
 	 * Synchronization and concurrency stuff
@@ -84,7 +86,12 @@ public class BasicInjectorMain {
 			NBUSERS);
 	// Shared async http client, because it run internal workers and lot of
 	// heavy stuff.
-	private static final AsyncHttpClient asyncHttpClient = new AsyncHttpClient();
+	private static final AsyncHttpClientConfig.Builder asyncHttpClientConfigBuilder = new AsyncHttpClientConfig.Builder();
+	static {
+		asyncHttpClientConfigBuilder.setMaximumConnectionsTotal(MAXNOFILES);
+		asyncHttpClientConfigBuilder.setMaximumConnectionsPerHost(MAXNOFILES);
+	}
+	private static final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(asyncHttpClientConfigBuilder.build());
 
 	/**
 	 * @param args
