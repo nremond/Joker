@@ -52,7 +52,7 @@ public class BasicInjectorMain {
 	 */
 	private final static String DEFAULT_HOST = "localhost";
 	private final static int DEFAULT_PORT = 9080;
-	
+
 	private static String HOST = DEFAULT_HOST;
 	private static int PORT = DEFAULT_PORT;
 
@@ -68,7 +68,7 @@ public class BasicInjectorMain {
 
 	private static int NBUSERS = DEFAULT_NBUSERS;
 	private static int MAXNOFILES = 395240;
-	
+
 	/*
 	 * Synchronization and concurrency stuff
 	 */
@@ -77,22 +77,19 @@ public class BasicInjectorMain {
 	private final static ExecutorService executor = Executors
 			.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
 	// List of players' workers
-	private static final List<UserGameWorker> workers = new ArrayList<BasicInjectorMain.UserGameWorker>(
-			NBUSERS);
+	private static List<UserGameWorker> workers;
 
 	private final static CountDownLatch gameStartSynchroLatch = new CountDownLatch(
 			1);
-	
-	private final static CountDownLatch gamersHaveAnsweredAllQuestions = new CountDownLatch(
-			NBUSERS);
-	private final static CountDownLatch lastSynchroTimeEllapsed = new CountDownLatch(
-					1);
-	
-	private final static CountDownLatch gameFinishedSynchroLatch = new CountDownLatch(
-			NBUSERS);
+
+	private static CountDownLatch gamersHaveAnsweredAllQuestions;
+
+	private static CountDownLatch gameFinishedSynchroLatch;
+
 	// Shared async http client, because it run internal workers and lot of
 	// heavy stuff.
-	private static final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(new AsyncHttpClientConfig.Builder().build());
+	private static final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
+			new AsyncHttpClientConfig.Builder().build());
 
 	/**
 	 * @param args
@@ -112,8 +109,13 @@ public class BasicInjectorMain {
 		if (args.length > 2) {
 			NBUSERS = Integer.valueOf(args[2]);
 		}
+
+		workers = new ArrayList<BasicInjectorMain.UserGameWorker>(NBUSERS);
+		gamersHaveAnsweredAllQuestions = new CountDownLatch(NBUSERS);
+		gameFinishedSynchroLatch = new CountDownLatch(NBUSERS);
 		
 		createGame();
+
 
 		insertUsers(NBUSERS);
 
@@ -125,24 +127,24 @@ public class BasicInjectorMain {
 		gameStartSynchroLatch.countDown();
 
 		LOGGER.info("Let's start");
-		
+
 		gamersHaveAnsweredAllQuestions.await();
-		
+
 		LOGGER.info("All gamers have answered all questions, let's wait synchrotime");
-		
-		Thread.sleep(QUESTIONTIMEFRAME + SYNCHROTIME);
-		
+
+		Thread.sleep((QUESTIONTIMEFRAME + SYNCHROTIME) * 1000);
+
 		LOGGER.info("Reinsert all workers in the queue to request ranking");
-		
+
 		for (UserGameWorker worker : workers) {
 			executor.execute(worker);
 		}
-				
+
 		// Wait till all workers has finished the game.
 		gameFinishedSynchroLatch.await();
 
 		LOGGER.info("All gamers have requested ranking, shutting down");
-				
+
 		// shutdown everything cleanly.
 		executor.shutdown();
 		executor.awaitTermination(600, TimeUnit.SECONDS);
@@ -228,8 +230,8 @@ public class BasicInjectorMain {
 
 		HttpClient httpClient = new HttpClient();
 
-		String postBody = "{ \"authentication_key\" : \"1234\", \"parameters\" : { \"questions\" " +
-				": [ { \"goodchoice\" : 1, \"label\" : \"Question1\", \"choices\" : [ \""
+		String postBody = "{ \"authentication_key\" : \"1234\", \"parameters\" : { \"questions\" "
+				+ ": [ { \"goodchoice\" : 1, \"label\" : \"Question1\", \"choices\" : [ \""
 				+ "choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 2, \"label\" : \"Question2\""
 				+ ", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 1, \"label\""
 				+ " : \"Question3\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\""
@@ -369,7 +371,9 @@ public class BasicInjectorMain {
 								cookieHeader = new Header("Cookie", headerValue);
 							}
 						} else {
-							LOGGER.warn("Problem at login with response code {}", httpResponseCode);
+							LOGGER.warn(
+									"Problem at login with response code {}",
+									httpResponseCode);
 						}
 
 					} finally {
@@ -416,7 +420,9 @@ public class BasicInjectorMain {
 								// OK :)
 
 							} else {
-								LOGGER.error("Error answering the question with response code {}", httpResponseCode);
+								LOGGER.error(
+										"Error answering the question with response code {}",
+										httpResponseCode);
 							}
 
 						} finally {
@@ -446,10 +452,13 @@ public class BasicInjectorMain {
 
 						if (httpResponseCode == 200) {
 
-							LOGGER.info("Everything went fine for user {}", email);
+							LOGGER.info("Everything went fine for user {}",
+									email);
 
 						} else {
-							LOGGER.error("Error requesting the ranking with response code {}", httpResponseCode);
+							LOGGER.error(
+									"Error requesting the ranking with response code {}",
+									httpResponseCode);
 						}
 
 					} finally {
