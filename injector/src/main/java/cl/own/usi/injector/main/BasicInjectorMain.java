@@ -88,8 +88,14 @@ public class BasicInjectorMain {
 
 	// Shared async http client, because it run internal workers and lot of
 	// heavy stuff.
+	private static final AsyncHttpClientConfig.Builder ASYNC_HTTP_CLIENT_CONFIG_BUILDER = new AsyncHttpClientConfig.Builder();
+	static {
+		ASYNC_HTTP_CLIENT_CONFIG_BUILDER
+				.setMaximumConnectionsPerHost(MAXNOFILES);
+		ASYNC_HTTP_CLIENT_CONFIG_BUILDER.setMaximumConnectionsTotal(MAXNOFILES);
+	}
 	private static final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
-			new AsyncHttpClientConfig.Builder().build());
+			ASYNC_HTTP_CLIENT_CONFIG_BUILDER.build());
 
 	/**
 	 * @param args
@@ -113,9 +119,8 @@ public class BasicInjectorMain {
 		workers = new ArrayList<BasicInjectorMain.UserGameWorker>(NBUSERS);
 		gamersHaveAnsweredAllQuestions = new CountDownLatch(NBUSERS);
 		gameFinishedSynchroLatch = new CountDownLatch(NBUSERS);
-		
-		createGame();
 
+		createGame();
 
 		insertUsers(NBUSERS);
 
@@ -292,7 +297,7 @@ public class BasicInjectorMain {
 	 * step at a time, rescheduling itself after each step. This permit to
 	 * emulate concurrency with much lower threads.
 	 * 
-	 * There is one step to login, one to request the questio, one to answer it
+	 * There is one step to login, one to request the question, one to answer it
 	 * (these two steps are repeated as much as needed by the game), and one
 	 * last step for the ranking.
 	 * 
