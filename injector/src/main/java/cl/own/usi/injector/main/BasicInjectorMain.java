@@ -82,6 +82,12 @@ public class BasicInjectorMain {
 
 	private final static CountDownLatch gameStartSynchroLatch = new CountDownLatch(
 			1);
+	
+	private final static CountDownLatch gamersHaveAnsweredAllQuestions = new CountDownLatch(
+			NBUSERS);
+	private final static CountDownLatch lastSynchroTimeEllapsed = new CountDownLatch(
+					1);
+	
 	private final static CountDownLatch gameFinishedSynchroLatch = new CountDownLatch(
 			NBUSERS);
 	// Shared async http client, because it run internal workers and lot of
@@ -118,9 +124,25 @@ public class BasicInjectorMain {
 		// Let all workers start login
 		gameStartSynchroLatch.countDown();
 
+		LOGGER.info("Let's start");
+		
+		gamersHaveAnsweredAllQuestions.await();
+		
+		LOGGER.info("All gamers have answered all questions, let's wait synchrotime");
+		
+		Thread.sleep(QUESTIONTIMEFRAME + SYNCHROTIME);
+		
+		LOGGER.info("Reinsert all workers in the queue to request ranking");
+		
+		for (UserGameWorker worker : workers) {
+			executor.execute(worker);
+		}
+				
 		// Wait till all workers has finished the game.
 		gameFinishedSynchroLatch.await();
 
+		LOGGER.info("All gamers have requested ranking, shutting down");
+				
 		// shutdown everything cleanly.
 		executor.shutdown();
 		executor.awaitTermination(600, TimeUnit.SECONDS);
@@ -403,7 +425,11 @@ public class BasicInjectorMain {
 
 						currentQuestion++;
 						currentQuestionRequested = false;
-						executor.execute(this);
+						if (currentQuestion <= numquestions) {
+							executor.execute(this);
+						} else {
+							gamersHaveAnsweredAllQuestions.countDown();
+						}
 					}
 
 				} else {
