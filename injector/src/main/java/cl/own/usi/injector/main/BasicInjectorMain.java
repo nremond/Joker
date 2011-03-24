@@ -86,12 +86,7 @@ public class BasicInjectorMain {
 			NBUSERS);
 	// Shared async http client, because it run internal workers and lot of
 	// heavy stuff.
-	private static final AsyncHttpClientConfig.Builder asyncHttpClientConfigBuilder = new AsyncHttpClientConfig.Builder();
-	static {
-		asyncHttpClientConfigBuilder.setMaximumConnectionsTotal(MAXNOFILES);
-		asyncHttpClientConfigBuilder.setMaximumConnectionsPerHost(MAXNOFILES);
-	}
-	private static final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(asyncHttpClientConfigBuilder.build());
+	private static final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(new AsyncHttpClientConfig.Builder().build());
 
 	/**
 	 * @param args
