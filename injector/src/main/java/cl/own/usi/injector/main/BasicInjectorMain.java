@@ -49,19 +49,24 @@ public class BasicInjectorMain {
 	/*
 	 * Server parameters
 	 */
-	private final static String HOST = "localhost";
-	private final static int PORT = 9080;
+	private final static String DEFAULT_HOST = "localhost";
+	private final static int DEFAULT_PORT = 9080;
+	
+	private static String HOST = DEFAULT_HOST;
+	private static int PORT = DEFAULT_PORT;
 
 	/*
 	 * Game parameters
 	 */
 	private final static boolean FLUSHUSERSTABLE = true;
-	private final static int NBUSERS = 10;
+	private final static int DEFAULT_NBUSERS = 10;
 	private final static int NBQUESTIONS = 17;
 	private final static int QUESTIONTIMEFRAME = 10;
 	private final static int SYNCHROTIME = 10;
 	private final static int LOGINTIMEOUT = 20;
 
+	private static int NBUSERS = DEFAULT_NBUSERS;
+	
 	/*
 	 * Synchronization and concurrency stuff
 	 */
@@ -90,6 +95,16 @@ public class BasicInjectorMain {
 	public static void main(String[] args) throws IOException,
 			InterruptedException, ExecutionException {
 
+		if (args.length > 0) {
+			HOST = args[0];
+		}
+		if (args.length > 1) {
+			PORT = Integer.valueOf(args[1]);
+		}
+		if (args.length > 2) {
+			NBUSERS = Integer.valueOf(args[2]);
+		}
+		
 		createGame();
 
 		insertUsers(NBUSERS);
@@ -372,7 +387,7 @@ public class BasicInjectorMain {
 							int httpResponseCode = httpClient
 									.executeMethod(post);
 
-							if (httpResponseCode == 200) {
+							if (httpResponseCode == 201) {
 
 								// OK :)
 

@@ -8,11 +8,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
-import org.jgroups.util.ConcurrentLinkedBlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,8 +43,7 @@ public class Inject1000001UsersMain {
 	
 	private static final ExecutorService executor = Executors
 			.newFixedThreadPool(CONCURRENT_WORKERS);
-	private static final BlockingQueue<String> fileLines = new ConcurrentLinkedBlockingQueue<String>(
-			1000);
+	private static final BlockingQueue<String> fileLines = new LinkedBlockingQueue<String>(1000);
 
 	public static void main(String[] args) throws IllegalArgumentException,
 			IOException, InterruptedException, ExecutionException {
