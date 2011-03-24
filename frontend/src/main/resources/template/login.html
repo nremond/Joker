@@ -26,17 +26,25 @@
 		var	password = form.find( 'input[name="password"]' ).val();
 		
 		
-		var url = "/api/login";
-
+		$.ajax({
+			url :  "/api/login",
+			data : "{ \"mail\":"+mail+ ",\"password\":"+password+" }",
+			type : "POST",
+			statusCode: {
+				201: function(data) {
+					console.log("login ok, let's do what ?")
+				},
+				
+				401: function(data) { 
+					$( "#result" ).html( "Invalid credentials" );
+				},
+				
+				400: function(data) {
+					$( "#result" ).html( "User already logged in" );
+				}	
+			}
+		});
 		
-		// Send the data using post and put the results in a div
-		$.post( url, "{ \"mail\":"+mail+ ",\"password\":"+password+" }" ,
-		  function( data ) {
-	 
-			 var content = $( data ).find( '#content' );
-			  $( "#result" ).html( content );
-		  }
-		, "json");
 	  });
 	</script>
 		
