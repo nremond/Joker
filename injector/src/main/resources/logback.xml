@@ -9,10 +9,10 @@
 	<!--Daily rolling file appender -->
 	<appender name="FILE"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<File>frontend.log</File>
+		<File>injector.log</File>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover, keep at maximum 14 files -->
-			<fileNamePattern>frontend-%d{yyyy-MM-dd}.log</fileNamePattern>
+			<fileNamePattern>injector-%d{yyyy-MM-dd}.log</fileNamePattern>
 			<maxHistory>14</maxHistory>
 		</rollingPolicy>
 
@@ -32,13 +32,6 @@
 
 	<logger name="org.springframework">
 		<level value="info" />
-	</logger>
-
-	<logger name="org.jgroups">
-		<level value="debug" />
-	</logger>
-	<logger name="org.jgroups.protocols.FD">
-		<level value="warn" />
 	</logger>
 
 	<root>
