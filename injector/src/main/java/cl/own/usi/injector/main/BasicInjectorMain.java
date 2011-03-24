@@ -401,7 +401,7 @@ public class BasicInjectorMain {
 
 						asyncHttpClient.prepareGet(getUrl)
 								.setHeader("Cookie", cookieHeader.getValue())
-								.execute(new MyAsyncHandler(this));
+								.execute(new MyAsyncHandler(this, currentQuestion));
 
 					} else {
 
@@ -483,9 +483,9 @@ public class BasicInjectorMain {
 		 * Callback function when the question is received.
 		 * 
 		 */
-		public void questionRecieved() {
+		public void questionRecieved(int questionRequested) {
 
-			LOGGER.info("Question recieved");
+			LOGGER.info("Question {} recieved", questionRequested);
 
 			currentQuestionRequested = true;
 
@@ -505,16 +505,18 @@ public class BasicInjectorMain {
 	private static class MyAsyncHandler extends AsyncCompletionHandler<Integer> {
 
 		private final UserGameWorker worker;
-
-		public MyAsyncHandler(UserGameWorker worker) {
+		private final int questionRequested;
+		
+		public MyAsyncHandler(UserGameWorker worker, int questionRequested) {
 			this.worker = worker;
+			this.questionRequested = questionRequested;
 		}
 
 		@Override
 		public Integer onCompleted(Response response) throws Exception {
 
 			if (response != null && response.getStatusCode() == 200) {
-				worker.questionRecieved();
+				worker.questionRecieved(questionRequested);
 			}
 			return 200;
 		}
