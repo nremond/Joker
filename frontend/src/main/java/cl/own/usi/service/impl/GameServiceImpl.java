@@ -416,7 +416,7 @@ public class GameServiceImpl implements GameService {
 
 	@Override
 	public boolean isRankingRequestAllowed() {
-		return gameSynchronization == null || gameSynchronization.rankingRequestAllowed;
+		return gameSynchronization != null && gameSynchronization.rankingRequestAllowed;
 	}
 
 }

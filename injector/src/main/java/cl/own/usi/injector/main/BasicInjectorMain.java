@@ -52,7 +52,7 @@ public class BasicInjectorMain {
 	 */
 	private final static String DEFAULT_HOST = "localhost";
 	private final static int DEFAULT_PORT = 9080;
-	
+
 	private static String HOST = DEFAULT_HOST;
 	private static int PORT = DEFAULT_PORT;
 
@@ -68,7 +68,7 @@ public class BasicInjectorMain {
 
 	private static int NBUSERS = DEFAULT_NBUSERS;
 	private static int MAXNOFILES = 395240;
-	
+
 	/*
 	 * Synchronization and concurrency stuff
 	 */
@@ -77,16 +77,25 @@ public class BasicInjectorMain {
 	private final static ExecutorService executor = Executors
 			.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
 	// List of players' workers
-	private static final List<UserGameWorker> workers = new ArrayList<BasicInjectorMain.UserGameWorker>(
-			NBUSERS);
+	private static List<UserGameWorker> workers;
 
 	private final static CountDownLatch gameStartSynchroLatch = new CountDownLatch(
 			1);
-	private final static CountDownLatch gameFinishedSynchroLatch = new CountDownLatch(
-			NBUSERS);
+
+	private static CountDownLatch gamersHaveAnsweredAllQuestions;
+
+	private static CountDownLatch gameFinishedSynchroLatch;
+
 	// Shared async http client, because it run internal workers and lot of
 	// heavy stuff.
-	private static final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(new AsyncHttpClientConfig.Builder().build());
+	private static final AsyncHttpClientConfig.Builder ASYNC_HTTP_CLIENT_CONFIG_BUILDER = new AsyncHttpClientConfig.Builder();
+	static {
+		ASYNC_HTTP_CLIENT_CONFIG_BUILDER
+				.setMaximumConnectionsPerHost(MAXNOFILES);
+		ASYNC_HTTP_CLIENT_CONFIG_BUILDER.setMaximumConnectionsTotal(MAXNOFILES);
+	}
+	private static final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
+			ASYNC_HTTP_CLIENT_CONFIG_BUILDER.build());
 
 	/**
 	 * @param args
@@ -106,7 +115,11 @@ public class BasicInjectorMain {
 		if (args.length > 2) {
 			NBUSERS = Integer.valueOf(args[2]);
 		}
-		
+
+		workers = new ArrayList<BasicInjectorMain.UserGameWorker>(NBUSERS);
+		gamersHaveAnsweredAllQuestions = new CountDownLatch(NBUSERS);
+		gameFinishedSynchroLatch = new CountDownLatch(NBUSERS);
+
 		createGame();
 
 		insertUsers(NBUSERS);
@@ -118,8 +131,24 @@ public class BasicInjectorMain {
 		// Let all workers start login
 		gameStartSynchroLatch.countDown();
 
+		LOGGER.info("Let's start");
+
+		gamersHaveAnsweredAllQuestions.await();
+
+		LOGGER.info("All gamers have answered all questions, let's wait synchrotime");
+
+		Thread.sleep((QUESTIONTIMEFRAME + SYNCHROTIME) * 1000);
+
+		LOGGER.info("Reinsert all workers in the queue to request ranking");
+
+		for (UserGameWorker worker : workers) {
+			executor.execute(worker);
+		}
+
 		// Wait till all workers has finished the game.
 		gameFinishedSynchroLatch.await();
+
+		LOGGER.info("All gamers have requested ranking, shutting down");
 
 		// shutdown everything cleanly.
 		executor.shutdown();
@@ -206,8 +235,8 @@ public class BasicInjectorMain {
 
 		HttpClient httpClient = new HttpClient();
 
-		String postBody = "{ \"authentication_key\" : \"1234\", \"parameters\" : { \"questions\" " +
-				": [ { \"goodchoice\" : 1, \"label\" : \"Question1\", \"choices\" : [ \""
+		String postBody = "{ \"authentication_key\" : \"1234\", \"parameters\" : { \"questions\" "
+				+ ": [ { \"goodchoice\" : 1, \"label\" : \"Question1\", \"choices\" : [ \""
 				+ "choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 2, \"label\" : \"Question2\""
 				+ ", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 1, \"label\""
 				+ " : \"Question3\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\""
@@ -268,7 +297,7 @@ public class BasicInjectorMain {
 	 * step at a time, rescheduling itself after each step. This permit to
 	 * emulate concurrency with much lower threads.
 	 * 
-	 * There is one step to login, one to request the questio, one to answer it
+	 * There is one step to login, one to request the question, one to answer it
 	 * (these two steps are repeated as much as needed by the game), and one
 	 * last step for the ranking.
 	 * 
@@ -347,7 +376,9 @@ public class BasicInjectorMain {
 								cookieHeader = new Header("Cookie", headerValue);
 							}
 						} else {
-							LOGGER.warn("Problem at login with response code {}", httpResponseCode);
+							LOGGER.warn(
+									"Problem at login with response code {}",
+									httpResponseCode);
 						}
 
 					} finally {
@@ -370,7 +401,7 @@ public class BasicInjectorMain {
 
 						asyncHttpClient.prepareGet(getUrl)
 								.setHeader("Cookie", cookieHeader.getValue())
-								.execute(new MyAsyncHandler(this));
+								.execute(new MyAsyncHandler(this, currentQuestion));
 
 					} else {
 
@@ -394,7 +425,9 @@ public class BasicInjectorMain {
 								// OK :)
 
 							} else {
-								LOGGER.error("Error answering the question with response code {}", httpResponseCode);
+								LOGGER.error(
+										"Error answering the question with response code {}",
+										httpResponseCode);
 							}
 
 						} finally {
@@ -403,7 +436,11 @@ public class BasicInjectorMain {
 
 						currentQuestion++;
 						currentQuestionRequested = false;
-						executor.execute(this);
+						if (currentQuestion <= numquestions) {
+							executor.execute(this);
+						} else {
+							gamersHaveAnsweredAllQuestions.countDown();
+						}
 					}
 
 				} else {
@@ -420,10 +457,13 @@ public class BasicInjectorMain {
 
 						if (httpResponseCode == 200) {
 
-							LOGGER.info("Everything went fine for user {}", email);
+							LOGGER.info("Everything went fine for user {}",
+									email);
 
 						} else {
-							LOGGER.error("Error requesting the ranking with response code {}", httpResponseCode);
+							LOGGER.error(
+									"Error requesting the ranking with response code {}",
+									httpResponseCode);
 						}
 
 					} finally {
@@ -443,9 +483,9 @@ public class BasicInjectorMain {
 		 * Callback function when the question is received.
 		 * 
 		 */
-		public void questionRecieved() {
+		public void questionRecieved(int questionRequested) {
 
-			LOGGER.info("Question recieved");
+			LOGGER.info("Question {} recieved", questionRequested);
 
 			currentQuestionRequested = true;
 
@@ -465,16 +505,18 @@ public class BasicInjectorMain {
 	private static class MyAsyncHandler extends AsyncCompletionHandler<Integer> {
 
 		private final UserGameWorker worker;
-
-		public MyAsyncHandler(UserGameWorker worker) {
+		private final int questionRequested;
+		
+		public MyAsyncHandler(UserGameWorker worker, int questionRequested) {
 			this.worker = worker;
+			this.questionRequested = questionRequested;
 		}
 
 		@Override
 		public Integer onCompleted(Response response) throws Exception {
 
 			if (response != null && response.getStatusCode() == 200) {
-				worker.questionRecieved();
+				worker.questionRecieved(questionRequested);
 			}
 			return 200;
 		}
