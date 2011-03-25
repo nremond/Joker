@@ -1,17 +1,11 @@
 package cl.own.usi.gateway.netty.controller;
 
 import static cl.own.usi.gateway.netty.ResponseHelper.writeResponse;
-import static cl.own.usi.gateway.netty.ResponseHelper.writeStringToReponse;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.SET_COOKIE;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CREATED;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_IMPLEMENTED;
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_0;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.jboss.netty.channel.ChannelFuture;
@@ -86,30 +80,9 @@ public class LoginController extends AbstractController {
 
 		} else if (request.getMethod() == HttpMethod.GET) {
 
-			BufferedReader in = null;
-			StringBuffer buff = new StringBuffer();
-			try {
-				final InputStream inputStream = loginTemplate.getInputStream();
-
-				in = new BufferedReader(new InputStreamReader(inputStream));
-				String str;
-				while ((str = in.readLine()) != null) {
-					buff.append(str);
-					buff.append("\n");
-				}
-
-			} catch (IOException exp) {
-				getLogger().error("The html template couldn't be found at {}",
-						loginTemplate);
-			} finally {
-				if (in != null) {
-					in.close();
-				}
-			}
-
-			writeStringToReponse(buff.toString(), e, CREATED);
-
+			writeHtml(e, loginTemplate);
 		} else {
+
 			writeResponse(e, NOT_IMPLEMENTED);
 			getLogger().warn("Not implemented");
 		}

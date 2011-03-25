@@ -4,10 +4,13 @@
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
 <head/>
 <body>
+
+	<div> Identification <div>
+
 	<form action="/" id="loginForm">
 		Mail: <input type="text" name="mail" /><br />
 		Password: <input type="password" name="password" /><br />
-		<input type="submit" value="Login"  />
+		<input type="submit" value="OK"  />
 	</form>
 	
 	<!-- the result of the search will be rendered inside this div -->
@@ -32,7 +35,67 @@
 			type : "POST",
 			statusCode: {
 				201: function(data) {
-					console.log("login ok, let's do what ?")
+					$( "#result" ).html( "User logged in" );
+					
+					<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"> 
+<html>
+<head>
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+<head/>
+<body>
+
+	<div> Identification <div>
+
+	<form action="/" id="loginForm">
+		Mail: <input type="text" name="mail" /><br />
+		Password: <input type="password" name="password" /><br />
+		<input type="submit" value="OK"  />
+	</form>
+	
+	<!-- the result of the search will be rendered inside this div -->
+	<div id="result"></div>
+	
+	<script>
+	  // attach a submit handler to the form
+	  $("#loginForm").submit(function(event) {
+
+		// stop form from submitting normally
+		event.preventDefault(); 
+			
+		// get some values from elements on the page:
+		var form = $( this );
+		var	mail = form.find( 'input[name="mail"]' ).val();
+		var	password = form.find( 'input[name="password"]' ).val();
+		
+		
+		$.ajax({
+			url :  "/api/login",
+			data : "{ \"mail\":"+mail+ ",\"password\":"+password+" }",
+			type : "POST",
+			statusCode: {
+				201: function(data) {
+					$( "#result" ).html( "User logged in" );
+					
+					window.location.replace("/api/play");
+				},
+				
+				401: function(data) { 
+					$( "#result" ).html( "Invalid credentials" );
+				},
+				
+				400: function(data) {
+					$( "#result" ).html( "User already logged in" );
+				}	
+			}
+		});
+		
+	  });
+	</script>
+		
+	
+</body>
+</html>
+
 				},
 				
 				401: function(data) { 

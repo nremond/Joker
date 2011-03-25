@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"> 
+<html>
+<head>
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+<head/>
+<body>
+
+	<div id="info"> 
+		<p>Waiting for other players.</p>
+		<p>Be ready !</p>
+	</div>
+
+	<div id="game"/>
+	
+	<script>
+		$.ajax({
+			url: "/api/question/1",
+			type: "GET",
+			dataType: "json",
+			success: function(data, textStatus, jqXHR) {
+				console.log("youpee");
+			}
+		});
+		
+	
+	</script>
+</body>
+</html>

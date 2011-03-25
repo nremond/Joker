@@ -5,8 +5,8 @@ import static cl.own.usi.gateway.netty.controller.AbstractController.URI_API;
 import static cl.own.usi.gateway.netty.controller.AbstractController.URI_API_LENGTH;
 import static cl.own.usi.gateway.netty.controller.AnswerController.URI_ANSWER;
 import static cl.own.usi.gateway.netty.controller.QuestionController.URI_QUESTION;
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -24,6 +24,7 @@ import cl.own.usi.gateway.netty.controller.AuditController;
 import cl.own.usi.gateway.netty.controller.GameController;
 import cl.own.usi.gateway.netty.controller.LoginController;
 import cl.own.usi.gateway.netty.controller.LogoutController;
+import cl.own.usi.gateway.netty.controller.PlayController;
 import cl.own.usi.gateway.netty.controller.QuestionController;
 import cl.own.usi.gateway.netty.controller.RankingController;
 import cl.own.usi.gateway.netty.controller.UserController;
@@ -54,6 +55,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 	private static final String URI_LOGOUT = "/logout";
 	private static final String URI_ADD_WORKER_NODE = "/join";
 	private static final String URI_AUDIT = "/audit";
+	private static final String URI_PLAY = "/play";
 
 	@Autowired
 	private QuestionController questionController;
@@ -79,6 +81,10 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 
 	@Autowired
 	private AuditController auditController;
+
+	@Autowired
+	private PlayController playController;
+
 
 	@Autowired
 	private AddWorkerNodeController addWorkerNodeController;
@@ -112,6 +118,8 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 					gameController.messageReceived(ctx, e);
 				} else if (URI.startsWith(URI_AUDIT)) {
 					auditController.messageReceived(ctx, e);
+				} else if (URI.startsWith(URI_PLAY)) {
+					playController.messageReceived(ctx, e);
 				} else {
 					writeResponse(e, NOT_FOUND);
 				}
