@@ -111,7 +111,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 	}
 
 	@Override
-	public int setBadAnswer(String userId) {
+	public int setBadAnswer(String userId, int questionNumber) {
 
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
@@ -133,7 +133,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 	}
 
 	@Override
-	public int setGoodAnswer(String userId, int questionValue) {
+	public int setGoodAnswer(String userId, int questionNumber, int questionValue) {
 		// TODO this implement is not good, we have to do this in one shot
 
 		DBCollection dbUsers = db.getCollection(usersCollection);

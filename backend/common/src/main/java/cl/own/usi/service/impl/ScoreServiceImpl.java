@@ -22,9 +22,9 @@ public class ScoreServiceImpl implements ScoreService {
 			String userId, boolean answerCorrect) {
 
 		if (answerCorrect) {
-			return scoreDAO.setGoodAnswer(userId, questionValue);
+			return scoreDAO.setGoodAnswer(userId, questionNumber, questionValue);
 		} else {
-			return scoreDAO.setBadAnswer(userId);
+			return scoreDAO.setBadAnswer(userId, questionNumber);
 		}
 	}
 
