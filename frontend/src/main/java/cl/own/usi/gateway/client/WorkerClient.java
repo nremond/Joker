@@ -43,4 +43,6 @@ public interface WorkerClient {
 	
 	boolean addWorkerNode(String host, int port);
 	
+	void startRankingsComputation();
+	
 }

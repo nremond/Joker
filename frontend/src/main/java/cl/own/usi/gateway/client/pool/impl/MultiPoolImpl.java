@@ -40,7 +40,7 @@ public abstract class MultiPoolImpl<K, V> implements MultiPool<K, V> {
 	
 	public V borrow() throws PoolException {
 		
-		if (!active.get()) {
+		if (!isActive()) {
 			throw new PoolException("Pool is not active");
 		}
 		
@@ -48,28 +48,37 @@ public abstract class MultiPoolImpl<K, V> implements MultiPool<K, V> {
 		int retry = 0;
 		
 		do {
-			K key = null;
-			try {
-				key = getKey();
-				if (key == null) {
-					throw new PoolException("No keys defined. Please addKey first");
-				}
-				Pool<V> pool = pools.get(key);
-				object = pool.borrow();
-				if (object != null) {
-					borrowedClients.put(object, key);
-					errors.get(key).set(0);
-				}
-			} catch (FactoryException e) {
-				if (key != null) {
-					removeKey(key);
-				}
-			}
+			K key = getKey();
+			object = borrow(key);
 		} while (object == null && retry++ < MAX_AQUISITION_RETRY);
 		
 		return object;
 	}
 
+	protected V borrow(K key) throws PoolException {
+		
+		V object = null;
+		
+		try {
+			key = getKey();
+			if (key == null) {
+				throw new PoolException("No keys defined. Please addKey first");
+			}
+			Pool<V> pool = getPools().get(key);
+			object = pool.borrow();
+			if (object != null) {
+				borrowedClients.put(object, key);
+				errors.get(key).set(0);
+			}
+		} catch (FactoryException e) {
+			if (key != null) {
+				removeKey(key);
+			}
+		}
+		
+		return object;
+	}
+	
 	public void release(V object) throws PoolException {
 		K key = borrowedClients.remove(object);
 		if (key != null) {
@@ -147,5 +156,13 @@ public abstract class MultiPoolImpl<K, V> implements MultiPool<K, V> {
 	
 	public int getMaxPoolSize() {
 		return 0;
+	}
+	
+	public boolean isActive() {
+		return active.get();
+	}
+	
+	protected ConcurrentMap<K, Pool<V>> getPools() {
+		return pools;
 	}
 }

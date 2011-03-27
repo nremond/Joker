@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import cl.own.usi.dao.GameDAO;
+import cl.own.usi.gateway.client.WorkerClient;
 import cl.own.usi.gateway.netty.QuestionWorker;
 import cl.own.usi.gateway.utils.ExecutorUtil;
 import cl.own.usi.gateway.utils.Twitter;
@@ -48,6 +49,9 @@ public class GameServiceImpl implements GameService {
 
 	@Autowired
 	private Twitter twitter;
+
+	@Autowired
+	private WorkerClient workerClient;
 	
 	private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -225,28 +229,30 @@ public class GameServiceImpl implements GameService {
 							.getQuestionTimeLimit() * 1000);
 					LOGGER.debug("Question wait time ... done");
 
-					LOGGER.debug("Synchrotime ...");
-					
-					long starttime = System.currentTimeMillis();
-					
-					questionSynchronization.lock.lock();
-					gameSynchronization.currentQuestionToAnswer++;
-					for (Runnable r : questionSynchronization.waitingQueue) {
-						LOGGER.debug("Inserting a early requester to the working queue");
-						executorUtil.getExecutorService().execute(r);
+					if (i < gameSynchronization.game.getNumberOfQuestion()) {
+						LOGGER.debug("Synchrotime ...");
+						
+						long starttime = System.currentTimeMillis();
+						
+						questionSynchronization.lock.lock();
+						gameSynchronization.currentQuestionToAnswer++;
+						for (Runnable r : questionSynchronization.waitingQueue) {
+							LOGGER.debug("Inserting a early requester to the working queue");
+							executorUtil.getExecutorService().execute(r);
+						}
+						questionSynchronization.lock.unlock();
+						
+						long stoptime = System.currentTimeMillis();
+						
+						long synchrotime = (gameSynchronization.game
+						.getSynchroTimeLimit() * 1000) + starttime - stoptime;
+						if (synchrotime > 0) {
+							// mmmh, weird specs...
+							Thread.sleep(synchrotime);
+						}
+						
+						LOGGER.debug("Synchrotime done");
 					}
-					questionSynchronization.lock.unlock();
-					
-					long stoptime = System.currentTimeMillis();
-					
-					long synchrotime = (gameSynchronization.game
-					.getSynchroTimeLimit() * 1000) + starttime - stoptime;
-					if (synchrotime > 0) {
-						// mmmh, weird specs...
-						Thread.sleep(synchrotime);
-					}
-					
-					LOGGER.debug("Synchrotime ... done");
 					
 				} catch (InterruptedException e) {
 					LOGGER.warn("Interrupted", e);
@@ -259,11 +265,35 @@ public class GameServiceImpl implements GameService {
 			}
 			
 			
-			LOGGER.info("All questions finished. Ranking requests are now allowed");
+			LOGGER.info("All questions finished. Doing some processing, latest synchrotime, and request for ranking will be allowed");
+
+			LOGGER.debug("Latest synchrotime ...");
+			
+			long starttime = System.currentTimeMillis();
+			
+			gameSynchronization.currentQuestionToAnswer++;
+			
+			workerClient.startRankingsComputation();
+			
+			long stoptime = System.currentTimeMillis();
+			
+			long synchrotime = (gameSynchronization.game
+			.getSynchroTimeLimit() * 1000) + starttime - stoptime;
+			if (synchrotime > 0) {
+				try {
+					// mmmh, weird specs again...
+					Thread.sleep(synchrotime);
+				} catch (InterruptedException e) {
+					LOGGER.warn("Interrupted", e);
+					return;
+				}
+			}
+			
+			LOGGER.debug("Latest synchrotime done");
 			
 			gameSynchronization.rankingRequestAllowed = true;
 			
-			LOGGER.info("Tweet and clean everything");
+			LOGGER.info("Ranking requests are now allowed, tweet and clean everything");
 			
 			if (twitt) {
 				twitter.twitt(String.format(TWITTER_MESSAGE, gameSynchronization.game.getUsersLimit()));
@@ -301,7 +331,6 @@ public class GameServiceImpl implements GameService {
 	private class GameSynchronization {
 
 		private final CountDownLatch waitForFirstLogin;
-		private final CountDownLatch waitBeforeRequestRanking;
 
 		private final CountDownLatch enoughUsersLatch;
 
@@ -328,7 +357,6 @@ public class GameServiceImpl implements GameService {
 
 			enoughUsersLatch = new CountDownLatch(game.getUsersLimit());
 			waitForFirstLogin = new CountDownLatch(1);
-			waitBeforeRequestRanking = new CountDownLatch(1);
 		}
 
 		QuestionSynchronization getQuestionSynchronization(int questionNumber) {

@@ -298,7 +298,9 @@ public class WorkerClientThriftImpl implements WorkerClient {
 	
 	private void release(Client client) {
 		try {
-			pools.release(client);
+			if (client != null) {
+				pools.release(client);
+			}
 		} catch (PoolException e) {
 		
 		}
@@ -410,5 +412,18 @@ public class WorkerClientThriftImpl implements WorkerClient {
 			return port;
 		}
 		
+	}
+
+	@Override
+	public void startRankingsComputation() {
+		
+		Client client = getClient();
+		try {
+			client.startRankingsComputation();
+		} catch (TException e) {
+			pools.invalidate(client);
+		} finally {
+			release(client);
+		}
 	}
 }
