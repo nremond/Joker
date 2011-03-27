@@ -50,10 +50,13 @@ public class CassandraHelper {
 	}
 	
 	
-	public static String generateUserId(final User user) {
-		ChannelBuffer chanBuff = wrappedBuffer((user.getEmail() + USER_ID_SALT)
+	public static String generateUserId(final String email) {
+		ChannelBuffer chanBuff = wrappedBuffer((email + USER_ID_SALT)
 				.getBytes(CharsetUtil.UTF_8));
 		return Base64.encode(chanBuff, Base64Dialect.ORDERED).toString(
 				CharsetUtil.UTF_8);
+	}
+	public static String generateUserId(final User user) {
+		return generateUserId(user.getEmail());
 	}
 }

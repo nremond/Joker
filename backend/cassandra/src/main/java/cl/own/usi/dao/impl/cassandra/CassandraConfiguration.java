@@ -1,43 +1,41 @@
 package cl.own.usi.dao.impl.cassandra;
 
-
-import java.util.ArrayList;
 import java.util.List;
 
+import me.prettyprint.cassandra.model.BasicColumnFamilyDefinition;
+import me.prettyprint.cassandra.model.BasicKeyspaceDefinition;
+import me.prettyprint.cassandra.service.ThriftCfDef;
+import me.prettyprint.cassandra.service.ThriftKsDef;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
+import me.prettyprint.hector.api.ddl.ComparatorType;
+import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 import me.prettyprint.hector.api.factory.HFactory;
 
-import org.apache.cassandra.thrift.Cassandra;
-import org.apache.cassandra.thrift.CfDef;
-import org.apache.cassandra.thrift.KsDef;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.transport.TFramedTransport;
-import org.apache.thrift.transport.TSocket;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-
 @Configuration
-public class CassandraConfiguration implements InitializingBean{
-	
-	//Cluster
+public class CassandraConfiguration implements InitializingBean {
+
+	// Cluster
 	final static private String dbcluster = "JokerCluster";
 	final static private String dbhost = "localhost";
 	final static private int dbPort = 9160;
-	
-	//Keyspace
+
+	// Keyspace
 	final static private String dbKeyspace = "JokerKeySpace";
-	
-	//Column Family
+
+	// Column Family
 	final static public String usersColumnFamily = "Users";
 	final static public String answersColumnFamily = "Answers";
-	final static public String emailsColumnFamily = "Emails";
-	final static public String requestsColumnFamily = "Requests";
-	final static public String scoreColumnFamily = "Scores";
-	
-	//Column name
+	// final static public String emailsColumnFamily = "Emails";
+	// final static public String requestsColumnFamily = "Requests";
+	final static public String bonusesColumnFamily = "Bonuses";
+	final static public String ranksColumnFamily = "Ranks";
+
+	// Column name
 	final static String userIdColumn = "userId";
 	final static String emailColumn = "email";
 	final static String passwordColumn = "password";
@@ -49,91 +47,94 @@ public class CassandraConfiguration implements InitializingBean{
 	final static String answersColumn = "answers";
 	final static String questionNumberColumn = "questionNumber";
 	final static String answerNumberColumn = "answerNumber";
-	
-	
-	
+
+	private int replicationFactor = 1;
+	private String strategyClass = "LocalStrategy"; // "SimpleStrategy"
+	private boolean forceRecreation = true;
+
 	@Bean
-	public Cluster cluster(){
-		return HFactory.getOrCreateCluster(dbcluster, dbhost+":"+dbPort);
+	public Cluster cluster() {
+		return HFactory.getOrCreateCluster(dbcluster, dbhost + ":" + dbPort);
 	}
-	
+
 	@Bean
-	public Keyspace keyspace(){
+	public Keyspace keyspace() {
 		return HFactory.createKeyspace(dbKeyspace, cluster());
 	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		TFramedTransport transport = null;
-		try {
-			transport = new TFramedTransport(new TSocket(dbhost, dbPort));
-			Cassandra.Client client = new Cassandra.Client(new TBinaryProtocol(transport));
-			transport.open();
+
+		boolean keyspaceExists = keyspaceExists();
+
+		if (!keyspaceExists || forceRecreation) {
+
 			
-			List<KsDef> keyspaceList = client.describe_keyspaces();
-			for(KsDef keyspace:keyspaceList){
-				if (keyspace.getName().equals(dbKeyspace)){
-					client.send_system_drop_keyspace(dbKeyspace);
-					client.recv_system_drop_keyspace();
-				}
+			if (keyspaceExists) {
+				dropKeyspace();
 			}
-	
-			//Definition of the Keyspace
-			KsDef keyspace_definition = new KsDef();
-			keyspace_definition.setReplication_factor(1);
-			keyspace_definition.setStrategy_class("LocalStrategy");
-			keyspace_definition.setName(dbKeyspace);
-			
-			//Definition of the column family Users
-	        CfDef users_CfDef = new CfDef();
-	        users_CfDef.setColumn_type("Standard");
-	        users_CfDef.setName(usersColumnFamily);
-	        users_CfDef.setKeyspace(dbKeyspace);
-	        
-	        //Definition of the column family Email
-	        CfDef emails_CfDef = new CfDef();
-	        emails_CfDef.setColumn_type("Standard");
-	        emails_CfDef.setName(emailsColumnFamily);
-	        emails_CfDef.setKeyspace(dbKeyspace);
-	        
-	        //Definition of the column family Score
-	        CfDef score_CfDef = new CfDef();
-	        score_CfDef.setColumn_type("Standard");
-	        score_CfDef.setName(scoreColumnFamily);
-	        score_CfDef.setKeyspace(dbKeyspace);
-	        
-	        //Definition of the column family Answers
-	        CfDef answers_CfDef = new CfDef();
-	        answers_CfDef.setColumn_type("Super");
-	        answers_CfDef.setName(answersColumnFamily);
-	        answers_CfDef.setKeyspace(dbKeyspace);
-	        
-	        //Definition of the index on column Email
-			/*ColumnDef email_CDef = new ColumnDef();
-			email_CDef.setName("email".getBytes());
-			email_CDef.setIndex_name("EmailIndex");
-			email_CDef.setIndex_type(IndexType.KEYS);
-			email_CDef.setValidation_class("BytesType");
-        	users_CfDef.addToColumn_metadata(email_CDef);*/
-        	
-        	
-        	
-   
-        	//Add the column family to the keyspace
-	        List<CfDef> columnfamily_list = new ArrayList<CfDef>();
-			columnfamily_list.add(users_CfDef);
-			columnfamily_list.add(emails_CfDef);
-			columnfamily_list.add(answers_CfDef);
-			columnfamily_list.add(score_CfDef);
-			keyspace_definition.setCf_defs(columnfamily_list);
-	                
-	        client.system_add_keyspace(keyspace_definition);
-		} finally {
-			if (transport != null) {
-				transport.close();
-			}
+
+			createKeyspace();
+
 		}
-		
+
 	}
 
+	public void dropKeyspace() {
+		cluster().dropKeyspace(dbKeyspace);
+	}
+
+	public void createKeyspace() {
+		// Definition of the Keyspace
+		BasicKeyspaceDefinition keyspaceDefinition = new BasicKeyspaceDefinition();
+		keyspaceDefinition.setName(dbKeyspace);
+		keyspaceDefinition.setReplicationFactor(replicationFactor);
+		keyspaceDefinition.setStrategyClass(strategyClass);
+		// keyspaceDefinition.setStrategyOption(field, value);
+
+		BasicColumnFamilyDefinition usersColumnFamilyDefinition = new BasicColumnFamilyDefinition();
+		usersColumnFamilyDefinition.setComparatorType(ComparatorType.UTF8TYPE);
+		usersColumnFamilyDefinition.setName(usersColumnFamily);
+		usersColumnFamilyDefinition.setKeyspaceName(dbKeyspace);
+		keyspaceDefinition.addColumnFamily(new ThriftCfDef(
+				usersColumnFamilyDefinition));
+
+		BasicColumnFamilyDefinition answerColumnFamilyDefinition = new BasicColumnFamilyDefinition();
+		answerColumnFamilyDefinition
+				.setComparatorType(ComparatorType.INTEGERTYPE);
+		answerColumnFamilyDefinition.setName(answersColumnFamily);
+		answerColumnFamilyDefinition.setKeyspaceName(dbKeyspace);
+		keyspaceDefinition.addColumnFamily(new ThriftCfDef(
+				answerColumnFamilyDefinition));
+
+		BasicColumnFamilyDefinition bonusesColumnFamilyDefinition = new BasicColumnFamilyDefinition();
+		bonusesColumnFamilyDefinition.setComparatorType(ComparatorType.INTEGERTYPE);
+		bonusesColumnFamilyDefinition.setName(bonusesColumnFamily);
+		bonusesColumnFamilyDefinition.setKeyspaceName(dbKeyspace);
+		keyspaceDefinition.addColumnFamily(new ThriftCfDef(
+				bonusesColumnFamilyDefinition));
+		
+		BasicColumnFamilyDefinition ranksColumnFamilyDefinition = new BasicColumnFamilyDefinition();
+		ranksColumnFamilyDefinition.setComparatorType(ComparatorType.UTF8TYPE);
+		ranksColumnFamilyDefinition.setName(ranksColumnFamily);
+		ranksColumnFamilyDefinition.setKeyspaceName(dbKeyspace);
+		keyspaceDefinition.addColumnFamily(new ThriftCfDef(
+				ranksColumnFamilyDefinition));
+
+		cluster().addKeyspace(new ThriftKsDef(keyspaceDefinition));
+	}
+
+	public boolean keyspaceExists() {
+
+		boolean keyspaceExists = false;
+		List<KeyspaceDefinition> keyspaces = cluster().describeKeyspaces();
+		for (KeyspaceDefinition kd : keyspaces) {
+			if (kd.getName().equals(dbKeyspace)) {
+				keyspaceExists = true;
+				break;
+			}
+		}
+
+		return keyspaceExists;
+	}
 }
