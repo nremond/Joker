@@ -111,4 +111,9 @@ public class ScoreDAOImpl implements ScoreDAO {
 		return newScore;
 	}
 
+	@Override
+	public void computeRankings() {
+		// not needed in this implementation
+	}
+
 }

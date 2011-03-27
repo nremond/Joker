@@ -40,4 +40,9 @@ public class ScoreServiceImpl implements ScoreService {
 		return scoreDAO.getAfter(user, FIFTY);
 	}
 
+	@Override
+	public void computeRankings() {
+		scoreDAO.computeRankings();
+	}
+
 }

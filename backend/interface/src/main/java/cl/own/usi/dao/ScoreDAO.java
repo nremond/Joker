@@ -6,8 +6,6 @@ import cl.own.usi.model.User;
 
 public interface ScoreDAO {
 
-
-
 	/**
 	 * Return the Users having the higher score.
 	 * 
@@ -54,4 +52,6 @@ public interface ScoreDAO {
 
 	void flushUsers();
 
+	void computeRankings();
+	
 }

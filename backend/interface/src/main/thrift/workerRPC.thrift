@@ -29,6 +29,8 @@ service WorkerRPC {
 	
 	list<UserInfoAndScore> getTop100(),
 	list<UserInfoAndScore> get50Before(1: string userId),
-	list<UserInfoAndScore> get50After(1: string userId)
+	list<UserInfoAndScore> get50After(1: string userId),
+	
+	void startRankingsComputation()
 	
 }

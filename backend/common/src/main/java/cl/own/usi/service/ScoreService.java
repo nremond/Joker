@@ -36,4 +36,10 @@ public interface ScoreService {
 	 * @return
 	 */
 	List<User> get50After(User user);
+	
+	/**
+	 * Compute rankings for all {@link User}s (if needed)
+	 */
+	void computeRankings();
+	
 }

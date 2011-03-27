@@ -169,4 +169,9 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		// TODO Auto-generated method stub
 	}
 
+	@Override
+	public void computeRankings() {
+		// not needed in this implementation
+	}
+
 }

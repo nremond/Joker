@@ -130,8 +130,7 @@ public class UserDAOMongoImpl implements UserDAO {
 
 	@Override
 	public void insertRequest(final String userId, final int questionNumber) {
-
-		// TODO finish
+		// not needed anymore
 	}
 
 	@Override

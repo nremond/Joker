@@ -220,4 +220,7 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 		}
 	}
 
+	public void startRankingsComputation() {
+		scoreService.computeRankings();
+	}
 }
