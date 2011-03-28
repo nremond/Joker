@@ -124,7 +124,7 @@ public class UserDAOMongoImpl implements UserDAO {
 		dblogout.put(isLoggedField, false);
 		DBObject dbSetlogout = new BasicDBObject();
 		dblogout.put("$set", dblogout);
-		
+
 		dbUsers.findAndModify(dbUser, dbSetlogout);
 	}
 
@@ -197,8 +197,8 @@ public class UserDAOMongoImpl implements UserDAO {
 
 	@Override
 	public void flushUsers() {
-		// TODO Auto-generated method stub
-
+		DBCollection dbUsers = db.getCollection(usersCollection);
+		dbUsers.drop();
 	}
 
 }
