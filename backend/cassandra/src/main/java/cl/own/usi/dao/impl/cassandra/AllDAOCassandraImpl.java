@@ -56,7 +56,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 	private List<User> top100 = Collections.<User> emptyList();
 
 	private final ReentrantLock scoresComputationLock = new ReentrantLock();
-	
+
 	@Autowired
 	private Keyspace keyspace;
 
@@ -82,7 +82,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 	public List<User> getBefore(User user, int limit) {
 
 		ensureOrderedScoresLoaded();
-		
+
 		String userKey = generateRankedUserKey(user);
 
 		List<User> users = findRankedUsers(limit, user.getScore(),
@@ -121,9 +121,9 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 
 	@Override
 	public List<User> getAfter(User user, int limit) {
-		
+
 		ensureOrderedScoresLoaded();
-		
+
 		String userKey = generateRankedUserKey(user);
 
 		List<User> users = findRankedUsers(limit, user.getScore(),
@@ -156,7 +156,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 
 		if (user != null) {
 
-//			int oldScore = user.getScore();
+			// int oldScore = user.getScore();
 
 			SliceQuery<String, Integer, Boolean> q = HFactory.createSliceQuery(
 					keyspace, ss, is, bs);
@@ -201,12 +201,14 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 
 			mutator.execute();
 
-//			String userKey = generateRankedUserKey(user);
-//			Mutator<Integer> rankMutator = HFactory.createMutator(keyspace, is);
-//			rankMutator.addDeletion(oldScore, ranksColumnFamily, userKey, ss);
-//			rankMutator.addInsertion(newScore, ranksColumnFamily,
-//					HFactory.createColumn(userKey, user.getUserId(), ss, ss));
-//			rankMutator.execute();
+			// String userKey = generateRankedUserKey(user);
+			// Mutator<Integer> rankMutator = HFactory.createMutator(keyspace,
+			// is);
+			// rankMutator.addDeletion(oldScore, ranksColumnFamily, userKey,
+			// ss);
+			// rankMutator.addInsertion(newScore, ranksColumnFamily,
+			// HFactory.createColumn(userKey, user.getUserId(), ss, ss));
+			// rankMutator.execute();
 			return newScore;
 
 		} else {
@@ -488,64 +490,69 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 			mutator.addDeletion(key, ranksColumnFamily);
 		}
 		mutator.execute();
-		
+
 		orderedScores = Collections.<Integer> emptyList();
-		reverseOrderedScores = Collections
-				.<Integer> emptyList();
+		reverseOrderedScores = Collections.<Integer> emptyList();
 	}
 
 	@Override
 	public void computeRankings() {
-		
+
 		insertRankings();
-		
+
 		top100 = new ArrayList<User>(100);
 		top100 = computeTop(100);
 
 	}
 
 	private void insertRankings() {
-		
+
 		int limit = 1000;
 		String start = "";
-		
+
 		boolean oneMoreIteration = true;
 		do {
-			
-			RangeSlicesQuery<String, String, ByteBuffer> rangeSliceQuery = HFactory.createRangeSlicesQuery(keyspace, ss, ss, bbs);
-			
+
+			RangeSlicesQuery<String, String, ByteBuffer> rangeSliceQuery = HFactory
+					.createRangeSlicesQuery(keyspace, ss, ss, bbs);
+
 			rangeSliceQuery.setColumnFamily(usersColumnFamily);
 			rangeSliceQuery.setRange(start, "", false, limit);
-			
-			QueryResult<OrderedRows<String, String, ByteBuffer>> result = rangeSliceQuery.execute();
-			
+
+			QueryResult<OrderedRows<String, String, ByteBuffer>> result = rangeSliceQuery
+					.execute();
+
 			OrderedRows<String, String, ByteBuffer> rows = result.get();
-			
+
 			if (rows.getCount() < limit) {
 				oneMoreIteration = false;
 			}
-			Iterator<Row<String, String, ByteBuffer>> iterator = rows.iterator();
-			
+			Iterator<Row<String, String, ByteBuffer>> iterator = rows
+					.iterator();
+
 			Mutator<Integer> mutator = HFactory.createMutator(keyspace, is);
-			
+
 			while (iterator.hasNext()) {
 				Row<String, String, ByteBuffer> row = iterator.next();
 				User user = toUser(row.getKey(), row.getColumnSlice());
 				String userKey = generateRankedUserKey(user);
-				mutator.addInsertion(user.getScore(), ranksColumnFamily, HFactory.createColumn(userKey, user.getUserId(), ss, ss));
+				mutator.addInsertion(
+						user.getScore(),
+						ranksColumnFamily,
+						HFactory.createColumn(userKey, user.getUserId(), ss, ss));
 			}
-			
+
 			MutationResult mutationResult = mutator.execute();
-			
-			logger.debug("Mutator executed in {} ms", mutationResult.getExecutionTimeMicro());
-			
+
+			logger.debug("Mutator executed in {} ms",
+					mutationResult.getExecutionTimeMicro());
+
 		} while (oneMoreIteration);
-		
+
 	}
-	
-	
+
 	private void ensureOrderedScoresLoaded() {
-		
+
 		if (orderedScores.isEmpty()) {
 			scoresComputationLock.lock();
 			if (orderedScores.isEmpty()) {
@@ -556,38 +563,39 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 	}
 
 	private void computeOrderedScores() {
-		
+
 		RangeSlicesQuery<Integer, String, String> rangeSliceQuery = HFactory
-			.createRangeSlicesQuery(keyspace, is, ss, ss);
+				.createRangeSlicesQuery(keyspace, is, ss, ss);
 
 		rangeSliceQuery.setColumnFamily(ranksColumnFamily);
 		rangeSliceQuery.setReturnKeysOnly();
-		
+
 		QueryResult<OrderedRows<Integer, String, String>> result = rangeSliceQuery
 				.execute();
-		
+
 		orderedScores = new ArrayList<Integer>(result.get().getCount());
-		
+
 		Iterator<Row<Integer, String, String>> iterator = result.get()
 				.iterator();
-		
+
 		while (iterator.hasNext()) {
 			Row<Integer, String, String> row = iterator.next();
 			int key = row.getKey();
 			orderedScores.add(key);
 		}
-		
+
 		Collections.sort(orderedScores);
 		reverseOrderedScores = new ArrayList<Integer>(orderedScores);
 		Collections.sort(reverseOrderedScores, Collections.reverseOrder());
 
 	}
+
 	private List<User> computeTop(int limit) {
 
 		ensureOrderedScoresLoaded();
 
-		List<User> users = findRankedUsers(limit, null,
-				reverseOrderedScores, false, "");
+		List<User> users = findRankedUsers(limit, null, reverseOrderedScores,
+				false, "");
 
 		return users;
 	}
