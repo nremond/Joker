@@ -7,12 +7,14 @@ import me.prettyprint.cassandra.model.BasicKeyspaceDefinition;
 import me.prettyprint.cassandra.service.ThriftCfDef;
 import me.prettyprint.cassandra.service.ThriftKsDef;
 import me.prettyprint.hector.api.Cluster;
+import me.prettyprint.hector.api.ConsistencyLevelPolicy;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.ddl.ComparatorType;
 import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 import me.prettyprint.hector.api.factory.HFactory;
 
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -52,6 +54,9 @@ public class CassandraConfiguration implements InitializingBean {
 	private String strategyClass = "LocalStrategy"; // "SimpleStrategy"
 	private boolean forceRecreation = true;
 
+	@Autowired
+	ConsistencyLevelPolicy consistencyLevelPolicy;
+	
 	@Bean
 	public Cluster cluster() {
 		return HFactory.getOrCreateCluster(dbcluster, dbhost + ":" + dbPort);
@@ -59,7 +64,7 @@ public class CassandraConfiguration implements InitializingBean {
 
 	@Bean
 	public Keyspace keyspace() {
-		return HFactory.createKeyspace(dbKeyspace, cluster());
+		return HFactory.createKeyspace(dbKeyspace, cluster(), consistencyLevelPolicy);
 	}
 
 	@Override
