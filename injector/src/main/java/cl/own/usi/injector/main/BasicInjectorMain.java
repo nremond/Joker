@@ -326,7 +326,7 @@ public class BasicInjectorMain {
 
 		private final Random random = new Random();
 		private boolean currentQuestionRequested = false;
-
+		
 		public UserGameWorker(int questiontimeframe, int synchrotime,
 				int numquestions, String email, String password,
 				ExecutorService executor) {
@@ -339,7 +339,7 @@ public class BasicInjectorMain {
 		}
 
 		public void run() {
-
+			
 			try {
 				HttpClient httpClient = new HttpClient();
 
@@ -360,6 +360,8 @@ public class BasicInjectorMain {
 					PostMethod post = new PostMethod(postUrl);
 					post.setRequestBody(postBody);
 
+					boolean loginOk = false;
+					
 					try {
 						int httpResponseCode = httpClient.executeMethod(post);
 
@@ -375,17 +377,22 @@ public class BasicInjectorMain {
 										headerValue.length() - 1);
 								cookieHeader = new Header("Cookie", headerValue);
 							}
+							
+							loginOk = true;
+							
 						} else {
 							LOGGER.warn(
-									"Problem at login with response code {}",
+									"Problem at login {} with response code {}", email, 
 									httpResponseCode);
 						}
 
 					} finally {
 						post.releaseConnection();
 					}
-
-					executor.execute(this);
+	
+					if (loginOk) {
+						executor.execute(this);
+					}
 
 				} else if (currentQuestion <= numquestions) {
 
@@ -485,7 +492,7 @@ public class BasicInjectorMain {
 		 */
 		public void questionRecieved(int questionRequested) {
 
-			LOGGER.info("Question {} recieved", questionRequested);
+			LOGGER.debug("Question {} recieved", questionRequested);
 
 			currentQuestionRequested = true;
 
