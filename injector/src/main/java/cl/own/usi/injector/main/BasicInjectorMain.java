@@ -62,13 +62,15 @@ public class BasicInjectorMain {
 	private final static boolean FLUSHUSERSTABLE = true;
 	private final static int DEFAULT_NBUSERS = 10;
 	private final static int NBQUESTIONS = 17;
-	private final static int QUESTIONTIMEFRAME = 10;
+	private final static int QUESTIONTIMEFRAME = 30;
 	private final static int SYNCHROTIME = 10;
-	private final static int LOGINTIMEOUT = 20;
+	private final static int LOGINTIMEOUT = 60;
 
 	private static int NBUSERS = DEFAULT_NBUSERS;
 	private static int MAXNOFILES = 395240;
 
+	private static long SLA = 350L;
+	
 	/*
 	 * Synchronization and concurrency stuff
 	 */
@@ -351,6 +353,8 @@ public class BasicInjectorMain {
 					} catch (InterruptedException e) {
 					}
 
+					long starttime = System.currentTimeMillis();
+					
 					// login
 					String postUrl = "http://" + HOST + ":" + PORT
 							+ "/api/login";
@@ -385,6 +389,11 @@ public class BasicInjectorMain {
 						post.releaseConnection();
 					}
 
+					long delta = System.currentTimeMillis() - starttime;
+					if (delta > SLA) {
+						LOGGER.warn("[SLA] Login for user {} took {} ms", email, delta);
+					}
+					
 					executor.execute(this);
 
 				} else if (currentQuestion <= numquestions) {
@@ -405,6 +414,8 @@ public class BasicInjectorMain {
 
 					} else {
 
+						long starttime = System.currentTimeMillis();
+						
 						// The question has been requested, need to answer.
 
 						String postUrl = "http://" + HOST + ":" + PORT
@@ -434,6 +445,11 @@ public class BasicInjectorMain {
 							post.releaseConnection();
 						}
 
+						long delta = System.currentTimeMillis() - starttime;
+						if (delta > SLA) {
+							LOGGER.warn("[SLA] Answer question for user {} took {} ms", email, delta);
+						}
+						
 						currentQuestion++;
 						currentQuestionRequested = false;
 						if (currentQuestion <= numquestions) {
@@ -445,6 +461,7 @@ public class BasicInjectorMain {
 
 				} else {
 
+					long starttime = System.currentTimeMillis();
 					// The game is finished, just need to request ranking.
 					String getUrl = "http://" + HOST + ":" + PORT
 							+ "/api/ranking";
@@ -470,6 +487,11 @@ public class BasicInjectorMain {
 						get.releaseConnection();
 					}
 
+					long delta = System.currentTimeMillis() - starttime;
+					if (delta > SLA) {
+						LOGGER.warn("[SLA] Ranking request for user {} took {} ms", email, delta);
+					}
+					
 					gameFinishedSynchroLatch.countDown();
 
 				}

@@ -530,9 +530,11 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 			
 			while (iterator.hasNext()) {
 				Row<String, String, ByteBuffer> row = iterator.next();
-				User user = toUser(row.getKey(), row.getColumnSlice());
-				String userKey = generateRankedUserKey(user);
-				mutator.addInsertion(user.getScore(), ranksColumnFamily, HFactory.createColumn(userKey, user.getUserId(), ss, ss));
+				if (row.getColumnSlice() != null) {
+					User user = toUser(row.getKey(), row.getColumnSlice());
+					String userKey = generateRankedUserKey(user);
+					mutator.addInsertion(user.getScore(), ranksColumnFamily, HFactory.createColumn(userKey, user.getUserId(), ss, ss));
+				}
 			}
 			
 			MutationResult mutationResult = mutator.execute();
