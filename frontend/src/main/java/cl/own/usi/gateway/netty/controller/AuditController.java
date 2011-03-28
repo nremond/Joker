@@ -1,6 +1,7 @@
 package cl.own.usi.gateway.netty.controller;
 
 import static cl.own.usi.gateway.netty.ResponseHelper.writeResponse;
+import static cl.own.usi.gateway.netty.ResponseHelper.writeStringToReponse;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 
@@ -13,7 +14,10 @@ import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import cl.own.usi.gateway.client.WorkerClient;
 
 /**
  * Controller that handle the audit requests.
@@ -22,6 +26,9 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class AuditController extends AbstractAuthenticateController {
+
+	@Autowired
+	private WorkerClient workerClient;
 
 	protected static final Pattern URI_PATTERN = Pattern
 			.compile("^/api/audit(?:/(\\d+))?\\?(.*)");
@@ -86,7 +93,11 @@ public class AuditController extends AbstractAuthenticateController {
 			return;
 		}
 
-		// TODO: we should probably do something from here now...
+		String response = workerClient.getAnswersAsJson(userMail,
+				questionNumber);
+
+		writeStringToReponse(response, e);
+		return;
 	}
 
 }

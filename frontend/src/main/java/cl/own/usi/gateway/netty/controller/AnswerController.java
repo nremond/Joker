@@ -15,17 +15,17 @@ import org.json.simple.JSONValue;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import cl.own.usi.gateway.client.UserAndScoreAndAnswer;
 import cl.own.usi.gateway.client.WorkerClient;
-import cl.own.usi.gateway.client.WorkerClient.UserAndScoreAndAnswer;
 import cl.own.usi.model.Question;
 import cl.own.usi.service.GameService;
 
 /**
  * Controller that validate and call for storing the answer.
- * 
+ *
  * @author bperroud
  * @author nicolas
- * 
+ *
  */
 @Component
 public class AnswerController extends AbstractController {
@@ -92,13 +92,13 @@ public class AnswerController extends AbstractController {
 									userId, questionNumber, answer);
 
 					if (userAndScoreAndAnswer == null
-							|| userAndScoreAndAnswer.userId == null) {
+							|| userAndScoreAndAnswer.getUserId() == null) {
 						writeResponse(e, BAD_REQUEST);
 						getLogger().info("Invalid userId " + userId);
 					} else {
 						StringBuilder sb = new StringBuilder(
 								"{ \"are_u_ok\" : ");
-						if (userAndScoreAndAnswer.answer) {
+						if (userAndScoreAndAnswer.isAnswer()) {
 							sb.append("true");
 						} else {
 							sb.append("false");
@@ -108,7 +108,7 @@ public class AnswerController extends AbstractController {
 						sb.append(question.getChoices().get(
 								question.getCorrectChoice() - 1));
 						sb.append("\", \"score\" : ");
-						sb.append(userAndScoreAndAnswer.score);
+						sb.append(userAndScoreAndAnswer.getScore());
 						sb.append("}");
 
 						writeStringToReponse(sb.toString(), e, CREATED);

@@ -12,24 +12,24 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import cl.own.usi.gateway.client.UserAndScore;
 import cl.own.usi.gateway.client.WorkerClient;
-import cl.own.usi.gateway.client.WorkerClient.UserAndScore;
 import cl.own.usi.gateway.netty.QuestionWorker;
 import cl.own.usi.model.Question;
 import cl.own.usi.service.GameService;
 
 /**
  * Controller that send asynchronously the {@link Question}
- * 
+ *
  * @author bperroud
  * @author nicolas
  */
 @Component
 public class QuestionController extends AbstractController {
-	
+
 	public static final String URI_QUESTION = "/question/";
 	private static final int URI_QUESTION_LENGTH = URI_QUESTION.length();
-	
+
 	@Autowired
 	private GameService gameService;
 
@@ -43,7 +43,7 @@ public class QuestionController extends AbstractController {
 
 		String uri = request.getUri();
 		uri = uri.substring(URI_API_LENGTH);
-		
+
 		if (request.getMethod() == HttpMethod.GET) {
 			String userId = getCookie(request, COOKIE_AUTH_NAME);
 
@@ -57,19 +57,21 @@ public class QuestionController extends AbstractController {
 
 					if (!gameService.validateQuestionToRequest(questionNumber)) {
 						writeResponse(e, BAD_REQUEST);
-						getLogger().info("Invalid question number " + questionNumber);
+						getLogger().info(
+								"Invalid question number " + questionNumber);
 					} else {
 
 						UserAndScore userAndScore = workerClient
 								.validateUserAndInsertQuestionRequest(userId,
 										questionNumber);
 
-						if (userAndScore.userId == null) {
+						if (userAndScore.getUserId() == null) {
 							writeResponse(e, BAD_REQUEST);
 							getLogger().info("Invalid userId " + userId);
 						} else {
-							getLogger().debug("Get Question " + questionNumber
-									+ " for user " + userId);
+							getLogger().debug(
+									"Get Question " + questionNumber
+											+ " for user " + userId);
 
 							Question question = gameService
 									.getQuestion(questionNumber);
@@ -87,8 +89,9 @@ public class QuestionController extends AbstractController {
 
 							gameService
 									.scheduleQuestionReply(new QuestionWorker(
-											questionNumber, userAndScore.score,
-											e, sb.toString(), gameService));
+											questionNumber, userAndScore
+													.getScore(), e, sb
+													.toString(), gameService));
 						}
 					}
 
@@ -103,7 +106,5 @@ public class QuestionController extends AbstractController {
 		}
 
 	}
-	
-	
 
 }
