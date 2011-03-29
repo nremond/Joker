@@ -213,14 +213,35 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 	}
 
 	@Override
+	public void startRankingsComputation() {
+		scoreService.computeRankings();
+	}
+
+	@Override
+	public String getAllAnswersAsJson(final String email) throws TException {
+
+		LOGGER.debug("Request for all answers for user {} received", email);
+
+		// TODO process audit request here
+		return "blop";
+	}
+
+	@Override
+	public String getAnswerAsJson(final String email, final int questionNumber)
+			throws TException {
+
+		LOGGER.debug("Request for answer to question {} for user {} received",
+				questionNumber, email);
+
+		// TODO process audit request here
+		return "blip";
+	}
+
+	@Override
 	public void destroy() throws Exception {
 
 		if (thriftThread != null) {
 			thriftThread.requestShutdown();
 		}
-	}
-
-	public void startRankingsComputation() {
-		scoreService.computeRankings();
 	}
 }

@@ -119,21 +119,31 @@ public class BasicInjectorMain {
 		}
 
 		workers = new ArrayList<BasicInjectorMain.UserGameWorker>(NBUSERS);
-		gamersHaveAnsweredAllQuestions = new CountDownLatch(NBUSERS);
+		gamersHaveAnsweredAllQuestions = new CountDownLatch(1); // 1 and not
+																// NBUSERS is
+																// case we loose
+																// players in
+																// the way.
 		gameFinishedSynchroLatch = new CountDownLatch(NBUSERS);
 
 		createGame();
 
 		insertUsers(NBUSERS);
 
+		try {
+			Thread.sleep(5);
+		} catch (InterruptedException e) {
+			return;
+		}
+
 		for (UserGameWorker worker : workers) {
 			executor.execute(worker);
 		}
 
+		LOGGER.info("Let's start");
+
 		// Let all workers start login
 		gameStartSynchroLatch.countDown();
-
-		LOGGER.info("Let's start");
 
 		gamersHaveAnsweredAllQuestions.await();
 
@@ -143,6 +153,8 @@ public class BasicInjectorMain {
 
 		LOGGER.info("Reinsert all workers in the queue to request ranking");
 
+		long starttime = System.currentTimeMillis();
+		
 		for (UserGameWorker worker : workers) {
 			executor.execute(worker);
 		}
@@ -150,12 +162,16 @@ public class BasicInjectorMain {
 		// Wait till all workers has finished the game.
 		gameFinishedSynchroLatch.await();
 
-		LOGGER.info("All gamers have requested ranking, shutting down");
-
 		// shutdown everything cleanly.
 		executor.shutdown();
 		executor.awaitTermination(600, TimeUnit.SECONDS);
 		asyncHttpClient.close();
+
+		long stoptime = System.currentTimeMillis();
+
+		LOGGER.info("Ranking requests done in {} ms, shutting down",
+				(stoptime - starttime));
+
 	}
 
 	/**
@@ -168,6 +184,8 @@ public class BasicInjectorMain {
 	 */
 	private static void insertUsers(Integer limit) throws IOException,
 			InterruptedException, ExecutionException {
+
+		long starttime = System.currentTimeMillis();
 
 		File file = new File("../tools/1million_users_1.csv");
 		HttpClient httpClient = new HttpClient();
@@ -225,6 +243,9 @@ public class BasicInjectorMain {
 			reader.close();
 		}
 
+		long stoptime = System.currentTimeMillis();
+
+		LOGGER.info("Users inserted in {} ms", (stoptime - starttime));
 	}
 
 	/**
@@ -234,6 +255,8 @@ public class BasicInjectorMain {
 	 * @throws IOException
 	 */
 	private static void createGame() throws HttpException, IOException {
+
+		long starttime = System.currentTimeMillis();
 
 		HttpClient httpClient = new HttpClient();
 
@@ -290,6 +313,9 @@ public class BasicInjectorMain {
 			post.releaseConnection();
 		}
 
+		long stoptime = System.currentTimeMillis();
+
+		LOGGER.info("Game created in {} ms", (stoptime - starttime));
 	}
 
 	/**
@@ -364,6 +390,8 @@ public class BasicInjectorMain {
 					PostMethod post = new PostMethod(postUrl);
 					post.setRequestBody(postBody);
 
+					boolean loginOk = false;
+
 					try {
 						int httpResponseCode = httpClient.executeMethod(post);
 
@@ -379,10 +407,13 @@ public class BasicInjectorMain {
 										headerValue.length() - 1);
 								cookieHeader = new Header("Cookie", headerValue);
 							}
+
+							loginOk = true;
+
 						} else {
 							LOGGER.warn(
-									"Problem at login with response code {}",
-									httpResponseCode);
+									"Problem at login {} with response code {}",
+									email, httpResponseCode);
 						}
 
 					} finally {
@@ -394,7 +425,9 @@ public class BasicInjectorMain {
 						LOGGER.warn("[SLA] Login for user {} took {} ms", email, delta);
 					}
 					
-					executor.execute(this);
+					if (loginOk) {
+						executor.execute(this);
+					}
 
 				} else if (currentQuestion <= numquestions) {
 
@@ -408,9 +441,12 @@ public class BasicInjectorMain {
 						String getUrl = "http://" + HOST + ":" + PORT
 								+ "/api/question/" + currentQuestion;
 
-						asyncHttpClient.prepareGet(getUrl)
+						asyncHttpClient
+								.prepareGet(getUrl)
 								.setHeader("Cookie", cookieHeader.getValue())
-								.execute(new MyAsyncHandler(this, currentQuestion));
+								.execute(
+										new MyAsyncHandler(this,
+												currentQuestion));
 
 					} else {
 
@@ -507,7 +543,7 @@ public class BasicInjectorMain {
 		 */
 		public void questionRecieved(int questionRequested) {
 
-			LOGGER.info("Question {} recieved", questionRequested);
+			LOGGER.debug("Question {} recieved", questionRequested);
 
 			currentQuestionRequested = true;
 
@@ -528,7 +564,7 @@ public class BasicInjectorMain {
 
 		private final UserGameWorker worker;
 		private final int questionRequested;
-		
+
 		public MyAsyncHandler(UserGameWorker worker, int questionRequested) {
 			this.worker = worker;
 			this.questionRequested = questionRequested;

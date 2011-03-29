@@ -14,14 +14,14 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import cl.own.usi.gateway.client.UserAndScore;
+import cl.own.usi.gateway.client.UserInfoAndScore;
 import cl.own.usi.gateway.client.WorkerClient;
-import cl.own.usi.gateway.client.WorkerClient.UserAndScore;
-import cl.own.usi.gateway.client.WorkerClient.UserInfoAndScore;
 import cl.own.usi.service.GameService;
 
 /**
  * Controller that return the rank and scores
- * 
+ *
  * @author bperroud
  * @author nicolas
  */
@@ -52,15 +52,15 @@ public class RankingController extends AbstractController {
 				UserAndScore userAndScore = workerClient
 						.validateUserAndGetScore(userId);
 
-				if (userAndScore.userId == null) {
+				if (userAndScore.getUserId() == null) {
 					writeResponse(e, UNAUTHORIZED);
 					getLogger().info("Invalid userId {}", userId);
 				} else {
 
 					StringBuilder sb = new StringBuilder("{");
 
-					sb.append(" \"my_score\" : ").append(userAndScore.score)
-							.append(", ");
+					sb.append(" \"my_score\" : ")
+							.append(userAndScore.getScore()).append(", ");
 
 					sb.append(" \"top_scores\" : { ");
 					List<UserInfoAndScore> topUsers = workerClient.getTop100();
@@ -99,19 +99,21 @@ public class RankingController extends AbstractController {
 			if (!first) {
 				topScoresMail.append(",");
 			}
-			topScoresMail.append("\"").append(user.email).append("\"");
+			topScoresMail.append("\"").append(user.getEmail()).append("\"");
 			if (!first) {
 				topScoresScores.append(",");
 			}
-			topScoresScores.append(user.score);
+			topScoresScores.append(user.getScore());
 			if (!first) {
 				topScoresFirstName.append(",");
 			}
-			topScoresFirstName.append("\"").append(user.firstname).append("\"");
+			topScoresFirstName.append("\"").append(user.getFirstname())
+					.append("\"");
 			if (!first) {
 				topScoresLastname.append(",");
 			}
-			topScoresLastname.append("\"").append(user.lastname).append("\"");
+			topScoresLastname.append("\"").append(user.getLastname())
+					.append("\"");
 			first = false;
 		}
 		sb.append(topScoresMail).append(" ] , ");
