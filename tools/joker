@@ -43,6 +43,7 @@ set -e
 
 start_frontend() {
 	log_begin_msg "Starting $NAME frontend..."
+	ulimit -n 1048576
 	cd $FOLDER
 	$JAVA $FRONTEND_JVM_OPTS -Dconfig.location=frontend.properties -jar $FRONTEND_APP > /dev/null &
 	PID=$!
