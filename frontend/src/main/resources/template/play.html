@@ -18,7 +18,7 @@
 			type: "GET",
 			dataType: "json",
 			success: function(data, textStatus, jqXHR) {
-				console.log("youpee", data);
+				console.log("question", data);
 				
 				var sform = "<form name=\"questionForm\" >" + data["question"] + " :<br/>";
 				for (var i = 1; ; i++) {
@@ -31,6 +31,7 @@
 					}
 				}
 				sform += "</form>";
+				sform += "<input type=\"submit\" value=\"OK\"/>";
 					
 				$("#game").html(sform);
 				$("#info").html("");
@@ -41,6 +42,15 @@
 					// stop form from submitting normally
 					event.preventDefault(); 
 				
+					$.ajax({
+						url :  "/api/answer/1",
+						data : "{ \"mail\":"+mail+ ",\"password\":"+password+" }",
+						type : "POST",
+						success: function(data, textStatus, jqXHR) {
+							console.log("answer", data);
+						}
+					)};
+							
 				});
 				
 			}
