@@ -14,19 +14,19 @@ import com.mongodb.DBObject;
 
 public class DaoHelper {
 
-	public static String userIdField = "userId";
-	public static String emailField = "email";
-	public static String passwordField = "password";
-	public static String firstnameField = "firstname";
-	public static String lastnameField = "lastname";
-	public static String scoreField = "score";
-	public static String isLoggedField = "isLogged";
-	public static String answersField = "answers";
-	public static String questionNumberField = "questionNumber";
-	public static String answerNumberField = "answerNumber";
-	public static String bonusField = "bonus";
+	public static final String userIdField = "userId";
+	public static final String emailField = "email";
+	public static final String passwordField = "password";
+	public static final String firstnameField = "firstname";
+	public static final String lastnameField = "lastname";
+	public static final String scoreField = "score";
+	public static final String isLoggedField = "isLogged";
+	public static final String answersField = "answers";
+	public static final String questionNumberField = "questionNumber";
+	public static final String answerNumberField = "answerNumber";
+	public static final String bonusField = "bonus";
 
-	public static String usersCollection = "users";
+	public static final String usersCollection = "users";
 
 	private static final String USER_ID_SALT = "123456";
 
