@@ -60,14 +60,13 @@ public class AnswerController extends AbstractController {
 				if (!gameService.validateQuestionToAnswer(questionNumber)) {
 					writeResponse(e, BAD_REQUEST);
 					getLogger()
-							.info("Invalid question number" + questionNumber);
+							.info("Invalid question number {}", questionNumber);
 				} else {
 
 					getLogger().debug(
-							"Answer Question " + questionNumber + " for user "
-									+ userId);
+							"Answer Question {} for user {} ", questionNumber, userId);
 
-					gameService.userAnswer(questionNumber);
+//					gameService.userAnswer(questionNumber);
 
 					JSONObject object = (JSONObject) JSONValue.parse(request
 							.getContent().toString(CharsetUtil.UTF_8));

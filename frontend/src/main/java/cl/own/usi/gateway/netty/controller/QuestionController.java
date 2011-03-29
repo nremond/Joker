@@ -66,10 +66,9 @@ public class QuestionController extends AbstractController {
 
 						if (userAndScore.userId == null) {
 							writeResponse(e, BAD_REQUEST);
-							getLogger().info("Invalid userId " + userId);
+							getLogger().info("Invalid userId {}", userId);
 						} else {
-							getLogger().debug("Get Question " + questionNumber
-									+ " for user " + userId);
+							getLogger().debug("Get Question {} for user {}", questionNumber, userId);
 
 							Question question = gameService
 									.getQuestion(questionNumber);

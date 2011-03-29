@@ -75,7 +75,7 @@ public class LoginController extends AbstractController {
 			} else {
 				writeResponse(e, BAD_REQUEST);
 				getLogger().warn(
-						"User not found for session " + loginRequest.getMail());
+						"User not found for session {}", loginRequest.getMail());
 			}
 
 		} else if (request.getMethod() == HttpMethod.GET) {

@@ -54,7 +54,7 @@ public class RankingController extends AbstractController {
 
 				if (userAndScore.userId == null) {
 					writeResponse(e, UNAUTHORIZED);
-					getLogger().info("Invalid userId " + userId);
+					getLogger().info("Invalid userId {}", userId);
 				} else {
 
 					StringBuilder sb = new StringBuilder("{");

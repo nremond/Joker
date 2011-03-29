@@ -277,6 +277,8 @@ public class GameServiceImpl implements GameService {
 			
 			long stoptime = System.currentTimeMillis();
 			
+			LOGGER.error("Ranking computation done in {} ms.", (stoptime - starttime));
+			
 			long synchrotime = (gameSynchronization.game
 			.getSynchroTimeLimit() * 1000) + starttime - stoptime;
 			if (synchrotime > 0) {
