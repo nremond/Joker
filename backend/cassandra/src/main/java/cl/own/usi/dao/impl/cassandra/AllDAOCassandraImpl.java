@@ -94,7 +94,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 		String userKey = generateRankedUserKey(user);
 
 		List<User> users = findRankedUsers(limit, user.getScore(),
-				reverseOrderedScores, false, userKey);
+				orderedScores, true, userKey);
 
 		return users;
 	}
@@ -135,7 +135,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 		String userKey = generateRankedUserKey(user);
 
 		List<User> users = findRankedUsers(limit, user.getScore(),
-				orderedScores, true, userKey);
+				reverseOrderedScores, false, userKey);
 
 		return users;
 	}
@@ -639,9 +639,11 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 					.execute();
 			ColumnSlice<String, String> columnSlice = sliceResult.get();
 			for (HColumn<String, String> column : columnSlice.getColumns()) {
-				userIds.add(column.getValue());
-				if (userIds.size() >= limit) {
-					break EXTERNALLOOP;
+				if (start == null || start.equals(column.getName())) {
+					userIds.add(column.getValue());
+					if (userIds.size() >= limit) {
+						break EXTERNALLOOP;
+					}
 				}
 			}
 		}
