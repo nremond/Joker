@@ -19,6 +19,9 @@ USER=user
 JAVA=/usr/bin/java
 PIDFILE=/var/run/joker.pid
 
+FRONTEND_JVM_OPTS="-Xms512m -Xmx3328m -server"
+BACKEND_JVM_OPTS="-Xms512m -Xmx1280m -server"
+
 SA1=/usr/lib/sysstat/sa1
 # collect stats every 1 second for 12 hours (60 * 60 * 12)
 SA1_OPTS="1 43200"
@@ -40,16 +43,17 @@ set -e
 
 start_frontend() {
 	log_begin_msg "Starting $NAME frontend..."
-	if start-stop-daemon --start --quiet --oknodo --pidfile $PIDFILE --chuid $USER --background --chdir $FOLDER --make-pidfile --exec $JAVA -- $JVM_OPTS -jar $FRONTEND_APP; then
-		log_end_msg 0
-	else
-		log_end_msg 1
-	fi
+	cd $FOLDER
+	$JAVA $FRONTEND_JVM_OPTS -Dconfig.location=frontend.properties -jar $FRONTEND_APP > /dev/null &
+	PID=$!
+	RET=$?
+	echo $PID > $PIDFILE
+	log_end_msg $RET
 }
 
 start_backend() {
 	log_daemon_msg "Starting $NAME backend..."
-	if start-stop-daemon --start --quiet --oknodo --pidfile $PIDFILE --chuid $USER --background --chdir $FOLDER --make-pidfile --exec $JAVA -- $JVM_OPTS -jar $BACKEND_APP; then
+	if start-stop-daemon --start --quiet --oknodo --pidfile $PIDFILE --chuid $USER --background --chdir $FOLDER --make-pidfile --exec $JAVA -- $BACKEND_JVM_OPTS -Dconfig.location=backend.properties -jar $BACKEND_APP; then
 		log_end_msg 0
 	else
 		log_end_msg 1
