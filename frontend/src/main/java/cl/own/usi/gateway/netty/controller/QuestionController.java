@@ -20,7 +20,7 @@ import cl.own.usi.service.GameService;
 
 /**
  * Controller that send asynchronously the {@link Question}
- *
+ * 
  * @author bperroud
  * @author nicolas
  */
@@ -65,11 +65,13 @@ public class QuestionController extends AbstractController {
 								.validateUserAndInsertQuestionRequest(userId,
 										questionNumber);
 
-						if (userAndScore.getUserId() == null) {
+						if (userAndScore == null
+								|| userAndScore.getUserId() == null) {
 							writeResponse(e, BAD_REQUEST);
 							getLogger().info("Invalid userId {}", userId);
 						} else {
-							getLogger().debug("Get Question {} for user {}", questionNumber, userId);
+							getLogger().debug("Get Question {} for user {}",
+									questionNumber, userId);
 
 							Question question = gameService
 									.getQuestion(questionNumber);
