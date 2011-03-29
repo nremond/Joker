@@ -570,7 +570,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	private void computeOrderedScores() {
 
 		RangeSlicesQuery<Integer, String, String> rangeSliceQuery = HFactory
-				.createRangeSlicesQuery(keyspace, is, ss, ss);
+				.createRangeSlicesQuery(consistencyOneKeyspace, is, ss, ss);
 
 		rangeSliceQuery.setColumnFamily(ranksColumnFamily);
 		rangeSliceQuery.setReturnKeysOnly();
