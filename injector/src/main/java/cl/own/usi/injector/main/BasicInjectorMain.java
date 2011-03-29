@@ -28,19 +28,19 @@ import com.ning.http.client.Response;
 
 /**
  * Multithreaded game injector.
- * 
+ *
  * Increase NBUSERS and NBQUESTIONS to add load.
- * 
+ *
  * Game creation, user insertion, question answers are based on
  * {@link HttpClient} (OIO), and question request is based on
  * {@link AsyncHttpClient} (NIO). {@link UserGameWorker#questionRecieved()} is
  * called asynchronously when the server has sent the question.
- * 
+ *
  * One {@link UserGameWorker} is instanciated for each user, and store the state
  * of this user.
- * 
+ *
  * @author bperroud
- * 
+ *
  */
 public class BasicInjectorMain {
 
@@ -70,7 +70,7 @@ public class BasicInjectorMain {
 	private static int MAXNOFILES = 395240;
 
 	private static long SLA = 350L;
-	
+
 	/*
 	 * Synchronization and concurrency stuff
 	 */
@@ -154,7 +154,7 @@ public class BasicInjectorMain {
 		LOGGER.info("Reinsert all workers in the queue to request ranking");
 
 		long starttime = System.currentTimeMillis();
-		
+
 		for (UserGameWorker worker : workers) {
 			executor.execute(worker);
 		}
@@ -176,7 +176,7 @@ public class BasicInjectorMain {
 
 	/**
 	 * Insert players. Read players from 1million_users_1.csv file.
-	 * 
+	 *
 	 * @param limit
 	 * @throws IOException
 	 * @throws InterruptedException
@@ -250,7 +250,7 @@ public class BasicInjectorMain {
 
 	/**
 	 * Create game. All game parameters are given as constants.
-	 * 
+	 *
 	 * @throws HttpException
 	 * @throws IOException
 	 */
@@ -320,17 +320,17 @@ public class BasicInjectorMain {
 
 	/**
 	 * Players class that handle.
-	 * 
+	 *
 	 * This class is run by an {@link Executor}. The runnable function do one
 	 * step at a time, rescheduling itself after each step. This permit to
 	 * emulate concurrency with much lower threads.
-	 * 
+	 *
 	 * There is one step to login, one to request the question, one to answer it
 	 * (these two steps are repeated as much as needed by the game), and one
 	 * last step for the ranking.
-	 * 
+	 *
 	 * @author bperroud
-	 * 
+	 *
 	 */
 	private static class UserGameWorker implements Runnable {
 
@@ -380,7 +380,7 @@ public class BasicInjectorMain {
 					}
 
 					long starttime = System.currentTimeMillis();
-					
+
 					// login
 					String postUrl = "http://" + HOST + ":" + PORT
 							+ "/api/login";
@@ -424,7 +424,7 @@ public class BasicInjectorMain {
 					if (delta > SLA) {
 						LOGGER.warn("[SLA] Login for user {} took {} ms", email, delta);
 					}
-					
+
 					if (loginOk) {
 						executor.execute(this);
 					}
@@ -451,7 +451,7 @@ public class BasicInjectorMain {
 					} else {
 
 						long starttime = System.currentTimeMillis();
-						
+
 						// The question has been requested, need to answer.
 
 						String postUrl = "http://" + HOST + ":" + PORT
@@ -485,7 +485,7 @@ public class BasicInjectorMain {
 						if (delta > SLA) {
 							LOGGER.warn("[SLA] Answer question {} for user {} took {} ms", new Object[] {currentQuestion, email, delta});
 						}
-						
+
 						currentQuestion++;
 						currentQuestionRequested = false;
 						if (currentQuestion <= numquestions) {
@@ -527,7 +527,7 @@ public class BasicInjectorMain {
 					if (delta > SLA) {
 						LOGGER.warn("[SLA] Ranking request for user {} took {} ms", email, delta);
 					}
-					
+
 					gameFinishedSynchroLatch.countDown();
 
 				}
@@ -539,11 +539,11 @@ public class BasicInjectorMain {
 
 		/**
 		 * Callback function when the question is received.
-		 * 
+		 *
 		 */
-		public void questionRecieved(int questionRequested) {
+		public void questionReceived(int questionRequested) {
 
-			LOGGER.debug("Question {} recieved", questionRequested);
+			LOGGER.debug("Question {} received", questionRequested);
 
 			currentQuestionRequested = true;
 
@@ -556,9 +556,9 @@ public class BasicInjectorMain {
 	/**
 	 * {@link AsyncHttpClient} handler that will call
 	 * {@link UserGameWorker#questionRecieved()} when the request returns.
-	 * 
+	 *
 	 * @author bperroud
-	 * 
+	 *
 	 */
 	private static class MyAsyncHandler extends AsyncCompletionHandler<Integer> {
 
@@ -574,7 +574,7 @@ public class BasicInjectorMain {
 		public Integer onCompleted(Response response) throws Exception {
 
 			if (response != null && response.getStatusCode() == 200) {
-				worker.questionRecieved(questionRequested);
+				worker.questionReceived(questionRequested);
 			}
 			return 200;
 		}
