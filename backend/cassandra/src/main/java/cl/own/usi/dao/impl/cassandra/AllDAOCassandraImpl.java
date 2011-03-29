@@ -1,6 +1,7 @@
 package cl.own.usi.dao.impl.cassandra;
 
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.emailColumn;
+import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.dbKeyspace;
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.answersColumnFamily;
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.firstnameColumn;
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.isLoggedColumn;
@@ -18,10 +19,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
+import me.prettyprint.cassandra.model.AllOneConsistencyLevelPolicy;
+import me.prettyprint.cassandra.model.QuorumAllConsistencyLevelPolicy;
 import me.prettyprint.cassandra.serializers.BooleanSerializer;
 import me.prettyprint.cassandra.serializers.ByteBufferSerializer;
 import me.prettyprint.cassandra.serializers.IntegerSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.HColumn;
@@ -39,6 +43,7 @@ import me.prettyprint.hector.api.query.SliceQuery;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -48,7 +53,7 @@ import cl.own.usi.model.Answer;
 import cl.own.usi.model.User;
 
 @Repository
-public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
+public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean {
 
 	private List<Integer> orderedScores = Collections.<Integer> emptyList();
 	private List<Integer> reverseOrderedScores = Collections
@@ -58,7 +63,10 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 	private final ReentrantLock scoresComputationLock = new ReentrantLock();
 	
 	@Autowired
-	private Keyspace keyspace;
+	private Cluster cluster;
+	
+	private Keyspace consistencyOneKeyspace;
+	private Keyspace consistencyQuorumKeyspace;
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -98,7 +106,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 		}
 
 		MultigetSliceQuery<String, String, ByteBuffer> multigetSliceQuery = HFactory
-				.createMultigetSliceQuery(keyspace, ss, ss, bbs);
+				.createMultigetSliceQuery(consistencyOneKeyspace, ss, ss, bbs);
 
 		multigetSliceQuery.setColumnFamily(usersColumnFamily);
 		multigetSliceQuery.setColumnNames(emailColumn, firstnameColumn,
@@ -137,7 +145,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 
 		User user = getUserById(userId);
 		if (user != null) {
-			Mutator<String> mutator = HFactory.createMutator(keyspace,
+			Mutator<String> mutator = HFactory.createMutator(consistencyOneKeyspace,
 					StringSerializer.get());
 			mutator.addInsertion(userId, bonusesColumnFamily, HFactory
 					.createColumn(questionNumber, Boolean.FALSE, is, bs));
@@ -159,7 +167,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 //			int oldScore = user.getScore();
 
 			SliceQuery<String, Integer, Boolean> q = HFactory.createSliceQuery(
-					keyspace, ss, is, bs);
+					consistencyOneKeyspace, ss, is, bs);
 			q.setKey(userId);
 			q.setColumnFamily(bonusesColumnFamily);
 			q.setRange(questionNumber - 1, 0, true, 20);
@@ -191,7 +199,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 
 			int newScore = user.getScore() + questionValue + newBonus;
 
-			Mutator<String> mutator = HFactory.createMutator(keyspace,
+			Mutator<String> mutator = HFactory.createMutator(consistencyOneKeyspace,
 					StringSerializer.get());
 			mutator.addInsertion(userId, bonusesColumnFamily,
 					HFactory.createColumn(questionNumber, Boolean.TRUE, is, bs));
@@ -232,7 +240,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 				return false;
 			}
 
-			Mutator<String> mutator = HFactory.createMutator(keyspace,
+			Mutator<String> mutator = HFactory.createMutator(consistencyQuorumKeyspace,
 					StringSerializer.get());
 
 			// Add the user in the CF Users
@@ -260,7 +268,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 
 	private boolean isEmailInDatabase(String userId) {
 		SliceQuery<String, String, ByteBuffer> q = HFactory.createSliceQuery(
-				keyspace, ss, ss, bbs);
+				consistencyQuorumKeyspace, ss, ss, bbs);
 		q.setKey(userId);
 		q.setColumnFamily(usersColumnFamily);
 		q.setColumnNames(emailColumn);
@@ -279,7 +287,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 		}
 
 		SliceQuery<String, String, ByteBuffer> q = HFactory.createSliceQuery(
-				keyspace, ss, ss, bbs);
+				consistencyOneKeyspace, ss, ss, bbs);
 		q.setKey(userId);
 		q.setColumnFamily(usersColumnFamily);
 		q.setColumnNames(emailColumn, firstnameColumn, lastnameColumn,
@@ -326,7 +334,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 				new Object[] { answer.getAnswerNumber(),
 						answer.getQuestionNumber(), answer.getUserId() });
 		try {
-			Mutator<String> mutator = HFactory.createMutator(keyspace, ss);
+			Mutator<String> mutator = HFactory.createMutator(consistencyOneKeyspace, ss);
 
 			mutator.addInsertion(
 					answer.getUserId(),
@@ -346,7 +354,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 	public List<Answer> getAnswers(String userId) {
 
 		SliceQuery<String, Integer, Integer> query = HFactory.createSliceQuery(
-				keyspace, ss, is, is);
+				consistencyOneKeyspace, ss, is, is);
 		query.setColumnFamily(answersColumnFamily);
 		query.setKey(userId);
 		query.setRange(0, Integer.MAX_VALUE, false, 20); // max 20 questions.
@@ -376,7 +384,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 		String userId = CassandraHelper.generateUserId(email);
 
 		SliceQuery<String, String, ByteBuffer> q = HFactory.createSliceQuery(
-				keyspace, ss, ss, bbs);
+				consistencyOneKeyspace, ss, ss, bbs);
 		q.setKey(userId);
 		q.setColumnFamily(usersColumnFamily);
 		q.setColumnNames(passwordColumn, isLoggedColumn);
@@ -393,7 +401,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 
 			if (password.equals(passwordFromDB) && !isLogged) {
 
-				Mutator<String> mutator = HFactory.createMutator(keyspace,
+				Mutator<String> mutator = HFactory.createMutator(consistencyQuorumKeyspace,
 						StringSerializer.get());
 				mutator.addInsertion(
 						userId,
@@ -412,7 +420,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 	@Override
 	public void logout(String userId) {
 		SliceQuery<String, String, ByteBuffer> q = HFactory.createSliceQuery(
-				keyspace, ss, ss, bbs);
+				consistencyOneKeyspace, ss, ss, bbs);
 
 		q.setColumnFamily(usersColumnFamily);
 		q.setKey(userId);
@@ -422,7 +430,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 		ColumnSlice<String, ByteBuffer> cs = result.get();
 
 		if (cs.getColumns().size() != 0) {
-			Mutator<String> mutator = HFactory.createMutator(keyspace, ss);
+			Mutator<String> mutator = HFactory.createMutator(consistencyQuorumKeyspace, ss);
 			mutator.addInsertion(
 					userId,
 					usersColumnFamily,
@@ -441,7 +449,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 		boolean oneMoreIteration = true;
 		do {
 			RangeSlicesQuery<String, String, ByteBuffer> rangeSlicesQuery = HFactory
-					.createRangeSlicesQuery(keyspace, ss, ss, bbs);
+					.createRangeSlicesQuery(consistencyOneKeyspace, ss, ss, bbs);
 
 			rangeSlicesQuery.setColumnFamily(usersColumnFamily);
 			rangeSlicesQuery.setKeys(from, "");
@@ -456,7 +464,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 
 			Iterator<Row<String, String, ByteBuffer>> iterator = result.get()
 					.iterator();
-			Mutator<String> mutator = HFactory.createMutator(keyspace, ss);
+			Mutator<String> mutator = HFactory.createMutator(consistencyOneKeyspace, ss);
 
 			while (iterator.hasNext()) {
 				Row<String, String, ByteBuffer> row = iterator.next();
@@ -474,14 +482,14 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 
 		// Remove all entries in ranks.
 		RangeSlicesQuery<Integer, String, String> rangeSliceQuery = HFactory
-				.createRangeSlicesQuery(keyspace, is, ss, ss);
+				.createRangeSlicesQuery(consistencyOneKeyspace, is, ss, ss);
 		rangeSliceQuery.setColumnFamily(ranksColumnFamily);
 		rangeSliceQuery.setReturnKeysOnly();
 		QueryResult<OrderedRows<Integer, String, String>> result = rangeSliceQuery
 				.execute();
 		Iterator<Row<Integer, String, String>> iterator = result.get()
 				.iterator();
-		Mutator<Integer> mutator = HFactory.createMutator(keyspace, is);
+		Mutator<Integer> mutator = HFactory.createMutator(consistencyOneKeyspace, is);
 		while (iterator.hasNext()) {
 			Row<Integer, String, String> row = iterator.next();
 			int key = row.getKey();
@@ -512,7 +520,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 		boolean oneMoreIteration = true;
 		do {
 			
-			RangeSlicesQuery<String, String, ByteBuffer> rangeSliceQuery = HFactory.createRangeSlicesQuery(keyspace, ss, ss, bbs);
+			RangeSlicesQuery<String, String, ByteBuffer> rangeSliceQuery = HFactory.createRangeSlicesQuery(consistencyOneKeyspace, ss, ss, bbs);
 			
 			rangeSliceQuery.setColumnFamily(usersColumnFamily);
 			rangeSliceQuery.setRange(start, "", false, limit);
@@ -526,11 +534,11 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 			}
 			Iterator<Row<String, String, ByteBuffer>> iterator = rows.iterator();
 			
-			Mutator<Integer> mutator = HFactory.createMutator(keyspace, is);
+			Mutator<Integer> mutator = HFactory.createMutator(consistencyOneKeyspace, is);
 			
 			while (iterator.hasNext()) {
 				Row<String, String, ByteBuffer> row = iterator.next();
-				if (row.getColumnSlice() != null) {
+				if (row.getColumnSlice().getColumnByName(emailColumn) != null) {
 					User user = toUser(row.getKey(), row.getColumnSlice());
 					String userKey = generateRankedUserKey(user);
 					mutator.addInsertion(user.getScore(), ranksColumnFamily, HFactory.createColumn(userKey, user.getUserId(), ss, ss));
@@ -560,7 +568,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 	private void computeOrderedScores() {
 		
 		RangeSlicesQuery<Integer, String, String> rangeSliceQuery = HFactory
-			.createRangeSlicesQuery(keyspace, is, ss, ss);
+			.createRangeSlicesQuery(consistencyOneKeyspace, is, ss, ss);
 
 		rangeSliceQuery.setColumnFamily(ranksColumnFamily);
 		rangeSliceQuery.setReturnKeysOnly();
@@ -618,7 +626,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 			}
 
 			SliceQuery<Integer, String, String> sliceQuery = HFactory
-					.createSliceQuery(keyspace, is, ss, ss);
+					.createSliceQuery(consistencyOneKeyspace, is, ss, ss);
 
 			sliceQuery.setColumnFamily(ranksColumnFamily);
 			sliceQuery.setKey(score);
@@ -637,5 +645,13 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO {
 
 		return loadUsers(userIds);
 
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		
+		consistencyOneKeyspace = HFactory.createKeyspace(dbKeyspace, cluster, new AllOneConsistencyLevelPolicy());
+		consistencyQuorumKeyspace = HFactory.createKeyspace(dbKeyspace, cluster, new QuorumAllConsistencyLevelPolicy());
+		
 	}
 }
