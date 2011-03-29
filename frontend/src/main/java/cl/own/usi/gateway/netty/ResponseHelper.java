@@ -14,7 +14,7 @@ import org.jboss.netty.util.CharsetUtil;
 
 /**
  * Write content to the channel and close the connection.
- * 
+ *
  * @author bperroud
  *
  */
@@ -29,25 +29,30 @@ public class ResponseHelper {
 		// Utility class => hide default constructor
 	}
 
-	public static void writeResponse(MessageEvent e, HttpResponseStatus status) {
-		HttpResponse response = new DefaultHttpResponse(HTTP_1_0, status);
-		ChannelFuture future = e.getChannel().write(response);
+	public static void writeResponse(final MessageEvent e,
+			final HttpResponseStatus status) {
+		final HttpResponse response = new DefaultHttpResponse(HTTP_1_0, status);
+		final ChannelFuture future = e.getChannel().write(response);
 		future.addListener(ChannelFutureListener.CLOSE);
 	}
 
-	public static void writeStringToReponse(String s, MessageEvent e,
-			HttpResponseStatus status) {
+	public static void writeStringToReponse(final String s, final MessageEvent e) {
+		writeStringToReponse(s, e, HttpResponseStatus.OK);
+	}
 
-		ChannelBuffer buf = ChannelBuffers.copiedBuffer(s, CharsetUtil.UTF_8);
-		
-		HttpResponse response = new DefaultHttpResponse(HTTP_1_0, status);
+	public static void writeStringToReponse(final String s,
+			final MessageEvent e, final HttpResponseStatus status) {
+
+		final ChannelBuffer buf = ChannelBuffers.copiedBuffer(s,
+				CharsetUtil.UTF_8);
+
+		final HttpResponse response = new DefaultHttpResponse(HTTP_1_0, status);
 		response.setHeader(HEADER_SERVER_LABEL, HEADER_SERVER_VALUE);
 		response.setHeader(HEADER_CONNECTION_LABEL, HEADER_CONNECTION_VALUE);
 		response.setContent(buf);
 
-		ChannelFuture future = e.getChannel().write(response);
+		final ChannelFuture future = e.getChannel().write(response);
 		future.addListener(ChannelFutureListener.CLOSE);
 	}
-		
 
 }

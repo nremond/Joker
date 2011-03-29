@@ -16,6 +16,9 @@ import org.apache.thrift.transport.TTransportException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import cl.own.usi.gateway.client.UserAndScore;
+import cl.own.usi.gateway.client.UserAndScoreAndAnswer;
+import cl.own.usi.gateway.client.UserInfoAndScore;
 import cl.own.usi.gateway.client.WorkerClient;
 import cl.own.usi.gateway.client.pool.MultiPool;
 import cl.own.usi.gateway.client.pool.ObjectPoolFactory;
@@ -30,28 +33,30 @@ import cl.own.usi.thrift.WorkerRPC.Client;
 
 /**
  * Thrift client.
- * 
+ *
  * @author bperroud
  *
  */
 @Component
 public class WorkerClientThriftImpl implements WorkerClient {
-	
+
 	private static final int THRIFT_RETRY = 3;
-	
+
 	@Autowired
-	GameService gameService;
-	
-	MultiPool<WorkerHost, Client> pools = new ThriftMultiPool();
-	
+	private GameService gameService;
+
+	private MultiPool<WorkerHost, Client> pools = new ThriftMultiPool();
+
 	@Override
-	public UserAndScore validateUserAndInsertQuestionRequest(String userId,
-			int questionNumber) {
-		
+	public UserAndScore validateUserAndInsertQuestionRequest(
+			final String userId, final int questionNumber) {
+
 		for (int i = 0; i < THRIFT_RETRY; i++) {
 			Client client = getClient();
 			try {
-				cl.own.usi.thrift.UserAndScore userAndScore = client.validateUserAndInsertQuestionRequest(userId, questionNumber);
+				final cl.own.usi.thrift.UserAndScore userAndScore = client
+						.validateUserAndInsertQuestionRequest(userId,
+								questionNumber);
 				return map(userAndScore);
 			} catch (TException e) {
 				pools.invalidate(client);
@@ -67,14 +72,18 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 	@Override
 	public UserAndScoreAndAnswer validateUserAndInsertQuestionResponseAndUpdateScore(
-			String userId, int questionNumber, Integer answer) {
-		
+			final String userId, final int questionNumber, final Integer answer) {
+
 		for (int i = 0; i < THRIFT_RETRY; i++) {
 			Client client = getClient();
 			try {
-				boolean answerCorrect = gameService.isAnswerCorrect(questionNumber, answer);
+				boolean answerCorrect = gameService.isAnswerCorrect(
+						questionNumber, answer);
 				Question question = gameService.getQuestion(questionNumber);
-				cl.own.usi.thrift.UserAndScore userAndScore = client.validateUserAndInsertQuestionResponseAndUpdateScore(userId, questionNumber, question.getValue(), answer, answerCorrect);
+				cl.own.usi.thrift.UserAndScore userAndScore = client
+						.validateUserAndInsertQuestionResponseAndUpdateScore(
+								userId, questionNumber, question.getValue(),
+								answer, answerCorrect);
 				return map(userAndScore, answerCorrect);
 			} catch (TException e) {
 				pools.invalidate(client);
@@ -89,12 +98,13 @@ public class WorkerClientThriftImpl implements WorkerClient {
 	}
 
 	@Override
-	public UserAndScore validateUserAndGetScore(String userId) {
-		
+	public UserAndScore validateUserAndGetScore(final String userId) {
+
 		for (int i = 0; i < THRIFT_RETRY; i++) {
 			Client client = getClient();
 			try {
-				cl.own.usi.thrift.UserAndScore userAndScore = client.validateUserAndGetScore(userId);
+				cl.own.usi.thrift.UserAndScore userAndScore = client
+						.validateUserAndGetScore(userId);
 				return map(userAndScore);
 			} catch (TException e) {
 				pools.invalidate(client);
@@ -109,8 +119,8 @@ public class WorkerClientThriftImpl implements WorkerClient {
 	}
 
 	@Override
-	public String loginUser(String email, String password) {
-		
+	public String loginUser(final String email, final String password) {
+
 		for (int i = 0; i < THRIFT_RETRY; i++) {
 			Client client = getClient();
 			try {
@@ -128,9 +138,9 @@ public class WorkerClientThriftImpl implements WorkerClient {
 	}
 
 	@Override
-	public boolean insertUser(String email, String password, String firstname,
-			String lastname) {
-		
+	public boolean insertUser(final String email, final String password,
+			final String firstname, final String lastname) {
+
 		for (int i = 0; i < THRIFT_RETRY; i++) {
 			Client client = getClient();
 			try {
@@ -149,7 +159,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 	@Override
 	public void flushUsers() {
-		
+
 		for (int i = 0; i < THRIFT_RETRY; i++) {
 			Client client = getClient();
 			try {
@@ -167,13 +177,15 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 	@Override
 	public List<UserInfoAndScore> getTop100() {
-		
+
 		for (int i = 0; i < THRIFT_RETRY; i++) {
 			Client client = getClient();
 			try {
-				List<cl.own.usi.thrift.UserInfoAndScore> users = client.getTop100();
-				
-				List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(users.size());
+				List<cl.own.usi.thrift.UserInfoAndScore> users = client
+						.getTop100();
+
+				List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(
+						users.size());
 				for (cl.own.usi.thrift.UserInfoAndScore user : users) {
 					retUsers.add(map(user));
 				}
@@ -191,14 +203,16 @@ public class WorkerClientThriftImpl implements WorkerClient {
 	}
 
 	@Override
-	public List<UserInfoAndScore> get50Before(String userId) {
-		
+	public List<UserInfoAndScore> get50Before(final String userId) {
+
 		for (int i = 0; i < THRIFT_RETRY; i++) {
 			Client client = getClient();
 			try {
-				List<cl.own.usi.thrift.UserInfoAndScore> users = client.get50Before(userId);
-				
-				List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(users.size());
+				final List<cl.own.usi.thrift.UserInfoAndScore> users = client
+						.get50Before(userId);
+
+				final List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(
+						users.size());
 				for (cl.own.usi.thrift.UserInfoAndScore user : users) {
 					retUsers.add(map(user));
 				}
@@ -216,14 +230,16 @@ public class WorkerClientThriftImpl implements WorkerClient {
 	}
 
 	@Override
-	public List<UserInfoAndScore> get50After(String userId) {
-		
+	public List<UserInfoAndScore> get50After(final String userId) {
+
 		for (int i = 0; i < THRIFT_RETRY; i++) {
 			Client client = getClient();
 			try {
-				List<cl.own.usi.thrift.UserInfoAndScore> users = client.get50After(userId);
-				
-				List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(users.size());
+				final List<cl.own.usi.thrift.UserInfoAndScore> users = client
+						.get50After(userId);
+
+				final List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(
+						users.size());
 				for (cl.own.usi.thrift.UserInfoAndScore user : users) {
 					retUsers.add(map(user));
 				}
@@ -239,89 +255,110 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		}
 		return null;
 	}
-	
-	private UserAndScore map(cl.own.usi.thrift.UserAndScore userAndScore) {
+
+	@Override
+	public String getAnswersAsJson(final String email,
+			final Integer questionNumber) {
+
+		final ThriftRetryableAction<String> action = new GetAnswersAsJsonAction(
+				email, questionNumber);
+
+		return executeAction(action, String.class);
+	}
+
+	private <T> T executeAction(final ThriftRetryableAction<T> action,
+			Class<T> resultClass) {
+		for (int i = 0; i < THRIFT_RETRY; i++) {
+			Client client = getClient();
+			try {
+				return action.doAction(client);
+			} catch (TException e) {
+				pools.invalidate(client);
+				client = null;
+			} finally {
+				if (client != null) {
+					release(client);
+				}
+			}
+		}
+		return null;
+
+	}
+
+	private UserAndScore map(final cl.own.usi.thrift.UserAndScore userAndScore) {
 		if (userAndScore == null) {
 			return null;
 		} else {
-			UserAndScore newUserAndScore = new UserAndScore();
-			newUserAndScore.score = userAndScore.score;
-			newUserAndScore.userId = userAndScore.userId;
+			final UserAndScore newUserAndScore = new UserAndScore(
+					userAndScore.userId, userAndScore.score);
 			return newUserAndScore;
 		}
 	}
-	
-	private UserAndScoreAndAnswer map(cl.own.usi.thrift.UserAndScore userAndScore, boolean answer) {
+
+	private UserAndScoreAndAnswer map(
+			cl.own.usi.thrift.UserAndScore userAndScore, boolean answer) {
 		if (userAndScore == null) {
 			return null;
 		} else {
-			UserAndScoreAndAnswer newUserAndScoreAndAnswer = new UserAndScoreAndAnswer();
-			newUserAndScoreAndAnswer.score = userAndScore.score;
-			newUserAndScoreAndAnswer.userId = userAndScore.userId;
-			newUserAndScoreAndAnswer.answer = answer;
+			final UserAndScoreAndAnswer newUserAndScoreAndAnswer = new UserAndScoreAndAnswer(
+					userAndScore.userId, userAndScore.score, answer);
 			return newUserAndScoreAndAnswer;
 		}
 	}
 
-	private UserInfoAndScore map(cl.own.usi.thrift.UserInfoAndScore userInfoAndScore) {
+	private UserInfoAndScore map(
+			cl.own.usi.thrift.UserInfoAndScore userInfoAndScore) {
 		if (userInfoAndScore == null) {
 			return null;
 		} else {
-			UserInfoAndScore newUserInfoAndScore = new UserInfoAndScore();
-			newUserInfoAndScore.email = userInfoAndScore.email;
-			newUserInfoAndScore.firstname = userInfoAndScore.firstname;
-			newUserInfoAndScore.lastname = userInfoAndScore.lastname;
-			newUserInfoAndScore.score = userInfoAndScore.score;
-			newUserInfoAndScore.userId = userInfoAndScore.userId;
+			final UserInfoAndScore newUserInfoAndScore = new UserInfoAndScore(
+					userInfoAndScore.userId, userInfoAndScore.score,
+					userInfoAndScore.email, userInfoAndScore.firstname,
+					userInfoAndScore.lastname);
 			return newUserInfoAndScore;
 		}
 	}
-	
-	public boolean addWorkerNode(String host, int port) {
-		WorkerHost wh = WorkerHost.create(host, port);
+
+	public boolean addWorkerNode(final String host, final int port) {
+		final WorkerHost wh = WorkerHost.create(host, port);
 		return pools.addKey(wh);
 	}
-	
-	
+
 	private Client getClient() {
-		
-		Client client = null;
-		
 		try {
-			client = pools.borrow();
+			return pools.borrow();
 		} catch (PoolException e) {
 			throw new IllegalStateException("No pool borrowed...", e);
 		}
-		
-		return client;
 	}
-	
-	private void release(Client client) {
+
+	private void release(final Client client) {
 		try {
 			if (client != null) {
 				pools.release(client);
 			}
 		} catch (PoolException e) {
-		
+
 		}
 	}
-	
-	private static class ThriftClientFactory implements ObjectPoolFactory<Client> {
+
+	private static class ThriftClientFactory implements
+			ObjectPoolFactory<Client> {
 
 		private final WorkerHost workerHost;
 		private final Map<Client, TTransport> transports = new ConcurrentHashMap<Client, TTransport>();
-		
-		
-		public ThriftClientFactory(WorkerHost workerHost) {
+
+		public ThriftClientFactory(final WorkerHost workerHost) {
 			this.workerHost = workerHost;
 		}
-		
+
 		@Override
 		public Client create() throws FactoryException {
-			
+
 			TTransport transport;
 			try {
-				transport = new TSocket(workerHost.getHost(), workerHost.getPort());
+				transport = new TSocket(workerHost.getHost(),
+						workerHost.getPort());
 				TProtocol protocol = new TBinaryProtocol(transport);
 				Client client = new Client(protocol);
 				transport.open();
@@ -344,17 +381,18 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 		@Override
 		public void destroy(Client object) {
-			
+
 			TTransport transport = transports.remove(object);
 			if (transport != null) {
 				transport.close();
 			}
-			
+
 		}
-		
+
 	}
-	
-	private static class ThriftMultiPool extends MultiPoolImpl<WorkerHost, Client> {
+
+	private static class ThriftMultiPool extends
+			MultiPoolImpl<WorkerHost, Client> {
 
 		@Override
 		protected Pool<Client> createPool(WorkerHost key) {
@@ -363,8 +401,9 @@ public class WorkerClientThriftImpl implements WorkerClient {
 			pool.setFactory(factory);
 			return pool;
 		}
-		
+
 		Random r = new Random();
+
 		protected WorkerHost getKey() {
 			if (keys.isEmpty()) {
 				return null;
@@ -372,16 +411,17 @@ public class WorkerClientThriftImpl implements WorkerClient {
 				return keys.get(r.nextInt(keys.size()));
 			}
 		}
-		
+
 	}
-	
+
 	private static class WorkerHost {
 		private final String host;
 		private final int port;
 		private static ConcurrentMap<String, WorkerHost> workerHosts = new ConcurrentHashMap<String, WorkerHost>();
+
 		public static WorkerHost create(String host, int port) {
 			String key = key(host, port);
-			
+
 			if (!workerHosts.containsKey(key)) {
 				WorkerHost wh = new WorkerHost(host, port);
 				WorkerHost tmpWh = workerHosts.putIfAbsent(key, wh);
@@ -394,11 +434,11 @@ public class WorkerClientThriftImpl implements WorkerClient {
 				return workerHosts.get(key);
 			}
 		}
-		
+
 		private static String key(String host, int port) {
 			return host + String.valueOf(port);
 		}
-		
+
 		private WorkerHost(String host, int port) {
 			this.host = host;
 			this.port = port;
@@ -411,12 +451,12 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		public int getPort() {
 			return port;
 		}
-		
+
 	}
 
 	@Override
 	public void startRankingsComputation() {
-		
+
 		Client client = getClient();
 		try {
 			client.startRankingsComputation();
