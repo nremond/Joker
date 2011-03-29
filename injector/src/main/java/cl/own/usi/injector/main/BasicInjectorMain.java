@@ -447,7 +447,7 @@ public class BasicInjectorMain {
 
 						long delta = System.currentTimeMillis() - starttime;
 						if (delta > SLA) {
-							LOGGER.warn("[SLA] Answer question for user {} took {} ms", email, delta);
+							LOGGER.warn("[SLA] Answer question {} for user {} took {} ms", new Object[] {currentQuestion, email, delta});
 						}
 						
 						currentQuestion++;
