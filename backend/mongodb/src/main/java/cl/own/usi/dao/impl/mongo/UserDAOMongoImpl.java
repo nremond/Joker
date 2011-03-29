@@ -8,6 +8,8 @@ import static cl.own.usi.dao.impl.mongo.DaoHelper.passwordField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.questionNumberField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.orderBy;
+
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,6 +53,8 @@ public class UserDAOMongoImpl implements UserDAO {
 		// the driver keeps a cache of the added index
 		dbUsers.ensureIndex(userIdIndex, "userIdIndex", true);
 		dbUsers.ensureIndex(credentialsIndex, "credentialsIndex", false);
+		dbUsers.ensureIndex(orderBy, "orderByIndex", false);
+		
 
 		DBObject dbUser = DaoHelper.toDBObject(user);
 

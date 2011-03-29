@@ -30,6 +30,11 @@ public class DaoHelper {
 
 	private static final String USER_ID_SALT = "123456";
 
+	// Spec : les classements sont ordonnes par lastname/firstname/mail
+	public final static DBObject orderBy = new BasicDBObject()
+			.append(scoreField, -1).append(lastnameField, 1)
+			.append(firstnameField, 1).append(emailField, 1);
+
 	public static DBObject toDBObject(final User user) {
 		DBObject dbUser = new BasicDBObject();
 		dbUser.put(userIdField, DaoHelper.generateUserId(user));

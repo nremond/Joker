@@ -1,9 +1,7 @@
 package cl.own.usi.dao.impl.mongo;
 
 import static cl.own.usi.dao.impl.mongo.DaoHelper.bonusField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.emailField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.firstnameField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.lastnameField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.orderBy;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.scoreField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
@@ -33,18 +31,13 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	// Spec : les classements sont ordonnes par lastname/firstname/mail
-	private static DBObject orderBy = new BasicDBObject()
-			.append(scoreField, -1).append(lastnameField, 1)
-			.append(firstnameField, 1).append(emailField, 1);
-
 	private List<User> getUsers(DBObject query, DBObject querySubset,
 			int expectedSize) {
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		DBCursor dbCursor = dbUsers.find(query, querySubset).sort(orderBy);
 
-		List<User> users = new ArrayList<User>();
+		List<User> users = new ArrayList<User>(expectedSize);
 		while (dbCursor.hasNext()) {
 			DBObject dbUser = dbCursor.next();
 			User user = DaoHelper.fromDBObject(dbUser);
@@ -133,7 +126,8 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 	}
 
 	@Override
-	public int setGoodAnswer(String userId, int questionNumber, int questionValue) {
+	public int setGoodAnswer(String userId, int questionNumber,
+			int questionValue) {
 		// TODO this implement is not good, we have to do this in one shot
 
 		DBCollection dbUsers = db.getCollection(usersCollection);
