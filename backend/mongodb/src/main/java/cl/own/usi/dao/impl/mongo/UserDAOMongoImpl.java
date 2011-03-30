@@ -212,24 +212,28 @@ public class UserDAOMongoImpl implements UserDAO {
 		// Enable sharding for the newly created collection
 		final DB adminDb = db.getSisterDB("admin");
 		try {
-			LOGGER.info("Enable sharding...");
-			final CommandResult command = adminDb.command(String.format(
-					"{ enablesharding : \"%s\" }", db.getName()));
-			LOGGER.info("Received: {}",
-					ToStringBuilder.reflectionToString(command));
+			final BasicDBObject enableSharding = new BasicDBObject(
+					"enablesharding", db.getName());
+			final CommandResult command = adminDb.command(enableSharding);
+			LOGGER.info("Enable sharding: {}, ok:{}, error: {}", new Object[] {
+					ToStringBuilder.reflectionToString(command), command.ok(),
+					command.getErrorMessage() });
+
 		} catch (MongoException e) {
 			LOGGER.warn(
 					"Exception while enabling sharding, probably already on", e);
 		}
 
 		try {
-			LOGGER.info("Shard users...");
-			final CommandResult command = adminDb
-					.command(String
-							.format("{ shardcollection : \"joker.users\", key : {userId : 1} }",
-									db.getName() + "." + usersCollection));
-			LOGGER.info("Received: {}",
-					ToStringBuilder.reflectionToString(command));
+			final BasicDBObject shard = new BasicDBObject("shardcollection",
+					db.getName() + "." + usersCollection);
+			final BasicDBObject shardKey = new BasicDBObject(userIdField, 1);
+			shard.put("key", shardKey);
+
+			final CommandResult command = adminDb.command(shard);
+			LOGGER.debug("Shard users: {}, ok:{}, error: {}", new Object[] {
+					ToStringBuilder.reflectionToString(command), command.ok(),
+					command.getErrorMessage() });
 		} catch (MongoException e) {
 			LOGGER.warn("Exception while trying to shard 'users' collection", e);
 		}

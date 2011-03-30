@@ -13,6 +13,8 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -41,6 +43,9 @@ import cl.own.usi.thrift.WorkerRPC.Client;
 public class WorkerClientThriftImpl implements WorkerClient {
 
 	private static final int THRIFT_RETRY = 3;
+
+	private static final Logger LOGGER = LoggerFactory
+			.getLogger(WorkerClientThriftImpl.class);
 
 	@Autowired
 	private GameService gameService;
@@ -339,7 +344,9 @@ public class WorkerClientThriftImpl implements WorkerClient {
 				pools.release(client);
 			}
 		} catch (PoolException e) {
-
+			LOGGER.error(
+					"Something bad happened while trying to release client {}!",
+					client, e);
 		}
 	}
 
