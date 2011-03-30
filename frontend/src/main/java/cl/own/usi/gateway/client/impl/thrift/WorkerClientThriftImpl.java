@@ -164,6 +164,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 			Client client = getClient();
 			try {
 				client.flushUsers();
+				return;
 			} catch (TException e) {
 				pools.invalidate(client);
 				client = null;
