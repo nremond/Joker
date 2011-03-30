@@ -4,17 +4,17 @@ import static cl.own.usi.dao.impl.mongo.DaoHelper.answerNumberField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.answersField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.emailField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.isLoggedField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.orderBy;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.passwordField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.questionNumberField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.orderBy;
-
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,35 +26,29 @@ import cl.own.usi.model.Answer;
 import cl.own.usi.model.User;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.CommandResult;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
+import com.mongodb.MongoException;
 import com.mongodb.WriteResult;
 
 @Repository
 public class UserDAOMongoImpl implements UserDAO {
 
 	@Autowired
-	DB db;
+	private DB db;
 
-	private Logger logger = LoggerFactory.getLogger(this.getClass());
+	private static final Logger LOGGER = LoggerFactory
+			.getLogger(UserDAOMongoImpl.class);
 
 	private static DBObject userIdIndex = new BasicDBObject(userIdField, 1);
 	private static DBObject credentialsIndex = new BasicDBObject(emailField, 1)
 			.append("password", 1);
 
-
-
-
 	@Override
 	public boolean insertUser(final User user) {
 		DBCollection dbUsers = db.getCollection(usersCollection);
-
-		// the driver keeps a cache of the added index
-		dbUsers.ensureIndex(userIdIndex, "userIdIndex", true);
-		dbUsers.ensureIndex(credentialsIndex, "credentialsIndex", false);
-		dbUsers.ensureIndex(orderBy, "orderByIndex", false);
-		
 
 		DBObject dbUser = DaoHelper.toDBObject(user);
 
@@ -63,10 +57,12 @@ public class UserDAOMongoImpl implements UserDAO {
 
 		// E11000 -> duplicate key
 		if (StringUtils.hasText(error) && error.indexOf("E11000") == 0) {
-			logger.debug("user {} was already in the collection, insertion aborted", user.getEmail());
+			LOGGER.debug(
+					"user {} was already in the collection, insertion aborted",
+					user.getEmail());
 			return false;
 		} else {
-			logger.debug("user {} was successfully inserted", user.getEmail());
+			LOGGER.debug("user {} was successfully inserted", user.getEmail());
 			return true;
 		}
 	}
@@ -80,13 +76,14 @@ public class UserDAOMongoImpl implements UserDAO {
 
 		DBObject dbUser = dbUsers.findOne(dbId);
 		if (dbUser != null) {
-			logger.debug("fetching userId={} and isLogged={}", userId, dbUser.get(isLoggedField));
+			LOGGER.debug("fetching userId={} and isLogged={}", userId,
+					dbUser.get(isLoggedField));
 
 			// The index is only on the id, isLogged can't be part of the query
-			return (Boolean) dbUser.get(isLoggedField) ? DaoHelper.fromDBObject(dbUser)
-					: null;
+			return (Boolean) dbUser.get(isLoggedField) ? DaoHelper
+					.fromDBObject(dbUser) : null;
 		} else {
-			logger.debug("fetching userId={} is impossible, not in db", userId);
+			LOGGER.debug("fetching userId={} is impossible, not in db", userId);
 			return null;
 		}
 	}
@@ -107,11 +104,12 @@ public class UserDAOMongoImpl implements UserDAO {
 		DBObject dbUser = dbUsers.findAndModify(dbCredentials, dbSetlogin);
 
 		if (dbUser != null) {
-			logger.debug("login sucessful for {}/{}->userId={}", new Object[] {email, password, dbUser.get("userId")});
+			LOGGER.debug("login sucessful for {}/{}->userId={}", new Object[] {
+					email, password, dbUser.get("userId") });
 
 			return (String) dbUser.get("userId");
 		} else {
-			logger.debug("login failed for {}/{}", email, password);
+			LOGGER.debug("login failed for {}/{}", email, password);
 
 			return null;
 		}
@@ -157,7 +155,7 @@ public class UserDAOMongoImpl implements UserDAO {
 
 		dbUsers.findAndModify(dbUserId, dbPushAnswers);
 
-		logger.debug("answer inserted, {}", /*ToStringBuilder.reflectionToString(*/answer/*)*/);
+		LOGGER.debug("answer inserted, {}", answer);
 
 	}
 
@@ -189,7 +187,8 @@ public class UserDAOMongoImpl implements UserDAO {
 					answers.add(answer);
 				}
 
-				logger.debug("fetching answers for userId={} {}", userId, answers);
+				LOGGER.debug("fetching answers for userId={} {}", userId,
+						answers);
 				return answers;
 			} else {
 				return Collections.emptyList();
@@ -201,8 +200,38 @@ public class UserDAOMongoImpl implements UserDAO {
 
 	@Override
 	public void flushUsers() {
-		DBCollection dbUsers = db.getCollection(usersCollection);
+		final DBCollection dbUsers = db.getCollection(usersCollection);
 		dbUsers.drop();
-	}
 
+		final DBCollection newUsers = db.getCollection(usersCollection);
+		// the driver keeps a cache of the added index
+		newUsers.ensureIndex(userIdIndex, "userIdIndex", true);
+		newUsers.ensureIndex(credentialsIndex, "credentialsIndex", false);
+		newUsers.ensureIndex(orderBy, "orderByIndex", false);
+
+		// Enable sharding for the newly created collection
+		final DB adminDb = db.getSisterDB("admin");
+		try {
+			LOGGER.info("Enable sharding...");
+			final CommandResult command = adminDb.command(String.format(
+					"{ enablesharding : \"%s\" }", db.getName()));
+			LOGGER.info("Received: {}",
+					ToStringBuilder.reflectionToString(command));
+		} catch (MongoException e) {
+			LOGGER.warn(
+					"Exception while enabling sharding, probably already on", e);
+		}
+
+		try {
+			LOGGER.info("Shard users...");
+			final CommandResult command = adminDb
+					.command(String
+							.format("{ shardcollection : \"joker.users\", key : {userId : 1} }",
+									db.getName() + "." + usersCollection));
+			LOGGER.info("Received: {}",
+					ToStringBuilder.reflectionToString(command));
+		} catch (MongoException e) {
+			LOGGER.warn("Exception while trying to shard 'users' collection", e);
+		}
+	}
 }
