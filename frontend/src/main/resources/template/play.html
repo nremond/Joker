@@ -2,7 +2,7 @@
 <html>
 <head>
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
-<head/>
+</head>
 <body>
 
 	<div id="info"> 
@@ -10,7 +10,7 @@
 		<p>Be ready !</p>
 	</div>
 
-	<div id="game"/>
+	<form id="questionForm" name="questionForm">	</form>
 	
 	<script>
 		$.ajax({
@@ -18,45 +18,53 @@
 			type: "GET",
 			dataType: "json",
 			success: function(data, textStatus, jqXHR) {
-				console.log("question", data);
-				
-				var sform = "<form name=\"questionForm\" >" + data["question"] + " :<br/>";
-				for (var i = 1; ; i++) {
-					var answer = "answer_" + i;
-					
-					if(data[answer]){
-						sform += "<input type=\"radio\" name=\"question\" value=\"" + data[answer] + "\">" + data[answer] + "<br/>";
-					} else {
-						break;
-					}
-				}
-				sform += "</form>";
-				sform += "<input type=\"submit\" value=\"OK\"/>";
-					
-				$("#game").html(sform);
-				$("#info").html("");
-					
-				
-				$("#questionForm").submit(function(event) {
-
-					// stop form from submitting normally
-					event.preventDefault(); 
-				
-					$.ajax({
-						url :  "/api/answer/1",
-						data : "{ \"mail\":"+mail+ ",\"password\":"+password+" }",
-						type : "POST",
-						success: function(data, textStatus, jqXHR) {
-							console.log("answer", data);
-						}
-					)};
-							
-				});
-				
+				question_callback(data, textStatus, jqXHR);
 			}
 		});
 		
+		
+		function question_callback(data, textStatus, jqXHR) {
+			console.log("question", data);
+			
+			var sform = data["question"] + " :<br/>";
+			for (var i = 1; ; i++) {
+				var answer = "answer_" + i;
+				
+				if(data[answer]){
+					sform += "<input type=\"radio\" name=\"question\" value=\"" + data[answer] + "\">" + data[answer] + "<br/>";
+				} else {
+					break;
+				}
+			}
+			sform += '<input type="submit" value="OK"/>';
+			
+				
+			$("#questionForm").html(sform);
+			$("#info").html("");
+				
+			
+			$("#questionForm").submit(function(event) {
+
+				// stop form from submitting normally
+				event.preventDefault(); 
+			
+				$.ajax({
+					url :  "/api/answer/1",
+					data : "{ \"mail\":"+mail+ ",\"password\":"+password+" }",
+					type : "POST",
+					success: function(data, textStatus, jqXHR) {
+						answer_callback(data, textStatus, jqXHR);
+					}
+				});
+						
+			});
+			
+		}
 	
+		function answer_callback(data, textStatus, jqXHR) {
+			console.log("answer", data);
+		}
+
 	</script>
 </body>
 </html>
