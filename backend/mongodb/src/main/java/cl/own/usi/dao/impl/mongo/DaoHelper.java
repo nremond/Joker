@@ -31,13 +31,13 @@ public class DaoHelper {
 	private static final String USER_ID_SALT = "123456";
 
 	// Spec : les classements sont ordonnes par lastname/firstname/mail
-	public final static DBObject orderBy = new BasicDBObject()
+	public final static DBObject orderByScoreAndNames = new BasicDBObject()
 			.append(scoreField, -1).append(lastnameField, 1)
 			.append(firstnameField, 1).append(emailField, 1);
 
 	public static DBObject toDBObject(final User user) {
 		DBObject dbUser = new BasicDBObject();
-		dbUser.put(userIdField, DaoHelper.generateUserId(user));
+		dbUser.put(userIdField, DaoHelper.generateUserId(user.getEmail()));
 		dbUser.put(emailField, user.getEmail());
 		dbUser.put(passwordField, user.getPassword());
 		dbUser.put(firstnameField, user.getFirstname());
@@ -59,8 +59,8 @@ public class DaoHelper {
 		return user;
 	}
 
-	public static String generateUserId(final User user) {
-		ChannelBuffer chanBuff = wrappedBuffer((user.getEmail() + USER_ID_SALT)
+	public static String generateUserId(final String email) {
+		ChannelBuffer chanBuff = wrappedBuffer((email + USER_ID_SALT)
 				.getBytes(CharsetUtil.UTF_8));
 		return Base64.encode(chanBuff, Base64Dialect.ORDERED).toString(
 				CharsetUtil.UTF_8);

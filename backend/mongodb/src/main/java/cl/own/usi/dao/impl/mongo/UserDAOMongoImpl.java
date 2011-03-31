@@ -2,10 +2,8 @@ package cl.own.usi.dao.impl.mongo;
 
 import static cl.own.usi.dao.impl.mongo.DaoHelper.answerNumberField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.answersField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.emailField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.isLoggedField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.orderBy;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.passwordField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScoreAndNames;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.questionNumberField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
@@ -43,8 +41,6 @@ public class UserDAOMongoImpl implements UserDAO {
 			.getLogger(UserDAOMongoImpl.class);
 
 	private static DBObject userIdIndex = new BasicDBObject(userIdField, 1);
-	private static DBObject credentialsIndex = new BasicDBObject(emailField, 1)
-			.append("password", 1);
 
 	@Override
 	public boolean insertUser(final User user) {
@@ -90,24 +86,30 @@ public class UserDAOMongoImpl implements UserDAO {
 
 	@Override
 	public String login(final String email, final String password) {
-		DBCollection dbUsers = db.getCollection(usersCollection);
 
-		DBObject dbCredentials = new BasicDBObject();
-		dbCredentials.put(emailField, email);
-		dbCredentials.put(passwordField, password);
+		final String userId = DaoHelper.generateUserId(email);
+		final User user = getUserById(userId);
 
-		DBObject dblogin = new BasicDBObject();
-		dblogin.put(isLoggedField, true);
-		DBObject dbSetlogin = new BasicDBObject();
-		dbSetlogin.put("$set", dblogin);
+		if (user != null && user.getPassword().equals(password)) {
+			// The user has been correction authenticated
+			DBCollection dbUsers = db.getCollection(usersCollection);
 
-		DBObject dbUser = dbUsers.findAndModify(dbCredentials, dbSetlogin);
+			DBObject dbId = new BasicDBObject();
+			dbId.put(userIdField, userId);
 
-		if (dbUser != null) {
+			DBObject dblogin = new BasicDBObject();
+			dblogin.put(isLoggedField, true);
+			DBObject dbSetlogin = new BasicDBObject();
+			dbSetlogin.put("$set", dblogin);
+
+			DBObject dbUser = dbUsers.findAndModify(dbId, dbSetlogin);
+
 			LOGGER.debug("login sucessful for {}/{}->userId={}", new Object[] {
 					email, password, dbUser.get("userId") });
 
-			return (String) dbUser.get("userId");
+			assert userId.equals(dbUser.get("userId"));
+
+			return userId;
 		} else {
 			LOGGER.debug("login failed for {}/{}", email, password);
 
@@ -203,11 +205,16 @@ public class UserDAOMongoImpl implements UserDAO {
 		final DBCollection dbUsers = db.getCollection(usersCollection);
 		dbUsers.drop();
 
+		// TODO NIRE : all this code must be moved to a "setupWhatever"
+		// function. It is possible to create a game *without* flushing the
+		// users
+
 		final DBCollection newUsers = db.getCollection(usersCollection);
+
 		// the driver keeps a cache of the added index
 		newUsers.ensureIndex(userIdIndex, "userIdIndex", true);
-		newUsers.ensureIndex(credentialsIndex, "credentialsIndex", false);
-		newUsers.ensureIndex(orderBy, "orderByIndex", false);
+		newUsers.ensureIndex(orderByScoreAndNames, "orderByScoreAndNames",
+				false);
 
 		// Enable sharding for the newly created collection
 		final DB adminDb = db.getSisterDB("admin");
