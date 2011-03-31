@@ -17,6 +17,8 @@ import cl.own.usi.thrift.WorkerRPC.Client;
  */
 abstract class ThriftAction<T> {
 
+	static final int THRIFT_RETRY = 3;
+
 	private MultiPool<WorkerHost, Client> pools = new ThriftMultiPool();
 
 	public ThriftAction(MultiPool<WorkerHost, Client> pools) {
@@ -27,7 +29,7 @@ abstract class ThriftAction<T> {
 
 	public T doAction() {
 
-		for (int i = 0; i < WorkerClientThriftImpl.THRIFT_RETRY; i++) {
+		for (int i = 0; i < THRIFT_RETRY; i++) {
 			Client client = getClient();
 			try {
 				return action(client);

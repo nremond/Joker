@@ -39,7 +39,7 @@ import cl.own.usi.thrift.WorkerRPC.Client;
 @Component
 public class WorkerClientThriftImpl implements WorkerClient {
 
-	static final int THRIFT_RETRY = 3;
+
 
 	@Autowired
 	private GameService gameService;
