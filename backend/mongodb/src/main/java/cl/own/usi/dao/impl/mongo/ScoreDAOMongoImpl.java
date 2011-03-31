@@ -1,7 +1,7 @@
 package cl.own.usi.dao.impl.mongo;
 
 import static cl.own.usi.dao.impl.mongo.DaoHelper.bonusField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.orderBy;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScoreAndNames;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.scoreField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
@@ -35,7 +35,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 			int expectedSize) {
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
-		DBCursor dbCursor = dbUsers.find(query, querySubset).sort(orderBy);
+		DBCursor dbCursor = dbUsers.find(query, querySubset).sort(orderByScoreAndNames);
 
 		List<User> users = new ArrayList<User>(expectedSize);
 		while (dbCursor.hasNext()) {
