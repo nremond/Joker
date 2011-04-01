@@ -60,8 +60,7 @@
 				// stop form from submitting normally
 				event.preventDefault(); 
 			
-				var form = $(this);
-				var	answer = form.find( 'input[name="answer"]' ).val();
+				var	answer = $('input:radio[name=answer]:checked').val();
 			
 				$.ajax({
 					url :  '/api/answer/' + questionNumber,
