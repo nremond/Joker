@@ -2,7 +2,6 @@ package cl.own.usi.gateway.client.impl.thrift;
 
 import org.apache.thrift.TException;
 
-import cl.own.usi.gateway.client.impl.thrift.WorkerClientThriftImpl.ThriftMultiPool;
 import cl.own.usi.gateway.client.impl.thrift.WorkerClientThriftImpl.WorkerHost;
 import cl.own.usi.gateway.client.pool.MultiPool;
 import cl.own.usi.gateway.client.pool.exception.PoolException;
@@ -19,23 +18,22 @@ abstract class ThriftAction<T> {
 
 	static final int THRIFT_RETRY = 3;
 
-	private MultiPool<WorkerHost, Client> pools = new ThriftMultiPool();
+	private final MultiPool<WorkerHost, Client> pools;
 
-	public ThriftAction(MultiPool<WorkerHost, Client> pools) {
+	public ThriftAction(final MultiPool<WorkerHost, Client> pools) {
 		this.pools = pools;
 	}
 
 	abstract protected T action(final Client client) throws TException;
 
-	public T doAction() {
+	public final T doAction() {
 
 		for (int i = 0; i < THRIFT_RETRY; i++) {
-			Client client = getClient();
+			final Client client = getClient();
 			try {
 				return action(client);
 			} catch (TException e) {
 				pools.invalidate(client);
-				client = null;
 			} finally {
 				if (client != null) {
 					release(client);
@@ -45,7 +43,7 @@ abstract class ThriftAction<T> {
 		return null;
 	}
 
-	private void release(final Client client) {
+	private final void release(final Client client) {
 		try {
 			if (client != null) {
 				pools.release(client);
@@ -55,7 +53,7 @@ abstract class ThriftAction<T> {
 		}
 	}
 
-	private Client getClient() {
+	private final Client getClient() {
 		try {
 			return pools.borrow();
 		} catch (PoolException e) {

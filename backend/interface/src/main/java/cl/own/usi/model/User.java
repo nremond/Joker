@@ -9,6 +9,9 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 
 public class User implements Serializable {
 
+	public static final String WRONG_CREDENTIALS_USERID = "0";
+	public static final String ALREADY_LOGGED_USERID = "1";
+	
 	private static final long serialVersionUID = 1L;
 
 	private String userId;

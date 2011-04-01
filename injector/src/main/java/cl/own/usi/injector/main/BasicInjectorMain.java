@@ -62,9 +62,9 @@ public class BasicInjectorMain {
 	private final static boolean FLUSHUSERSTABLE = true;
 	private final static int DEFAULT_NBUSERS = 10;
 	private final static int NBQUESTIONS = 17;
-	private final static int QUESTIONTIMEFRAME = 30;
-	private final static int SYNCHROTIME = 10;
-	private final static int LOGINTIMEOUT = 60;
+	private final static int QUESTIONTIMEFRAME = 60;
+	private final static int SYNCHROTIME = 20;
+	private final static int LOGINTIMEOUT = 600;
 
 	private static int NBUSERS = DEFAULT_NBUSERS;
 	private static int MAXNOFILES = 395240;

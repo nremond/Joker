@@ -49,6 +49,7 @@ import org.springframework.stereotype.Repository;
 
 import cl.own.usi.dao.ScoreDAO;
 import cl.own.usi.dao.UserDAO;
+import cl.own.usi.exception.UserAlreadyLoggedException;
 import cl.own.usi.model.Answer;
 import cl.own.usi.model.User;
 
@@ -381,7 +382,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	}
 
 	@Override
-	public String login(String email, String password) {
+	public String login(String email, String password) throws UserAlreadyLoggedException {
 
 		String userId = CassandraHelper.generateUserId(email);
 
@@ -400,8 +401,10 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 					passwordColumn).getValue());
 			Boolean isLogged = bs.fromByteBuffer(cs.getColumnByName(
 					isLoggedColumn).getValue());
-
-			if (password.equals(passwordFromDB) && !isLogged) {
+			
+			if (isLogged) {
+				throw new UserAlreadyLoggedException();
+			} else if (password.equals(passwordFromDB)) {
 
 				Mutator<String> mutator = HFactory.createMutator(consistencyQuorumKeyspace,
 						StringSerializer.get());

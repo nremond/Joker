@@ -203,6 +203,7 @@ public class GameController extends AbstractAuthenticateController {
 			Boolean flushusertable = (Boolean) parameters.get("flushusertable");
 			if (flushusertable != null && flushusertable) {
 				workerClient.flushUsers();
+				getCacheManager().flush();
 			}
 
 			writeResponse(e, CREATED);

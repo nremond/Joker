@@ -1,32 +1,36 @@
 package cl.own.usi.service;
 
+import cl.own.usi.exception.UserAlreadyLoggedException;
 import cl.own.usi.model.User;
 
 public interface UserService {
 
 	/**
 	 * Insert a new {@link User}
-	 *
+	 * 
 	 * @param email
 	 * @param password
 	 * @param firstname
 	 * @param lastname
 	 * @return
 	 */
-	boolean insertUser(String email, String password, String firstname, String lastname);
+	boolean insertUser(String email, String password, String firstname,
+			String lastname);
 
 	/**
 	 * Login a {@link User}
-	 *
+	 * 
 	 * @param email
 	 * @param password
-	 * @return userId
+	 * @return userId, null if user not found, throws
+	 *         {@link UserAlreadyLoggedException} if user is already logged
 	 */
-	String login(String email, String password);
+	String login(String email, String password)
+			throws UserAlreadyLoggedException;
 
 	/**
 	 * Request a {@link Question}
-	 *
+	 * 
 	 * @param userId
 	 * @param questionNumber
 	 * @return
@@ -35,7 +39,7 @@ public interface UserService {
 
 	/**
 	 * Answer a {@link Question}
-	 *
+	 * 
 	 * @param userId
 	 * @param questionNumber
 	 * @param answer
@@ -45,16 +49,17 @@ public interface UserService {
 
 	/**
 	 * Logout
-	 *
+	 * 
 	 * @param userId
 	 * @return
 	 */
 	boolean logout(String userId);
 
 	/**
-	 * Map the "userId" returned by a previous {@link #login(String, String)} call to an existing {@link User}
-	 *
-	 *@TODO remove this method
+	 * Map the "userId" returned by a previous {@link #login(String, String)}
+	 * call to an existing {@link User}
+	 * 
+	 * @TODO remove this method
 	 * @param userId
 	 * @return
 	 */

@@ -50,8 +50,8 @@ public class CassandraConfiguration implements InitializingBean {
 	final static String questionNumberColumn = "questionNumber";
 	final static String answerNumberColumn = "answerNumber";
 
-	private int replicationFactor = 1;
-	private String strategyClass = "LocalStrategy"; // "SimpleStrategy"
+	private int replicationFactor = 2;
+	private String strategyClass = "SimpleStrategy"; //"LocalStrategy"; // "SimpleStrategy"
 	private boolean forceRecreation = true;
 
 	@Autowired

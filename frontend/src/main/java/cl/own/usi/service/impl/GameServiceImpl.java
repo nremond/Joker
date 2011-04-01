@@ -21,9 +21,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import cl.own.usi.dao.GameDAO;
+import cl.own.usi.gateway.client.UserInfoAndScore;
 import cl.own.usi.gateway.client.WorkerClient;
 import cl.own.usi.gateway.netty.QuestionWorker;
 import cl.own.usi.gateway.utils.ExecutorUtil;
+import cl.own.usi.gateway.utils.ScoresHelper;
 import cl.own.usi.gateway.utils.Twitter;
 import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
@@ -62,6 +64,8 @@ public class GameServiceImpl implements GameService {
 	private static final String TWITTER_MESSAGE = "Notre Appli supporte %d joueurs #challengeUSI2011";
 	
 	private boolean twitt = false;
+	
+	private String top100AsString;
 	
 	@Value(value = "${frontend.twitt:false}")
 	public void setTwitt(boolean twitt) {
@@ -275,9 +279,14 @@ public class GameServiceImpl implements GameService {
 			
 			workerClient.startRankingsComputation();
 			
+			List<UserInfoAndScore> top100 = workerClient.getTop100();
+			StringBuilder sb = new StringBuilder();
+			ScoresHelper.appendUsersScores(top100, sb);
+			top100AsString = sb.toString();
+			
 			long stoptime = System.currentTimeMillis();
 			
-			LOGGER.error("Ranking computation done in {} ms.", (stoptime - starttime));
+			LOGGER.error("Ranking computation and top100 query done in {} ms.", (stoptime - starttime));
 			
 			long synchrotime = (gameSynchronization.game
 			.getSynchroTimeLimit() * 1000) + starttime - stoptime;
@@ -447,6 +456,11 @@ public class GameServiceImpl implements GameService {
 	@Override
 	public boolean isRankingRequestAllowed() {
 		return gameSynchronization != null && gameSynchronization.rankingRequestAllowed;
+	}
+
+	@Override
+	public String getTop100AsString() {
+		return top100AsString;
 	}
 
 }

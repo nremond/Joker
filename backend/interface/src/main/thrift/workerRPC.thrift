@@ -13,6 +13,26 @@ struct UserInfoAndScore {
 	5: string lastname
 }
 
+struct ExtendedUserInfoAndScore {
+	1: string userId,
+	2: i32 score,
+	3: string email,
+	4: string firstname,
+	5: string lastname,
+	6: bool isLogged,
+	7: i32 lastQuestionAnwered
+}
+
+struct BeforeAndAfterScores {
+	1: list<UserInfoAndScore> beforeUsers,
+	2: list<UserInfoAndScore> afterUsers
+}
+
+struct UserLogin {
+	1: string userId,
+	2: bool alreadyLogged
+}
+
 service WorkerRPC {
 
 	UserAndScore validateUserAndInsertQuestionRequest(1: string userId, 2: i32 questionNumber),
@@ -21,7 +41,7 @@ service WorkerRPC {
 
 	UserAndScore validateUserAndGetScore(1: string userId),
 
-	string loginUser(1: string email, 2: string password),
+	UserLogin loginUser(1: string email, 2: string password),
 
 	bool insertUser(1: string email, 2: string password, 3: string firstname, 4: string lastname),
 
@@ -35,6 +55,10 @@ service WorkerRPC {
 
 	string getAllAnswersAsJson(1: string email),
 
-	string getAnswerAsJson(1: string email, 2: i32 questionNumber)
+	string getAnswerAsJson(1: string email, 2: i32 questionNumber),
 
+	BeforeAndAfterScores get50BeforeAnd50After(1: string userId),
+	
+	ExtendedUserInfoAndScore getExtendedUserInfo(1: string userId)
+	
 }

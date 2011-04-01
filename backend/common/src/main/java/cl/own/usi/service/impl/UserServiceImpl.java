@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import cl.own.usi.dao.ScoreDAO;
 import cl.own.usi.dao.UserDAO;
+import cl.own.usi.exception.UserAlreadyLoggedException;
 import cl.own.usi.model.Answer;
 import cl.own.usi.model.User;
 import cl.own.usi.service.UserService;
@@ -23,7 +24,8 @@ public class UserServiceImpl implements UserService {
 	public boolean insertUser(String email, String password, String firstname,
 			String lastname) {
 
-		if (email == null || password == null || firstname == null || lastname == null) {
+		if (email == null || password == null || firstname == null
+				|| lastname == null) {
 			throw new IllegalArgumentException("an argument is null.");
 		} else {
 			User user = new User();
@@ -40,28 +42,40 @@ public class UserServiceImpl implements UserService {
 		if (email == null || password == null) {
 			return null;
 		} else {
-			return userDAO.login(email, password);
+			try {
+				String userId = userDAO.login(email, password);
+				if (userId == null) {
+					return User.WRONG_CREDENTIALS_USERID;
+				} else {
+					return userId;
+				}
+			} catch (UserAlreadyLoggedException e) {
+				return User.ALREADY_LOGGED_USERID;
+			}
 		}
 	}
 
-	//TODO String userId in the signature
+	// TODO String userId in the signature
 	public void insertRequest(String userId, int questionNumber) {
 		userDAO.insertRequest(userId, questionNumber);
 	}
 
-	public void insertAnswer(String userId, int questionNumber, Integer answerNumber) {
+	public void insertAnswer(String userId, int questionNumber,
+			Integer answerNumber) {
 
-		List<Answer> answers = userDAO.getAnswers(userId);
-
-		if (answers.size() >= questionNumber && answers.get(questionNumber - 1) != null) {
-			throw new IllegalArgumentException("User has already answered this question.");
-		} else {
+//		List<Answer> answers = userDAO.getAnswers(userId);
+//
+//		if (answers.size() >= questionNumber
+//				&& answers.get(questionNumber - 1) != null) {
+//			throw new IllegalArgumentException(
+//					"User has already answered this question.");
+//		} else {
 			Answer answer = new Answer();
 			answer.setQuestionNumber(questionNumber);
 			answer.setUserId(userId);
 			answer.setAnswerNumber(answerNumber);
 			userDAO.insertAnswer(answer);
-		}
+//		}
 	}
 
 	public boolean logout(String userId) {

@@ -91,4 +91,7 @@ public interface GameService {
 	 */
 	boolean isRankingRequestAllowed();
 	
+	
+	String getTop100AsString();
+	
 }
