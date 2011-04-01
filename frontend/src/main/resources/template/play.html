@@ -5,42 +5,54 @@
 </head>
 <body>
 
-	<div id="info"> 
-		<p>Waiting for other players.</p>
-		<p>Be ready !</p>
-	</div>
+	<div id="info"></div>
 
-	<form id="questionForm" name="questionForm">	</form>
+	<form id="questionForm" name="questionForm"></form>
 	
 	<script>
-		$.ajax({
-			url: "/api/question/1",
-			type: "GET",
-			dataType: "json",
-			success: function(data, textStatus, jqXHR) {
-				question_callback(data, textStatus, jqXHR);
-			}
-		});
 		
+		var waitingMsg = '<p>Waiting for other players.</p>';
+		waitingMsg += '<p>Be ready !</p>';
+		
+		$("#info").html(waitingMsg);
+		
+		//TODO for() loop here
+		var questionNumber = 1;
+		ask_question();
+	
+	
+		function ask_question() {
+			
+			$.ajax({
+				url: '/api/question/' + questionNumber,
+				type: 'GET',
+				dataType: 'json',
+				success: function(data, textStatus, jqXHR) {
+					question_callback(data, textStatus, jqXHR);
+				}
+			});
+			
+		}
 		
 		function question_callback(data, textStatus, jqXHR) {
 			console.log("question", data);
 			
 			var sform = data["question"] + " :<br/>";
-			for (var i = 1; ; i++) {
+			for (var i = 1;; i++) {
 				var answer = "answer_" + i;
 				
 				if(data[answer]){
-					sform += "<input type=\"radio\" name=\"answer\" value=\"" + i + "\">" + data[answer] + "<br/>";
+					sform += "<input type=\"radio\" name=\"answer\" value=\"" 
+							 + i + "\">" + data[answer] + "<br/>";
 				} else {
 					break;
 				}
 			}
 			sform += '<input type="submit" value="OK"/>';
 			
-				
+			
+			$("#info").html("");			
 			$("#questionForm").html(sform);
-			$("#info").html("");
 				
 			
 			$("#questionForm").submit(function(event) {
@@ -52,9 +64,10 @@
 				var	answer = form.find( 'input[name="answer"]' ).val();
 			
 				$.ajax({
-					url :  '/api/answer/1',
+					url :  '/api/answer/' + questionNumber,
 					data : '{ "answer" : ' + answer +' }',
 					type : 'POST',
+					dataType: 'json',
 					success: function(data, textStatus, jqXHR) {
 						answer_callback(data, textStatus, jqXHR);
 					}
@@ -66,8 +79,22 @@
 	
 		function answer_callback(data, textStatus, jqXHR) {
 			console.log("answer", data);
+			
+			var ok = data['are_u_ok'];
+			//var good_answer = data["good_answer"];
+			var score = data['score'];
+			
+			var okMsg = ok ? 'Good' : 'Bad';		
+			var resultMsg = '<p>' + okMsg + ' answer !<br/>';
+			resultMsg += 'Your score : ' + score + ' points</p>';
+			
+			$("#info").html(resultMsg + waitingMsg);
+			$("#questionForm").html("");
+			
+			questionNumber++;
+			ask_question();
 		}
-
+	
 	</script>
 </body>
 </html>
