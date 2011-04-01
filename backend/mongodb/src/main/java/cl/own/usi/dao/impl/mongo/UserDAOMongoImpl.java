@@ -100,12 +100,10 @@ public class UserDAOMongoImpl implements UserDAO {
 			DBObject dbSetlogin = new BasicDBObject();
 			dbSetlogin.put("$set", dblogin);
 
-			DBObject dbUser = dbUsers.findAndModify(dbId, dbSetlogin);
+			dbUsers.findAndModify(dbId, dbSetlogin);
 
 			LOGGER.debug("login sucessful for {}/{}->userId={}", new Object[] {
-					email, password, dbUser.get("userId") });
-
-			assert userId.equals(dbUser.get("userId"));
+					email, password, userId });
 
 			return userId;
 		} else {
@@ -214,33 +212,33 @@ public class UserDAOMongoImpl implements UserDAO {
 		newUsers.ensureIndex(orderByScoreAndNames, "orderByScoreAndNames",
 				false);
 
-		 // Enable sharding for the newly created collection
-		 final DB adminDb = db.getSisterDB("admin");
-		 try {
-		 final BasicDBObject enableSharding = new BasicDBObject(
-		 "enablesharding", db.getName());
-		 final CommandResult command = adminDb.command(enableSharding);
-		 LOGGER.info("Enable sharding: {}, ok:{}, error: {}", new Object[] {
-		 ToStringBuilder.reflectionToString(command), command.ok(),
-		 command.getErrorMessage() });
-		
-		 } catch (MongoException e) {
-		 LOGGER.warn(
-		 "Exception while enabling sharding, probably already on", e);
-		 }
-		
-		 try {
-		 final BasicDBObject shard = new BasicDBObject("shardcollection",
-		 db.getName() + "." + usersCollection);
-		 final BasicDBObject shardKey = new BasicDBObject(userIdField, 1);
-		 shard.put("key", shardKey);
-		
-		 final CommandResult command = adminDb.command(shard);
-		 LOGGER.debug("Shard users: {}, ok:{}, error: {}", new Object[] {
-		 ToStringBuilder.reflectionToString(command), command.ok(),
-		 command.getErrorMessage() });
-		 } catch (MongoException e) {
-		 LOGGER.warn("Exception while trying to shard 'users' collection", e);
-		 }
+		// Enable sharding for the newly created collection
+		final DB adminDb = db.getSisterDB("admin");
+		try {
+			final BasicDBObject enableSharding = new BasicDBObject(
+					"enablesharding", db.getName());
+			final CommandResult command = adminDb.command(enableSharding);
+			LOGGER.info("Enable sharding: {}, ok:{}, error: {}", new Object[] {
+					ToStringBuilder.reflectionToString(command), command.ok(),
+					command.getErrorMessage() });
+
+		} catch (MongoException e) {
+			LOGGER.warn(
+					"Exception while enabling sharding, probably already on", e);
+		}
+
+		try {
+			final BasicDBObject shard = new BasicDBObject("shardcollection",
+					db.getName() + "." + usersCollection);
+			final BasicDBObject shardKey = new BasicDBObject(userIdField, 1);
+			shard.put("key", shardKey);
+
+			final CommandResult command = adminDb.command(shard);
+			LOGGER.debug("Shard users: {}, ok:{}, error: {}", new Object[] {
+					ToStringBuilder.reflectionToString(command), command.ok(),
+					command.getErrorMessage() });
+		} catch (MongoException e) {
+			LOGGER.warn("Exception while trying to shard 'users' collection", e);
+		}
 	}
 }

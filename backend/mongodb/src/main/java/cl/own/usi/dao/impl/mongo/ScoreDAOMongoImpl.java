@@ -35,7 +35,8 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 			int expectedSize) {
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
-		DBCursor dbCursor = dbUsers.find(query, querySubset).sort(orderByScoreAndNames);
+		DBCursor dbCursor = dbUsers.find(query, querySubset).sort(
+				orderByScoreAndNames);
 
 		List<User> users = new ArrayList<User>(expectedSize);
 		while (dbCursor.hasNext()) {
@@ -128,7 +129,6 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 	@Override
 	public int setGoodAnswer(String userId, int questionNumber,
 			int questionValue) {
-		// TODO this implement is not good, we have to do this in one shot
 
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
@@ -140,16 +140,23 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		int bonus = (Integer) dbUser.get(bonusField);
 		int score = (Integer) dbUser.get(scoreField);
 
+		// TODO Et si un user répond à 3 questions correctes d'affilées,
+		// mais loupe le temps de réponse pour la 4ème, la 5ème réponse
+		// si elle est correct ne doit pas profiter des 3 questions
+		// précédentes enregirstrées.
+
+		int newScore = score + bonus + questionValue;
+		int newBonus = bonus + 1;
+
 		DBObject dbScoreAndBonus = new BasicDBObject();
-		dbScoreAndBonus.put(scoreField,
-				Integer.valueOf(score + bonus + questionValue));
-		dbScoreAndBonus.put(bonusField, Integer.valueOf(bonus + 1));
+
+		dbScoreAndBonus.put(scoreField, Integer.valueOf(newScore));
+		dbScoreAndBonus.put(bonusField, Integer.valueOf(newBonus));
 
 		DBObject dbSetScoreAndBonus = new BasicDBObject();
 		dbSetScoreAndBonus.put("$set", dbScoreAndBonus);
 
-		dbUser = dbUsers.findAndModify(dbId, dbSetScoreAndBonus);
-		int newScore = (Integer) dbUser.get(scoreField);
+		dbUsers.findAndModify(dbId, dbSetScoreAndBonus);
 
 		logger.debug(
 				"setGoodAnswer for user {} whose previous score was {} and is now {}",
