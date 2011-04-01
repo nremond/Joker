@@ -10,16 +10,19 @@
 	<form id="questionForm" name="questionForm"></form>
 	
 	<script>
-		
+
+		// Waiting message
 		var waitingMsg = '<p>Waiting for other players.</p>';
 		waitingMsg += '<p>Be ready !</p>';
 		
+		// Display the waiting message
 		$("#info").html(waitingMsg);
 		
-		//TODO for() loop here
+		// Initialize the game to the first question
 		var questionNumber = 1;
+		
+		// Start the game
 		ask_question();
-	
 	
 		function ask_question() {
 			
