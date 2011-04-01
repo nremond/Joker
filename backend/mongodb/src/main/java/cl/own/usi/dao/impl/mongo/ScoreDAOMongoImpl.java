@@ -140,10 +140,10 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		int bonus = (Integer) dbUser.get(bonusField);
 		int score = (Integer) dbUser.get(scoreField);
 
-		// TODO Et si un user repond a 3 questions correctes d'affilee,
-		// mais loupe le temps de reponse pour la 4eme, la 5eme reponse
+		// TODO Et si un user répond à 3 questions correctes d'affilées,
+		// mais loupe le temps de réponse pour la 4ème, la 5ème réponse
 		// si elle est correct ne doit pas profiter des 3 questions
-		// precedente enregirstrees.
+		// précédentes enregirstrées.
 
 		int newScore = score + bonus + questionValue;
 		int newBonus = bonus + 1;
