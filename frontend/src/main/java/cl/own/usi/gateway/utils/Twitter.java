@@ -10,11 +10,11 @@ import twitter4j.conf.ConfigurationBuilder;
 
 /**
  * Twitter wrapper that use twitter4j as twitter client.
- * 
- * Instanciate everything needed, tweet and release stuff (hopefully).
- * 
+ *
+ * Instantiate everything needed, tweet and release stuff (hopefully).
+ *
  * @author bperroud
- * 
+ *
  */
 public class Twitter {
 
@@ -23,23 +23,23 @@ public class Twitter {
 	private static final String OAuthAccessToken = "266003317-e3HcR7MaK9F0rhJWnvGNiqlCXL9xljoRKdArqmVA";
 	private static final String OAuthAccessTokenSecret = "bgC9ydvBbEs7dbntAPfQgn9RxckVRkyp7EQMfQ";
 
-	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+	private static final Logger LOGGER = LoggerFactory.getLogger(Twitter.class);
 
 	private String httpProxyHost;
 	private int httpProxyPort;
-	
+
 	@Value(value = "${frontend.httpProxyHost:}")
 	public void setHttpProxyHost(String httpProxyHost) {
 		if (!"".equals(httpProxyHost)) { // don't know how to inject null...
 			this.httpProxyHost = httpProxyHost;
 		}
 	}
-	
+
 	@Value(value = "${frontend.httpProxyPort:8080}")
 	public void setHttpProxyPort(int httpProxyPort) {
 		this.httpProxyPort = httpProxyPort;
 	}
-	
+
 	public void twitt(String status) {
 
 		ConfigurationBuilder cb = new ConfigurationBuilder();
@@ -47,12 +47,12 @@ public class Twitter {
 				.setOAuthConsumerSecret(OAuthConsumerSecret)
 				.setOAuthAccessToken(OAuthAccessToken)
 				.setOAuthAccessTokenSecret(OAuthAccessTokenSecret);
-		
+
 		if (httpProxyHost != null) {
 				cb.setHttpProxyHost(httpProxyHost)
 				.setHttpProxyPort(httpProxyPort);
 		}
-		
+
 		twitter4j.Twitter twitter = new TwitterFactory(cb.build())
 				.getInstance();
 

@@ -24,19 +24,13 @@ public class PlayController extends AbstractController {
 
 	public static final String URI_PLAY = "/play/";
 
-
 	@Value(value = "classpath:template/play.html")
 	private Resource playTemplate;
-
-
 
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 			throws Exception {
 		HttpRequest request = (HttpRequest) e.getMessage();
-
-		String uri = request.getUri();
-		uri = uri.substring(URI_API_LENGTH);
 
 		if (request.getMethod() == HttpMethod.GET) {
 			String userId = getCookie(request, COOKIE_AUTH_NAME);

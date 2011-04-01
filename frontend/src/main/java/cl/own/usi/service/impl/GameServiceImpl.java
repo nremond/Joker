@@ -31,7 +31,7 @@ import cl.own.usi.service.GameService;
 
 /**
  * Game service implementation.
- * 
+ *
  * @author bperroud
  *
  */
@@ -52,36 +52,36 @@ public class GameServiceImpl implements GameService {
 
 	@Autowired
 	private WorkerClient workerClient;
-	
-	private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+	private final ExecutorService executorService = Executors
+			.newSingleThreadExecutor();
 
 	private GameSynchronization gameSynchronization;
 
 	private static final int FIRST_QUESTION = 1;
-	
+
 	private static final String TWITTER_MESSAGE = "Notre Appli supporte %d joueurs #challengeUSI2011";
-	
+
 	private boolean twitt = false;
-	
+
 	@Value(value = "${frontend.twitt:false}")
 	public void setTwitt(boolean twitt) {
 		this.twitt = twitt;
 	}
-	
+
 	public boolean insertGame(int usersLimit, int questionTimeLimit,
-			int pollingTimeLimit, int synchroTimeLimit, int numberOfQuestion, 
+			int pollingTimeLimit, int synchroTimeLimit, int numberOfQuestion,
 			List<Map<String, Map<String, Boolean>>> questions) {
 
 		resetPreviousGame();
 
 		Game game = gameDAO.insertGame(usersLimit, questionTimeLimit,
-				pollingTimeLimit, synchroTimeLimit, numberOfQuestion, 
+				pollingTimeLimit, synchroTimeLimit, numberOfQuestion,
 				mapToQuestion(questions));
 
 		gameSynchronization = new GameSynchronization(game);
 
-		executorService.execute(new GameFlowWorker(
-				gameSynchronization));
+		executorService.execute(new GameFlowWorker(gameSynchronization));
 
 		return true;
 	}
@@ -99,8 +99,6 @@ public class GameServiceImpl implements GameService {
 			}
 		}
 	}
-
-	Random r = new Random();
 
 	private List<Question> mapToQuestion(
 			List<Map<String, Map<String, Boolean>>> questions) {
@@ -153,8 +151,8 @@ public class GameServiceImpl implements GameService {
 		if (questionSync == null) {
 			return false;
 		} else {
-			boolean enter = questionSync.questionReadyLatch.await(
-					gameDAO.getGame().getPollingTimeLimit(), TimeUnit.SECONDS);
+			boolean enter = questionSync.questionReadyLatch.await(gameDAO
+					.getGame().getPollingTimeLimit(), TimeUnit.SECONDS);
 			return enter && gameSynchronization.currentQuestionRunning;
 		}
 	}
@@ -170,12 +168,13 @@ public class GameServiceImpl implements GameService {
 
 	private class GameFlowWorker implements Runnable {
 
-		final GameSynchronization gameSynchronization;
+		private final GameSynchronization gameSynchronization;
 
 		public GameFlowWorker(GameSynchronization gameSynchronization) {
 			this.gameSynchronization = gameSynchronization;
 		}
 
+		@Override
 		public void run() {
 
 			LOGGER.debug("Start game");
@@ -188,11 +187,12 @@ public class GameServiceImpl implements GameService {
 				LOGGER.warn("Interrupted", e);
 				return;
 			}
-			
 
 			try {
 				LOGGER.debug("Wait on all users login and requesting the first question.");
-				boolean awaited = gameSynchronization.enoughUsersLatch.await(gameSynchronization.game.getPollingTimeLimit(), TimeUnit.SECONDS);
+				boolean awaited = gameSynchronization.enoughUsersLatch.await(
+						gameSynchronization.game.getPollingTimeLimit(),
+						TimeUnit.SECONDS);
 				if (awaited) {
 					LOGGER.debug("Enough users have joined the game and requested the first question.");
 				} else {
@@ -201,12 +201,13 @@ public class GameServiceImpl implements GameService {
 			} catch (InterruptedException e) {
 				LOGGER.warn("Interrupted", e);
 				return;
-			}			
-			
-			for (int i = FIRST_QUESTION; i <= gameSynchronization.game.getNumberOfQuestion(); i++) {
+			}
+
+			for (int i = FIRST_QUESTION; i <= gameSynchronization.game
+					.getNumberOfQuestion(); i++) {
 
 				gameSynchronization.currentQuestionToRequest = i + 1;
-				
+
 				LOGGER.info(
 						"Starting question {}. Response question number {}", i,
 						gameSynchronization.currentQuestionToAnswer);
@@ -225,15 +226,16 @@ public class GameServiceImpl implements GameService {
 
 					// Wait the quest time limit
 					LOGGER.debug("Question wait time ...");
-					Thread.sleep(gameSynchronization.game
-							.getQuestionTimeLimit() * 1000);
+					Thread.sleep(TimeUnit.SECONDS
+							.toMillis(gameSynchronization.game
+									.getQuestionTimeLimit()));
 					LOGGER.debug("Question wait time ... done");
 
 					if (i < gameSynchronization.game.getNumberOfQuestion()) {
 						LOGGER.debug("Synchrotime ...");
-						
+
 						long starttime = System.currentTimeMillis();
-						
+
 						questionSynchronization.lock.lock();
 						gameSynchronization.currentQuestionToAnswer++;
 						for (Runnable r : questionSynchronization.waitingQueue) {
@@ -241,46 +243,49 @@ public class GameServiceImpl implements GameService {
 							executorUtil.getExecutorService().execute(r);
 						}
 						questionSynchronization.lock.unlock();
-						
+
 						long stoptime = System.currentTimeMillis();
-						
-						long synchrotime = (gameSynchronization.game
-						.getSynchroTimeLimit() * 1000) + starttime - stoptime;
+
+						long synchrotime = TimeUnit.SECONDS
+								.toMillis(gameSynchronization.game
+										.getSynchroTimeLimit())
+								+ starttime - stoptime;
 						if (synchrotime > 0) {
 							// mmmh, weird specs...
 							Thread.sleep(synchrotime);
 						}
-						
+
 						LOGGER.debug("Synchrotime done");
 					}
-					
+
 				} catch (InterruptedException e) {
 					LOGGER.warn("Interrupted", e);
 					return;
 				}
-				
+
 				LOGGER.info("Question {} finished, going to the next question",
 						i);
 
 			}
-			
-			
+
 			LOGGER.info("All questions finished. Doing some processing, latest synchrotime, and request for ranking will be allowed");
 
 			LOGGER.debug("Latest synchrotime ...");
-			
+
 			long starttime = System.currentTimeMillis();
-			
+
 			gameSynchronization.currentQuestionToAnswer++;
-			
+
 			workerClient.startRankingsComputation();
-			
+
 			long stoptime = System.currentTimeMillis();
-			
-			LOGGER.error("Ranking computation done in {} ms.", (stoptime - starttime));
-			
-			long synchrotime = (gameSynchronization.game
-			.getSynchroTimeLimit() * 1000) + starttime - stoptime;
+
+			LOGGER.error("Ranking computation done in {} ms.",
+					(stoptime - starttime));
+
+			long synchrotime = TimeUnit.SECONDS
+					.toMillis(gameSynchronization.game.getSynchroTimeLimit() * 1000)
+					+ starttime - stoptime;
 			if (synchrotime > 0) {
 				try {
 					// mmmh, weird specs again...
@@ -290,30 +295,28 @@ public class GameServiceImpl implements GameService {
 					return;
 				}
 			}
-			
+
 			LOGGER.debug("Latest synchrotime done");
-			
+
 			gameSynchronization.rankingRequestAllowed = true;
-			
+
 			LOGGER.info("Ranking requests are now allowed, tweet and clean everything");
-			
+
 			if (twitt) {
-				twitter.twitt(String.format(TWITTER_MESSAGE, gameSynchronization.game.getUsersLimit()));
+				twitter.twitt(String.format(TWITTER_MESSAGE,
+						gameSynchronization.game.getUsersLimit()));
 			}
-			
+
 		}
 
-	}
-
-	protected Game getGame() {
-		return gameDAO.getGame();
 	}
 
 	public boolean validateQuestionToAnswer(int questionNumber) {
 		if (gameSynchronization == null) {
 			return false;
 		} else {
-			return questionNumber == gameSynchronization.currentQuestionToAnswer && gameSynchronization.currentQuestionRunning;
+			return questionNumber == gameSynchronization.currentQuestionToAnswer
+					&& gameSynchronization.currentQuestionRunning;
 		}
 	}
 
@@ -323,14 +326,15 @@ public class GameServiceImpl implements GameService {
 			return false;
 		} else {
 			boolean questionValid = questionNumber == gameSynchronization.currentQuestionToRequest;
-			if (questionValid && gameSynchronization.currentQuestionToRequest == FIRST_QUESTION) {
+			if (questionValid
+					&& gameSynchronization.currentQuestionToRequest == FIRST_QUESTION) {
 				gameSynchronization.enoughUsersLatch.countDown();
 			}
 			return questionValid;
 		}
 	}
 
-	private class GameSynchronization {
+	private static class GameSynchronization {
 
 		private final CountDownLatch waitForFirstLogin;
 
@@ -338,11 +342,11 @@ public class GameServiceImpl implements GameService {
 
 		private final Map<Question, QuestionSynchronization> questionSynchronizations;
 
-		volatile int currentQuestionToRequest = 1;
-		volatile int currentQuestionToAnswer = 1;
-		volatile boolean currentQuestionRunning = false;
-		volatile boolean rankingRequestAllowed = false;
-		
+		private volatile int currentQuestionToRequest = 1;
+		private volatile int currentQuestionToAnswer = 1;
+		private volatile boolean currentQuestionRunning = false;
+		private volatile boolean rankingRequestAllowed = false;
+
 		private final Game game;
 
 		public GameSynchronization(Game game) {
@@ -365,7 +369,7 @@ public class GameServiceImpl implements GameService {
 			return questionSynchronizations.get(game.getQuestions().get(
 					questionNumber - 1));
 		}
-		
+
 	}
 
 	private static class QuestionSynchronization {
@@ -428,25 +432,26 @@ public class GameServiceImpl implements GameService {
 	}
 
 	@Override
-	public boolean isAnswerCorrect(int questionNumber, Integer answer) {
+	public boolean isAnswerCorrect(final int questionNumber, final Integer answer) {
 
-		answer = validateAnswer(questionNumber, answer);
+		final Integer validatedAnswer = validateAnswer(questionNumber, answer);
 
-		if (answer == null) {
+		if (validatedAnswer == null) {
 			return false;
 		} else {
 			Question question = getQuestion(questionNumber);
 			if (question == null) {
 				return false;
 			} else {
-				return question.getCorrectChoice() == answer;
+				return question.getCorrectChoice() == validatedAnswer;
 			}
 		}
 	}
 
 	@Override
 	public boolean isRankingRequestAllowed() {
-		return gameSynchronization != null && gameSynchronization.rankingRequestAllowed;
+		return gameSynchronization != null
+				&& gameSynchronization.rankingRequestAllowed;
 	}
 
 }

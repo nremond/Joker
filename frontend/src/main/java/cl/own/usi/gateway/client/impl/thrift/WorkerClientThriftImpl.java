@@ -39,8 +39,6 @@ import cl.own.usi.thrift.WorkerRPC.Client;
 @Component
 public class WorkerClientThriftImpl implements WorkerClient {
 
-
-
 	@Autowired
 	private GameService gameService;
 
@@ -114,7 +112,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 	public boolean insertUser(final String email, final String password,
 			final String firstname, final String lastname) {
 
-		Boolean isInserted = new ThriftAction<Boolean>(pools) {
+		final Boolean isInserted = new ThriftAction<Boolean>(pools) {
 
 			@Override
 			protected Boolean action(Client client) throws TException {
@@ -322,6 +320,8 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 	static class ThriftMultiPool extends MultiPoolImpl<WorkerHost, Client> {
 
+		private final Random r = new Random();
+
 		@Override
 		protected Pool<Client> createPool(WorkerHost key) {
 			Pool<Client> pool = new PoolImpl<Client>();
@@ -329,8 +329,6 @@ public class WorkerClientThriftImpl implements WorkerClient {
 			pool.setFactory(factory);
 			return pool;
 		}
-
-		Random r = new Random();
 
 		protected WorkerHost getKey() {
 			if (keys.isEmpty()) {
@@ -342,7 +340,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 	}
 
-	static class WorkerHost {
+	static final class WorkerHost {
 		private final String host;
 		private final int port;
 		private static ConcurrentMap<String, WorkerHost> workerHosts = new ConcurrentHashMap<String, WorkerHost>();
@@ -364,7 +362,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		}
 
 		private static String key(String host, int port) {
-			return host + String.valueOf(port);
+			return host + port;
 		}
 
 		private WorkerHost(String host, int port) {

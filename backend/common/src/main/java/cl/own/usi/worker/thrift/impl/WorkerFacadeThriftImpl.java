@@ -47,6 +47,8 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 
 	private WorkerFacadeThriftThread thriftThread;
 
+	private final InetAddress localAddress = InetAddressHelper.getCurrentIP();
+
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(WorkerFacadeThriftImpl.class);
 
@@ -72,8 +74,6 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 	public void setPort(final int port) {
 		this.port = port;
 	}
-
-	InetAddress localAddress = InetAddressHelper.getCurrentIP();
 
 	@Override
 	public UserAndScore validateUserAndInsertQuestionRequest(String userId,

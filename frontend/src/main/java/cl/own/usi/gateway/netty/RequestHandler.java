@@ -96,29 +96,29 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 		try {
 			HttpRequest request = (HttpRequest) e.getMessage();
 
-			String URI = request.getUri();
+			String uri = request.getUri();
 
-			if (URI.startsWith(URI_API)) {
+			if (uri.startsWith(URI_API)) {
 
-				URI = URI.substring(URI_API_LENGTH);
+				uri = uri.substring(URI_API_LENGTH);
 
-				if (URI.startsWith(URI_QUESTION)) {
+				if (uri.startsWith(URI_QUESTION)) {
 					questionController.messageReceived(ctx, e);
-				} else if (URI.startsWith(URI_ANSWER)) {
+				} else if (uri.startsWith(URI_ANSWER)) {
 					answerController.messageReceived(ctx, e);
-				} else if (URI.startsWith(URI_RANKING)) {
+				} else if (uri.startsWith(URI_RANKING)) {
 					rankingController.messageReceived(ctx, e);
-				} else if (URI.startsWith(URI_LOGIN)) {
+				} else if (uri.startsWith(URI_LOGIN)) {
 					loginController.messageReceived(ctx, e);
-				} else if (URI.startsWith(URI_USER)) {
+				} else if (uri.startsWith(URI_USER)) {
 					userController.messageReceived(ctx, e);
-				} else if (URI.startsWith(URI_ADD_WORKER_NODE)) {
+				} else if (uri.startsWith(URI_ADD_WORKER_NODE)) {
 					addWorkerNodeController.messageReceived(ctx, e);
-				} else if (URI.startsWith(URI_GAME)) {
+				} else if (uri.startsWith(URI_GAME)) {
 					gameController.messageReceived(ctx, e);
-				} else if (URI.startsWith(URI_AUDIT)) {
+				} else if (uri.startsWith(URI_AUDIT)) {
 					auditController.messageReceived(ctx, e);
-				} else if (URI.startsWith(URI_PLAY)) {
+				} else if (uri.startsWith(URI_PLAY)) {
 					playController.messageReceived(ctx, e);
 				} else {
 					writeResponse(e, NOT_FOUND);

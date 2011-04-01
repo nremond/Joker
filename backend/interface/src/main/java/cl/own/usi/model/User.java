@@ -17,6 +17,7 @@ public class User implements Serializable {
 	private String firstname;
 	private String lastname;
 	private int score = 0;
+	private List<Integer> answers = new ArrayList<Integer>();
 
 	public String getUserId() {
 		return userId;
@@ -25,8 +26,6 @@ public class User implements Serializable {
 	public void setUserId(String userId) {
 		this.userId = userId;
 	}
-
-	List<Integer> answers = new ArrayList<Integer>();
 
 	public String getEmail() {
 		return email;
@@ -89,7 +88,6 @@ public class User implements Serializable {
 
 		User rhs = (User) obj;
 		return new EqualsBuilder().append(email, rhs.email).isEquals();
-
 	}
 
 	@Override
