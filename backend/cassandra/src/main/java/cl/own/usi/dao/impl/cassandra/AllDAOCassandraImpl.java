@@ -4,13 +4,13 @@ import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.emailColumn;
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.dbKeyspace;
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.answersColumnFamily;
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.firstnameColumn;
-import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.isLoggedColumn;
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.lastnameColumn;
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.passwordColumn;
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.usersColumnFamily;
-import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.scoreColumn;
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.bonusesColumnFamily;
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.ranksColumnFamily;
+import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.scoresColumnFamily;
+import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.loginsColumnFamily;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -24,6 +24,7 @@ import me.prettyprint.cassandra.model.QuorumAllConsistencyLevelPolicy;
 import me.prettyprint.cassandra.serializers.BooleanSerializer;
 import me.prettyprint.cassandra.serializers.ByteBufferSerializer;
 import me.prettyprint.cassandra.serializers.IntegerSerializer;
+import me.prettyprint.cassandra.serializers.LongSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
@@ -56,6 +57,9 @@ import cl.own.usi.model.User;
 @Repository
 public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean {
 
+	private static final String DEFAULT_START_KEY = "";
+	private static final int DEFAULT_MAX_QUESTIONS = 20;
+
 	private List<Integer> orderedScores = Collections.<Integer> emptyList();
 	private List<Integer> reverseOrderedScores = Collections
 			.<Integer> emptyList();
@@ -65,7 +69,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 	@Autowired
 	private Cluster cluster;
-	
+
 	private Keyspace consistencyOneKeyspace;
 	private Keyspace consistencyQuorumKeyspace;
 
@@ -74,6 +78,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	private final StringSerializer ss = StringSerializer.get();
 	private final ByteBufferSerializer bbs = ByteBufferSerializer.get();
 	private final IntegerSerializer is = IntegerSerializer.get();
+	private final LongSerializer ls = LongSerializer.get();
 	private final BooleanSerializer bs = BooleanSerializer.get();
 
 	@Override
@@ -111,7 +116,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 		multigetSliceQuery.setColumnFamily(usersColumnFamily);
 		multigetSliceQuery.setColumnNames(emailColumn, firstnameColumn,
-				lastnameColumn, passwordColumn, scoreColumn);
+				lastnameColumn, passwordColumn);
 		multigetSliceQuery.setKeys(userIds);
 
 		QueryResult<Rows<String, String, ByteBuffer>> queryResult = multigetSliceQuery
@@ -122,7 +127,9 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 			Row<String, String, ByteBuffer> row = queryResult.get().getByKey(
 					userId);
 			if (row != null) {
-				users.add(toUser(userId, row.getColumnSlice()));
+				User user = toUser(userId, row.getColumnSlice());
+				user.setScore(getScore(user.getUserId()));
+				users.add(user);
 			}
 		}
 		return users;
@@ -146,8 +153,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 		User user = getUserById(userId);
 		if (user != null) {
-			Mutator<String> mutator = HFactory.createMutator(consistencyOneKeyspace,
-					StringSerializer.get());
+			Mutator<String> mutator = HFactory.createMutator(
+					consistencyOneKeyspace, StringSerializer.get());
 			mutator.addInsertion(userId, bonusesColumnFamily, HFactory
 					.createColumn(questionNumber, Boolean.FALSE, is, bs));
 			mutator.execute();
@@ -171,7 +178,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 					consistencyOneKeyspace, ss, is, bs);
 			q.setKey(userId);
 			q.setColumnFamily(bonusesColumnFamily);
-			q.setRange(questionNumber - 1, 0, true, 20);
+			q.setRange(questionNumber - 1, 0, true, DEFAULT_MAX_QUESTIONS);
 
 			QueryResult<ColumnSlice<Integer, Boolean>> result = q.execute();
 
@@ -200,13 +207,13 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 			int newScore = user.getScore() + questionValue + newBonus;
 
-			Mutator<String> mutator = HFactory.createMutator(consistencyOneKeyspace,
-					StringSerializer.get());
+			Mutator<String> mutator = HFactory.createMutator(
+					consistencyOneKeyspace, StringSerializer.get());
 			mutator.addInsertion(userId, bonusesColumnFamily,
 					HFactory.createColumn(questionNumber, Boolean.TRUE, is, bs));
 
-			mutator.addInsertion(userId, usersColumnFamily,
-					HFactory.createColumn(scoreColumn, newScore, ss, is));
+			mutator.addInsertion(userId, scoresColumnFamily,
+					HFactory.createColumn(questionNumber, newScore, is, is));
 
 			mutator.execute();
 
@@ -233,35 +240,34 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	@Override
 	public boolean insertUser(User user) {
 
-		String userID = CassandraHelper.generateUserId(user);
+		String userId = CassandraHelper.generateUserId(user);
 
 		try {
-			if (isEmailInDatabase(userID)) {
+			if (isEmailInDatabase(userId)) {
 				logger.debug(
 						"user {} was already in the database, insertion aborted",
 						user.getEmail());
 				return false;
 			}
 
-			Mutator<String> mutator = HFactory.createMutator(consistencyQuorumKeyspace,
-					StringSerializer.get());
+			Mutator<String> mutator = HFactory.createMutator(
+					consistencyQuorumKeyspace, StringSerializer.get());
 
 			// Add the user in the CF Users
-			mutator.addInsertion(userID, usersColumnFamily,
+			mutator.addInsertion(userId, usersColumnFamily,
 					HFactory.createColumn(emailColumn, user.getEmail(), ss, ss));
-			mutator.addInsertion(userID, usersColumnFamily, HFactory
+			mutator.addInsertion(userId, usersColumnFamily, HFactory
 					.createColumn(firstnameColumn, user.getFirstname(), ss, ss));
-			mutator.addInsertion(userID, usersColumnFamily, HFactory
+			mutator.addInsertion(userId, usersColumnFamily, HFactory
 					.createColumn(lastnameColumn, user.getLastname(), ss, ss));
-			mutator.addInsertion(userID, usersColumnFamily, HFactory
+			mutator.addInsertion(userId, usersColumnFamily, HFactory
 					.createColumn(passwordColumn, user.getPassword(), ss, ss));
-			mutator.addInsertion(userID, usersColumnFamily,
-					HFactory.createColumn(scoreColumn, user.getScore(), ss, is));
-			mutator.addInsertion(userID, usersColumnFamily, HFactory
-					.createColumn(isLoggedColumn, Boolean.FALSE, ss, bs));
 
-			mutator.execute();
-			logger.debug("user {} was successfully inserted", user.getEmail());
+			MutationResult result = mutator.execute();
+			logger.debug(
+					"user {} was successfully inserted in {} ms, userId = {}",
+					new Object[] { user.getEmail(),
+							result.getExecutionTimeMicro(), userId });
 		} catch (HectorException e) {
 			logger.error("An error occured while inserting user", e);
 			return false;
@@ -289,23 +295,74 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 			return null;
 		}
 
+		long starttime = System.currentTimeMillis();
+
 		SliceQuery<String, String, ByteBuffer> q = HFactory.createSliceQuery(
 				consistencyOneKeyspace, ss, ss, bbs);
 		q.setKey(userId);
 		q.setColumnFamily(usersColumnFamily);
 		q.setColumnNames(emailColumn, firstnameColumn, lastnameColumn,
-				passwordColumn, scoreColumn);
+				passwordColumn);
 
 		QueryResult<ColumnSlice<String, ByteBuffer>> result = q.execute();
 		ColumnSlice<String, ByteBuffer> cs = result.get();
 
-		if (cs.getColumns().size() != 0) {
-			User user = toUser(userId, cs);
-			return user;
+		User user;
+		if (!cs.getColumns().isEmpty()) {
+			user = toUser(userId, cs);
 		} else {
 			logger.debug("fetching userId={} is impossible, not in db", userId);
 			return null;
 		}
+
+		// load score
+		user.setScore(getScore(userId));
+
+		logger.debug("User {} loaded in {} ms", userId,
+				(System.currentTimeMillis() - starttime));
+
+		return user;
+
+	}
+
+	private int getScore(String userId) {
+
+		// load score
+		SliceQuery<String, Integer, Integer> sliceQuery = HFactory
+				.createSliceQuery(consistencyOneKeyspace, ss, is, is);
+		sliceQuery.setKey(userId);
+		sliceQuery.setColumnFamily(scoresColumnFamily);
+		sliceQuery.setRange(DEFAULT_MAX_QUESTIONS, 0, true, 1);
+
+		QueryResult<ColumnSlice<Integer, Integer>> queryResult = sliceQuery
+				.execute();
+		ColumnSlice<Integer, Integer> columnSlice = queryResult.get();
+		if (!columnSlice.getColumns().isEmpty()) {
+			return columnSlice.getColumns().get(0).getValue();
+		} else {
+			return 0;
+		}
+
+	}
+
+	private boolean isLogged(String userId) {
+
+		// load score
+		SliceQuery<String, Long, Boolean> sliceQuery = HFactory
+				.createSliceQuery(consistencyOneKeyspace, ss, ls, bs);
+		sliceQuery.setKey(userId);
+		sliceQuery.setColumnFamily(loginsColumnFamily);
+		sliceQuery.setRange(System.currentTimeMillis(), 0L, true, 1);
+
+		QueryResult<ColumnSlice<Long, Boolean>> queryResult = sliceQuery
+				.execute();
+		ColumnSlice<Long, Boolean> columnSlice = queryResult.get();
+		if (!columnSlice.getColumns().isEmpty()) {
+			return columnSlice.getColumns().get(0).getValue();
+		} else {
+			return false;
+		}
+
 	}
 
 	private User toUser(String userId, ColumnSlice<String, ByteBuffer> cs) {
@@ -317,8 +374,6 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 		user.setLastname(ss.fromByteBuffer(cs.getColumnByName(lastnameColumn)
 				.getValue()));
 		user.setPassword(ss.fromByteBuffer(cs.getColumnByName(passwordColumn)
-				.getValue()));
-		user.setScore(is.fromByteBuffer(cs.getColumnByName(scoreColumn)
 				.getValue()));
 		user.setUserId(userId);
 		return user;
@@ -337,7 +392,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 				new Object[] { answer.getAnswerNumber(),
 						answer.getQuestionNumber(), answer.getUserId() });
 		try {
-			Mutator<String> mutator = HFactory.createMutator(consistencyOneKeyspace, ss);
+			Mutator<String> mutator = HFactory.createMutator(
+					consistencyOneKeyspace, ss);
 
 			mutator.addInsertion(
 					answer.getUserId(),
@@ -360,7 +416,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 				consistencyOneKeyspace, ss, is, is);
 		query.setColumnFamily(answersColumnFamily);
 		query.setKey(userId);
-		query.setRange(0, Integer.MAX_VALUE, false, 20); // max 20 questions.
+		query.setRange(0, DEFAULT_MAX_QUESTIONS, false, DEFAULT_MAX_QUESTIONS);
 
 		QueryResult<ColumnSlice<Integer, Integer>> result = query.execute();
 		List<HColumn<Integer, Integer>> columns = result.get().getColumns();
@@ -382,82 +438,71 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	}
 
 	@Override
-	public String login(String email, String password) throws UserAlreadyLoggedException {
+	public String login(String email, String password)
+			throws UserAlreadyLoggedException {
 
 		String userId = CassandraHelper.generateUserId(email);
 
 		SliceQuery<String, String, ByteBuffer> q = HFactory.createSliceQuery(
-				consistencyOneKeyspace, ss, ss, bbs);
+				consistencyQuorumKeyspace, ss, ss, bbs);
 		q.setKey(userId);
 		q.setColumnFamily(usersColumnFamily);
-		q.setColumnNames(passwordColumn, isLoggedColumn);
+		q.setColumnNames(passwordColumn);
 
 		QueryResult<ColumnSlice<String, ByteBuffer>> result = q.execute();
 		ColumnSlice<String, ByteBuffer> cs = result.get();
 
-		if (cs.getColumns().size() != 0) {
+		if (!cs.getColumns().isEmpty()) {
 
 			String passwordFromDB = ss.fromByteBuffer(cs.getColumnByName(
 					passwordColumn).getValue());
-			Boolean isLogged = bs.fromByteBuffer(cs.getColumnByName(
-					isLoggedColumn).getValue());
-			
+			Boolean isLogged = isLogged(userId);
+
 			if (isLogged) {
 				throw new UserAlreadyLoggedException();
 			} else if (password.equals(passwordFromDB)) {
 
-				Mutator<String> mutator = HFactory.createMutator(consistencyQuorumKeyspace,
-						StringSerializer.get());
-				mutator.addInsertion(
-						userId,
-						usersColumnFamily,
-						HFactory.createColumn(isLoggedColumn,
-								bs.toByteBuffer(Boolean.TRUE), ss, bbs));
+				Mutator<String> mutator = HFactory.createMutator(
+						consistencyQuorumKeyspace, StringSerializer.get());
+				mutator.addInsertion(userId, loginsColumnFamily, HFactory
+						.createColumn(System.currentTimeMillis(), Boolean.TRUE,
+								ls, bs));
 				mutator.execute();
 				logger.debug("login sucessful for {}, userId={}", email, userId);
 				return userId;
 			}
 		}
-		logger.debug("login failed for {}", email);
+		logger.debug("login failed for {}, returned columns = {}", email, cs
+				.getColumns().size());
 		return null;
 	}
 
 	@Override
 	public void logout(String userId) {
-		SliceQuery<String, String, ByteBuffer> q = HFactory.createSliceQuery(
-				consistencyOneKeyspace, ss, ss, bbs);
 
-		q.setColumnFamily(usersColumnFamily);
-		q.setKey(userId);
-		q.setColumnNames(isLoggedColumn);
+		long starttime = System.currentTimeMillis();
+		Mutator<String> mutator = HFactory.createMutator(
+				consistencyQuorumKeyspace, StringSerializer.get());
+		mutator.addInsertion(userId, loginsColumnFamily, HFactory.createColumn(
+				System.currentTimeMillis(), Boolean.FALSE, ls, bs));
+		mutator.execute();
 
-		QueryResult<ColumnSlice<String, ByteBuffer>> result = q.execute();
-		ColumnSlice<String, ByteBuffer> cs = result.get();
-
-		if (cs.getColumns().size() != 0) {
-			Mutator<String> mutator = HFactory.createMutator(consistencyQuorumKeyspace, ss);
-			mutator.addInsertion(
-					userId,
-					usersColumnFamily,
-					HFactory.createColumn(isLoggedColumn,
-							bs.toByteBuffer(Boolean.FALSE), ss, bbs));
-			mutator.execute();
-			logger.debug("User {} successfully logout", userId);
-		}
+		logger.debug("User {} successfully logout in {} ms", userId,
+				(System.currentTimeMillis() - starttime));
 	}
 
 	@Override
 	public void flushUsers() {
 
-		String from = "";
-		int limit = 2;
+		String from = DEFAULT_START_KEY;
+		int limit = 2000;
 		boolean oneMoreIteration = true;
 		do {
 			RangeSlicesQuery<String, String, ByteBuffer> rangeSlicesQuery = HFactory
 					.createRangeSlicesQuery(consistencyOneKeyspace, ss, ss, bbs);
 
 			rangeSlicesQuery.setColumnFamily(usersColumnFamily);
-			rangeSlicesQuery.setKeys(from, "");
+			rangeSlicesQuery.setKeys(from, DEFAULT_START_KEY);
 			rangeSlicesQuery.setReturnKeysOnly();
 			rangeSlicesQuery.setRowCount(limit);
 
@@ -469,14 +514,20 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 			Iterator<Row<String, String, ByteBuffer>> iterator = result.get()
 					.iterator();
-			Mutator<String> mutator = HFactory.createMutator(consistencyOneKeyspace, ss);
+			Mutator<String> mutator = HFactory.createMutator(
+					consistencyQuorumKeyspace, ss);
 
 			while (iterator.hasNext()) {
 				Row<String, String, ByteBuffer> row = iterator.next();
 				String key = row.getKey();
+				if (key.equals(from)) {
+					continue;
+				}
 				mutator.addDeletion(key, usersColumnFamily);
 				mutator.addDeletion(key, answersColumnFamily);
 				mutator.addDeletion(key, bonusesColumnFamily);
+				mutator.addDeletion(key, scoresColumnFamily);
+				mutator.addDeletion(key, loginsColumnFamily);
 				from = key;
 			}
 			MutationResult mutationResult = mutator.execute();
@@ -494,14 +545,16 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 				.execute();
 		Iterator<Row<Integer, String, String>> iterator = result.get()
 				.iterator();
-		Mutator<Integer> mutator = HFactory.createMutator(consistencyOneKeyspace, is);
+		Mutator<Integer> mutator = HFactory.createMutator(
+				consistencyQuorumKeyspace, is);
 		while (iterator.hasNext()) {
 			Row<Integer, String, String> row = iterator.next();
 			int key = row.getKey();
 			mutator.addDeletion(key, ranksColumnFamily);
 		}
-		mutator.execute();
-
+		MutationResult mutationResult = mutator.execute();
+		logger.debug("Flush ranking batch executed in {} ms",
+				mutationResult.getExecutionTimeMicro());
 		orderedScores = Collections.<Integer> emptyList();
 		reverseOrderedScores = Collections.<Integer> emptyList();
 	}
@@ -518,35 +571,50 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 	private void insertRankings() {
 
-		int limit = 1000;
-		String start = "";
+		int limit = 2000;
+		String start = DEFAULT_START_KEY;
 
 		boolean oneMoreIteration = true;
 		do {
-			
-			RangeSlicesQuery<String, String, ByteBuffer> rangeSliceQuery = HFactory.createRangeSlicesQuery(consistencyOneKeyspace, ss, ss, bbs);
-			
-			rangeSliceQuery.setColumnFamily(usersColumnFamily);
-			rangeSliceQuery.setRange(start, "", false, limit);
 
+			RangeSlicesQuery<String, String, ByteBuffer> rangeSliceQuery = HFactory
+					.createRangeSlicesQuery(consistencyQuorumKeyspace, ss, ss,
+							bbs);
+
+			rangeSliceQuery.setColumnFamily(usersColumnFamily);
+			rangeSliceQuery.setKeys(start, DEFAULT_START_KEY);
+			rangeSliceQuery.setRowCount(limit);
+			rangeSliceQuery.setColumnNames(emailColumn, firstnameColumn, lastnameColumn,
+					passwordColumn);
+			
 			QueryResult<OrderedRows<String, String, ByteBuffer>> result = rangeSliceQuery
 					.execute();
 
 			OrderedRows<String, String, ByteBuffer> rows = result.get();
 
-			if (rows.getCount() < limit) {
+			logger.debug("Query fetches {} rows in {} ms", rows.getCount(),
+					result.getExecutionTimeMicro());
+
+			if (rows.getCount() <= limit) {
 				oneMoreIteration = false;
 			}
-			Iterator<Row<String, String, ByteBuffer>> iterator = rows.iterator();
-			
-			Mutator<Integer> mutator = HFactory.createMutator(consistencyOneKeyspace, is);
-			
+			Iterator<Row<String, String, ByteBuffer>> iterator = rows
+					.iterator();
+
+			Mutator<Integer> mutator = HFactory.createMutator(
+					consistencyOneKeyspace, is);
+
 			while (iterator.hasNext()) {
 				Row<String, String, ByteBuffer> row = iterator.next();
-				if (row.getColumnSlice().getColumnByName(emailColumn) != null) {
+				if (!row.getKey().equals(start)
+						&& row.getColumnSlice().getColumnByName(emailColumn) != null) {
 					User user = toUser(row.getKey(), row.getColumnSlice());
+					user.setScore(getScore(user.getUserId()));
 					String userKey = generateRankedUserKey(user);
-					mutator.addInsertion(user.getScore(), ranksColumnFamily, HFactory.createColumn(userKey, user.getUserId(), ss, ss));
+					mutator.addInsertion(user.getScore(), ranksColumnFamily,
+							HFactory.createColumn(userKey, user.getUserId(),
+									ss, ss));
+					start = row.getKey();
 				}
 			}
 
@@ -603,7 +671,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 		ensureOrderedScoresLoaded();
 
 		List<User> users = findRankedUsers(limit, null, reverseOrderedScores,
-				false, "");
+				false, DEFAULT_START_KEY);
 
 		return users;
 	}
@@ -628,7 +696,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 			if (first) {
 				first = false;
 			} else {
-				start = "";
+				start = DEFAULT_START_KEY;
 			}
 
 			SliceQuery<Integer, String, String> sliceQuery = HFactory
@@ -636,7 +704,11 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 			sliceQuery.setColumnFamily(ranksColumnFamily);
 			sliceQuery.setKey(score);
-			sliceQuery.setRange(start, "", reverseOrder, limit);
+			if (reverseOrder) {
+				sliceQuery.setRange(DEFAULT_START_KEY, start, true, limit);
+			} else {
+				sliceQuery.setRange(start, DEFAULT_START_KEY, false, limit);
+			}
 
 			QueryResult<ColumnSlice<String, String>> sliceResult = sliceQuery
 					.execute();
@@ -657,9 +729,11 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		
-		consistencyOneKeyspace = HFactory.createKeyspace(dbKeyspace, cluster, new AllOneConsistencyLevelPolicy());
-		consistencyQuorumKeyspace = HFactory.createKeyspace(dbKeyspace, cluster, new QuorumAllConsistencyLevelPolicy());
-		
+
+		consistencyOneKeyspace = HFactory.createKeyspace(dbKeyspace, cluster,
+				new AllOneConsistencyLevelPolicy());
+		consistencyQuorumKeyspace = HFactory.createKeyspace(dbKeyspace,
+				cluster, new QuorumAllConsistencyLevelPolicy());
+
 	}
 }

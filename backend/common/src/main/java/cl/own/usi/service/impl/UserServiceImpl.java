@@ -1,7 +1,5 @@
 package cl.own.usi.service.impl;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -37,21 +35,12 @@ public class UserServiceImpl implements UserService {
 		}
 	}
 
-	public String login(String email, String password) {
+	public String login(String email, String password) throws UserAlreadyLoggedException {
 
 		if (email == null || password == null) {
 			return null;
 		} else {
-			try {
-				String userId = userDAO.login(email, password);
-				if (userId == null) {
-					return User.WRONG_CREDENTIALS_USERID;
-				} else {
-					return userId;
-				}
-			} catch (UserAlreadyLoggedException e) {
-				return User.ALREADY_LOGGED_USERID;
-			}
+			return userDAO.login(email, password);
 		}
 	}
 

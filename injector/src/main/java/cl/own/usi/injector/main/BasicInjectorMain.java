@@ -61,9 +61,9 @@ public class BasicInjectorMain {
 	 */
 	private final static boolean FLUSHUSERSTABLE = true;
 	private final static int DEFAULT_NBUSERS = 10;
-	private final static int NBQUESTIONS = 17;
-	private final static int QUESTIONTIMEFRAME = 60;
-	private final static int SYNCHROTIME = 20;
+	private final static int NBQUESTIONS = 5;
+	private final static int QUESTIONTIMEFRAME = 10;
+	private final static int SYNCHROTIME = 4;
 	private final static int LOGINTIMEOUT = 600;
 
 	private static int NBUSERS = DEFAULT_NBUSERS;
@@ -353,7 +353,7 @@ public class BasicInjectorMain {
 		private final ExecutorService executor;
 
 		private final Random random = new Random();
-		private boolean currentQuestionRequested = false;
+		private volatile boolean currentQuestionRequested = false;
 
 		public UserGameWorker(int questiontimeframe, int synchrotime,
 				int numquestions, String email, String password,
@@ -507,11 +507,13 @@ public class BasicInjectorMain {
 
 					try {
 						int httpResponseCode = httpClient.executeMethod(get);
-
+						
 						if (httpResponseCode == 200) {
 
-							LOGGER.info("Everything went fine for user {}",
-									email);
+							String body = get.getResponseBodyAsString();
+							
+							LOGGER.info("Everything went fine for user {} : {}",
+									email, body);
 
 						} else {
 							LOGGER.error(
@@ -575,8 +577,11 @@ public class BasicInjectorMain {
 
 			if (response != null && response.getStatusCode() == 200) {
 				worker.questionReceived(questionRequested);
+				return 200;
+			} else {
+				LOGGER.warn("Question requestion completed, but recieve wrong response code {}", response.getStatusCode());
+				return -1;
 			}
-			return 200;
 		}
 
 	}

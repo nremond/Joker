@@ -40,6 +40,7 @@ public class CacheManagerImpl implements CacheManager {
 	@Override
 	public void flush() {
 		cachedUsers.clear();
+		processingUsers.clear();
 	}
 
 	@Override
@@ -77,13 +78,17 @@ public class CacheManagerImpl implements CacheManager {
 
 		if (futureCachedUser == null) {
 			futureCachedUser = new FutureCachedUser();
-			final FutureCachedUser tmpCachedUserFuture = processingUsers
+			try {
+				final FutureCachedUser tmpCachedUserFuture = processingUsers
 					.putIfAbsent(userId, futureCachedUser);
-			if (tmpCachedUserFuture == null) {
-				internalLoadUser(userId, futureCachedUser);
-				return futureCachedUser;
-			} else {
-				return tmpCachedUserFuture;
+				if (tmpCachedUserFuture == null) {
+					internalLoadUser(userId, futureCachedUser);
+					return futureCachedUser;
+				} else {
+					return tmpCachedUserFuture;
+				}
+			} finally {
+				processingUsers.remove(userId);
 			}
 		} else {
 			return futureCachedUser;

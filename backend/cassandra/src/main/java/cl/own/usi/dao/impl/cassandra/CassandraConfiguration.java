@@ -8,7 +8,6 @@ import me.prettyprint.cassandra.service.ThriftCfDef;
 import me.prettyprint.cassandra.service.ThriftKsDef;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.ConsistencyLevelPolicy;
-import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.ddl.ComparatorType;
 import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 import me.prettyprint.hector.api.factory.HFactory;
@@ -36,23 +35,25 @@ public class CassandraConfiguration implements InitializingBean {
 	// final static public String requestsColumnFamily = "Requests";
 	final static public String bonusesColumnFamily = "Bonuses";
 	final static public String ranksColumnFamily = "Ranks";
+	final static public String loginsColumnFamily = "Logins";
+	final static public String scoresColumnFamily = "Scores";
 
 	// Column name
-	final static String userIdColumn = "userId";
+//	final static String userIdColumn = "userId";
 	final static String emailColumn = "email";
 	final static String passwordColumn = "password";
 	final static String firstnameColumn = "firstname";
 	final static String lastnameColumn = "lastname";
-	final static String scoreColumn = "score";
-	final static String bonusColumn = "bonus";
-	final static String isLoggedColumn = "isLogged";
-	final static String answersColumn = "answers";
-	final static String questionNumberColumn = "questionNumber";
-	final static String answerNumberColumn = "answerNumber";
+//	final static String scoreColumn = "score";
+//	final static String bonusColumn = "bonus";
+//	final static String isLoggedColumn = "isLogged";
+//	final static String answersColumn = "answers";
+//	final static String questionNumberColumn = "questionNumber";
+//	final static String answerNumberColumn = "answerNumber";
 
 	private int replicationFactor = 2;
 	private String strategyClass = "SimpleStrategy"; //"LocalStrategy"; // "SimpleStrategy"
-	private boolean forceRecreation = true;
+	private boolean forceRecreation = false;
 
 	@Autowired
 	ConsistencyLevelPolicy consistencyLevelPolicy;
@@ -99,13 +100,13 @@ public class CassandraConfiguration implements InitializingBean {
 		keyspaceDefinition.addColumnFamily(new ThriftCfDef(
 				usersColumnFamilyDefinition));
 
-		BasicColumnFamilyDefinition answerColumnFamilyDefinition = new BasicColumnFamilyDefinition();
-		answerColumnFamilyDefinition
+		BasicColumnFamilyDefinition answersColumnFamilyDefinition = new BasicColumnFamilyDefinition();
+		answersColumnFamilyDefinition
 				.setComparatorType(ComparatorType.INTEGERTYPE);
-		answerColumnFamilyDefinition.setName(answersColumnFamily);
-		answerColumnFamilyDefinition.setKeyspaceName(dbKeyspace);
+		answersColumnFamilyDefinition.setName(answersColumnFamily);
+		answersColumnFamilyDefinition.setKeyspaceName(dbKeyspace);
 		keyspaceDefinition.addColumnFamily(new ThriftCfDef(
-				answerColumnFamilyDefinition));
+				answersColumnFamilyDefinition));
 
 		BasicColumnFamilyDefinition bonusesColumnFamilyDefinition = new BasicColumnFamilyDefinition();
 		bonusesColumnFamilyDefinition.setComparatorType(ComparatorType.INTEGERTYPE);
@@ -121,6 +122,21 @@ public class CassandraConfiguration implements InitializingBean {
 		keyspaceDefinition.addColumnFamily(new ThriftCfDef(
 				ranksColumnFamilyDefinition));
 
+		BasicColumnFamilyDefinition loginsColumnFamilyDefinition = new BasicColumnFamilyDefinition();
+		loginsColumnFamilyDefinition.setComparatorType(ComparatorType.LONGTYPE);
+		loginsColumnFamilyDefinition.setName(loginsColumnFamily);
+		loginsColumnFamilyDefinition.setKeyspaceName(dbKeyspace);
+		keyspaceDefinition.addColumnFamily(new ThriftCfDef(
+				loginsColumnFamilyDefinition));
+		
+		BasicColumnFamilyDefinition scoresColumnFamilyDefinition = new BasicColumnFamilyDefinition();
+		scoresColumnFamilyDefinition
+				.setComparatorType(ComparatorType.INTEGERTYPE);
+		scoresColumnFamilyDefinition.setName(scoresColumnFamily);
+		scoresColumnFamilyDefinition.setKeyspaceName(dbKeyspace);
+		keyspaceDefinition.addColumnFamily(new ThriftCfDef(
+				scoresColumnFamilyDefinition));
+		
 		cluster().addKeyspace(new ThriftKsDef(keyspaceDefinition));
 	}
 

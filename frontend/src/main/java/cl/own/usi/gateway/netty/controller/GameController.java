@@ -29,10 +29,10 @@ import cl.own.usi.service.GameService;
 
 /**
  * Controller that create the {@link Game}
- *
+ * 
  * @author bperroud
  * @author nicolas
- *
+ * 
  */
 @Component
 public class GameController extends AbstractAuthenticateController {
@@ -202,8 +202,11 @@ public class GameController extends AbstractAuthenticateController {
 
 			Boolean flushusertable = (Boolean) parameters.get("flushusertable");
 			if (flushusertable != null && flushusertable) {
+				long starttime = System.currentTimeMillis();
 				workerClient.flushUsers();
 				getCacheManager().flush();
+				getLogger().info("Flushed in {} ms",
+						(System.currentTimeMillis() - starttime));
 			}
 
 			writeResponse(e, CREATED);

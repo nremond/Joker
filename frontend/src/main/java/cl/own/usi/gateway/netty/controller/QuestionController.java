@@ -13,8 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import cl.own.usi.cache.CachedUser;
-import cl.own.usi.gateway.client.UserAndScore;
-import cl.own.usi.gateway.client.WorkerClient;
 import cl.own.usi.gateway.netty.QuestionWorker;
 import cl.own.usi.model.Question;
 import cl.own.usi.service.GameService;
@@ -33,9 +31,6 @@ public class QuestionController extends AbstractController {
 
 	@Autowired
 	private GameService gameService;
-
-	@Autowired
-	private WorkerClient workerClient;
 
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)

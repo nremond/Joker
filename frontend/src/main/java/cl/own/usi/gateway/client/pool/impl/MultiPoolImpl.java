@@ -55,12 +55,11 @@ public abstract class MultiPoolImpl<K, V> implements MultiPool<K, V> {
 		return object;
 	}
 
-	protected V borrow(K key) throws PoolException {
+	protected V borrow(final K key) throws PoolException {
 		
 		V object = null;
 		
 		try {
-			key = getKey();
 			if (key == null) {
 				throw new PoolException("No keys defined. Please addKey first");
 			}

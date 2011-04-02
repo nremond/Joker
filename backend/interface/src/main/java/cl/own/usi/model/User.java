@@ -8,9 +8,6 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
 public class User implements Serializable {
-
-	public static final String WRONG_CREDENTIALS_USERID = "0";
-	public static final String ALREADY_LOGGED_USERID = "1";
 	
 	private static final long serialVersionUID = 1L;
 
@@ -20,7 +17,7 @@ public class User implements Serializable {
 	private String firstname;
 	private String lastname;
 	private int score = 0;
-
+	
 	public String getUserId() {
 		return userId;
 	}
