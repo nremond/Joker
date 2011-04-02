@@ -17,6 +17,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import cl.own.usi.dao.GameDAO;
+import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
 
 /**
@@ -49,7 +50,11 @@ public class PlayController extends AbstractController {
 				writeResponse(e, UNAUTHORIZED);
 				getLogger().info("User not authorized");
 			} else {
-				int nbQuestions = gameDAO.getGame().getNumberOfQuestion();
+				Game game = gameDAO.getGame();
+
+				assert game != null;
+
+				int nbQuestions = game.getNumberOfQuestion();
 				Map<String, String> mapping = new HashMap<String, String>();
 				mapping.put(NB_QUESTIONS, String.valueOf(nbQuestions));
 
