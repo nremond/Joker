@@ -26,20 +26,71 @@
 	
 		function ask_question() {
 			
-			$.ajax({
-				url: '/api/question/' + questionNumber,
-				type: 'GET',
-				dataType: 'json',
-				success: function(data, textStatus, jqXHR) {
-					question_callback(data, textStatus, jqXHR);
-				}
-			});
+			if(questionNumber <= %NB_QUESTIONS%) {
+			
+				$.ajax({
+					url: '/api/question/' + questionNumber,
+					type: 'GET',
+					dataType: 'json',
+					success: function(data, textStatus, jqXHR) {
+						question_callback(data, textStatus, jqXHR);
+					}
+				});
+			} else {
+				$.ajax({
+					url: '/api/ranking',
+					type: 'GET',
+					dataType: 'json',
+					success: function(data, textStatus, jqXHR) {
+						ranking_callback(data, textStatus, jqXHR);
+					}
+				});
+			}
 			
 		}
 		
-		function question_callback(data, textStatus, jqXHR) {
-			console.log("question", data);
+		function ranking_callback(data, textStatus, jqXHR) {
 			
+			var ranking = '';
+			
+			var score = data['score'];
+			ranking += '<p>Your score : ' + score + ' points</p>';
+			
+			ranking += '<p> The 100 first users are : <br/>';
+			ranking += render_ranking(data['top_scores']);
+			ranking += '</p>';
+			
+			ranking += '<p> The 50 users before me are : <br/>';
+			ranking += render_ranking(data['before']);
+			ranking += '</p>';
+			
+			ranking += '<p> The 50 users after me are : <br/>';
+			ranking += render_ranking(data['after']);
+			ranking += '</p>';
+		
+			$("#info").html(ranking);
+			$("#questionForm").html("");
+		}
+		
+		
+		function render_ranking(users) {
+			var firstnames = users['firstnames'];
+			var lastnames = users['lastnames'];
+			var scores = users['scores'];
+			
+			var ranking = '';
+			
+			var n = scores.length;
+			for(var i=0; i<n; i++) {
+				ranking += firstnames[i] + ' ' + lastnames[i] + ' : ' + scores[i] + '<br/>';
+			}
+			
+			return ranking
+		}
+		
+		
+		function question_callback(data, textStatus, jqXHR) {
+					
 			var sform = data["question"] + " :<br/>";
 			for (var i = 1;; i++) {
 				var answer = "answer_" + i;
@@ -80,7 +131,6 @@
 		}
 	
 		function answer_callback(data, textStatus, jqXHR) {
-			console.log("answer", data);
 			
 			var ok = data['are_u_ok'];
 			//var good_answer = data["good_answer"];
