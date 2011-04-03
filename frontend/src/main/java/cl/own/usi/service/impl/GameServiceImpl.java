@@ -291,7 +291,7 @@ public class GameServiceImpl implements GameService {
 					(stoptime - starttime));
 
 			long synchrotime = TimeUnit.SECONDS
-					.toMillis(gameSynchronization.game.getSynchroTimeLimit() * 1000)
+					.toMillis(gameSynchronization.game.getSynchroTimeLimit())
 					+ starttime - stoptime;
 			if (synchrotime > 0) {
 				try {
@@ -440,7 +440,8 @@ public class GameServiceImpl implements GameService {
 	}
 
 	@Override
-	public boolean isAnswerCorrect(final int questionNumber, final Integer answer) {
+	public boolean isAnswerCorrect(final int questionNumber,
+			final Integer answer) {
 
 		final Integer validatedAnswer = validateAnswer(questionNumber, answer);
 
