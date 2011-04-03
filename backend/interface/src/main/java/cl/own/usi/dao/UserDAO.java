@@ -9,7 +9,7 @@ public interface UserDAO {
 
 	/**
 	 * Insert a new user in the DB
-	 * 
+	 *
 	 * @param user
 	 *            to insert
 	 * @return true if the user has been inserted, false if a user with the same
@@ -26,9 +26,11 @@ public interface UserDAO {
 
 	List<Answer> getAnswers(final String userId);
 
+	List<Answer> getAnswersByEmail(final String userEmail);
+
 	/**
 	 * Log the user in
-	 * 
+	 *
 	 * @return The userId is the credentials are good, null otherwise
 	 */
 	String login(String email, String password);

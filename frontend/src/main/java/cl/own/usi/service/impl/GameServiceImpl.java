@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -86,6 +85,11 @@ public class GameServiceImpl implements GameService {
 		return true;
 	}
 
+	@Override
+	public Game getGame() {
+		return gameDAO.getGame();
+	}
+
 	private void resetPreviousGame() {
 		GameSynchronization oldGameSynchronization = gameSynchronization;
 		if (oldGameSynchronization != null) {
@@ -137,6 +141,7 @@ public class GameServiceImpl implements GameService {
 		return list;
 	}
 
+	@Override
 	public Question getQuestion(int questionNumber) {
 		return gameDAO.getQuestion(questionNumber);
 	}
@@ -145,6 +150,7 @@ public class GameServiceImpl implements GameService {
 		return gameSynchronization.getQuestionSynchronization(questionNumber);
 	}
 
+	@Override
 	public boolean waitOtherUsers(int questionNumber)
 			throws InterruptedException {
 		QuestionSynchronization questionSync = getQuestionSync(questionNumber);
@@ -157,6 +163,7 @@ public class GameServiceImpl implements GameService {
 		}
 	}
 
+	@Override
 	public boolean enterGame(String userId) {
 		if (gameSynchronization != null) {
 			gameSynchronization.waitForFirstLogin.countDown();
@@ -311,6 +318,7 @@ public class GameServiceImpl implements GameService {
 
 	}
 
+	@Override
 	public boolean validateQuestionToAnswer(int questionNumber) {
 		if (gameSynchronization == null) {
 			return false;
@@ -453,5 +461,4 @@ public class GameServiceImpl implements GameService {
 		return gameSynchronization != null
 				&& gameSynchronization.rankingRequestAllowed;
 	}
-
 }

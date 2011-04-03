@@ -4,6 +4,7 @@ import static cl.own.usi.gateway.netty.ResponseHelper.writeResponse;
 import static cl.own.usi.gateway.netty.ResponseHelper.writeStringToReponse;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import cl.own.usi.gateway.client.WorkerClient;
+import cl.own.usi.model.Game;
+import cl.own.usi.service.GameService;
 
 /**
  * Controller that handle the audit requests.
@@ -29,6 +32,9 @@ public class AuditController extends AbstractAuthenticateController {
 
 	@Autowired
 	private WorkerClient workerClient;
+
+	@Autowired
+	private GameService gameService;
 
 	protected static final Pattern URI_PATTERN = Pattern
 			.compile("^/api/audit(?:/(\\d+))?\\?(.*)");
@@ -93,8 +99,16 @@ public class AuditController extends AbstractAuthenticateController {
 			return;
 		}
 
+		final Game game = gameService.getGame();
+
+		if (game == null) {
+			getLogger().error("Audit request received while no game exists!");
+			writeResponse(e, BAD_REQUEST);
+			return;
+		}
+
 		String response = workerClient.getAnswersAsJson(userMail,
-				questionNumber);
+				questionNumber, game);
 
 		writeStringToReponse(response, e);
 		return;

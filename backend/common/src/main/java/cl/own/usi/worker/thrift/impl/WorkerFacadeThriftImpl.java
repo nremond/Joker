@@ -1,5 +1,6 @@
 package cl.own.usi.worker.thrift.impl;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +12,7 @@ import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransportException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -18,6 +20,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import cl.own.usi.model.AuditAnswer;
+import cl.own.usi.model.AuditAnswers;
 import cl.own.usi.model.User;
 import cl.own.usi.network.InetAddressHelper;
 import cl.own.usi.service.ScoreService;
@@ -48,6 +52,8 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 	private WorkerFacadeThriftThread thriftThread;
 
 	private final InetAddress localAddress = InetAddressHelper.getCurrentIP();
+
+	private final ObjectMapper mapper = new ObjectMapper();
 
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(WorkerFacadeThriftImpl.class);
@@ -218,23 +224,42 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 	}
 
 	@Override
-	public String getAllAnswersAsJson(final String email) throws TException {
+	public String getAllAnswersAsJson(final String email,
+			final List<Integer> goodAnswers) throws TException {
 
-		LOGGER.debug("Request for all answers for user {} received", email);
+		LOGGER.debug(
+				"Request for all answers for user {} received, good answers are {}",
+				email, goodAnswers);
 
-		// TODO process audit request here
-		return "blop";
+		final AuditAnswers auditAnswers = userService.getAuditAnswers(email,
+				goodAnswers);
+
+		try {
+			return mapper.writeValueAsString(auditAnswers);
+		} catch (IOException e) {
+			LOGGER.error("Cannot convert audit answers to json for user {}",
+					email, e);
+			return "";
+		}
 	}
 
 	@Override
-	public String getAnswerAsJson(final String email, final int questionNumber)
-			throws TException {
+	public String getAnswerAsJson(final String email, final int questionNumber,
+			final String question, final int goodAnswer) throws TException {
 
 		LOGGER.debug("Request for answer to question {} for user {} received",
 				questionNumber, email);
 
-		// TODO process audit request here
-		return "blip";
+		final AuditAnswer auditAnswer = userService.getAuditAnswerFor(email,
+				questionNumber, question, goodAnswer);
+
+		try {
+			return mapper.writeValueAsString(auditAnswer);
+		} catch (IOException e) {
+			LOGGER.error("Cannot convert audit answer to json for user {}",
+					email, e);
+			return "";
+		}
 	}
 
 	@Override

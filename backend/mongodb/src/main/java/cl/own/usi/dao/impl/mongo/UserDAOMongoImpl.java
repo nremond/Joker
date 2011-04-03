@@ -241,4 +241,10 @@ public class UserDAOMongoImpl implements UserDAO {
 			LOGGER.warn("Exception while trying to shard 'users' collection", e);
 		}
 	}
+
+	@Override
+	public List<Answer> getAnswersByEmail(final String userEmail) {
+		// TODO implement this
+		return null;
+	}
 }
