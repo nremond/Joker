@@ -26,6 +26,7 @@ import cl.own.usi.gateway.client.pool.Pool;
 import cl.own.usi.gateway.client.pool.exception.FactoryException;
 import cl.own.usi.gateway.client.pool.impl.MultiPoolImpl;
 import cl.own.usi.gateway.client.pool.impl.PoolImpl;
+import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
 import cl.own.usi.service.GameService;
 import cl.own.usi.thrift.WorkerRPC.Client;
@@ -202,16 +203,48 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 	@Override
 	public String getAnswersAsJson(final String email,
-			final Integer questionNumber) {
+			final Integer questionNumber, final Game game) {
+
+		assert email != null : "the 'email' parameter cannot be null";
+		assert questionNumber != null : "the 'questionNumber' parameter cannot be null";
+		assert game != null : "the 'game' parameter cannot be null";
+
+		// TODO: sort questions here?
+		final List<Question> questions = game.getQuestions();
 
 		return new ThriftAction<String>(pools) {
 
 			@Override
-			protected String action(Client client) throws TException {
+			protected String action(final Client client) throws TException {
 				if (questionNumber == null) {
-					return client.getAllAnswersAsJson(email);
+
+					final List<Integer> goodAnswers = new ArrayList<Integer>(
+							questions.size());
+
+					for (Question question : questions) {
+						goodAnswers.add(question.getCorrectChoice());
+					}
+
+					return client.getAllAnswersAsJson(email, goodAnswers);
+
 				} else {
-					return client.getAnswerAsJson(email, questionNumber);
+					String questionString = null;
+					int goodAnswer = -1;
+
+					for (Question question : questions) {
+						if (questionNumber.equals(question.getNumber())) {
+							questionString = question.getLabel();
+							goodAnswer = question.getCorrectChoice();
+						}
+					}
+
+					if (questionString == null) {
+						// TODO
+					}
+
+					return client.getAnswerAsJson(email,
+							questionNumber.intValue(), questionString,
+							goodAnswer);
 				}
 			}
 		}.doAction();

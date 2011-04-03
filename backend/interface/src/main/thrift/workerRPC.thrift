@@ -33,8 +33,8 @@ service WorkerRPC {
 
 	void startRankingsComputation(),
 
-	string getAllAnswersAsJson(1: string email),
+	string getAllAnswersAsJson(1: string email, 2: list<i32> goodAnswers),
 
-	string getAnswerAsJson(1: string email, 2: i32 questionNumber)
+	string getAnswerAsJson(1: string email, 2: i32 questionNumber, string question, i32 goodAnswer)
 
 }

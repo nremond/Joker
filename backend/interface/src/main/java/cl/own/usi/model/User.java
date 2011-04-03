@@ -1,8 +1,6 @@
 package cl.own.usi.model;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
@@ -17,7 +15,6 @@ public class User implements Serializable {
 	private String firstname;
 	private String lastname;
 	private int score = 0;
-	private List<Integer> answers = new ArrayList<Integer>();
 
 	public String getUserId() {
 		return userId;

@@ -64,7 +64,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 	@Autowired
 	private Cluster cluster;
-	
+
 	private Keyspace consistencyOneKeyspace;
 	private Keyspace consistencyQuorumKeyspace;
 
@@ -520,9 +520,9 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 		boolean oneMoreIteration = true;
 		do {
-			
+
 			RangeSlicesQuery<String, String, ByteBuffer> rangeSliceQuery = HFactory.createRangeSlicesQuery(consistencyOneKeyspace, ss, ss, bbs);
-			
+
 			rangeSliceQuery.setColumnFamily(usersColumnFamily);
 			rangeSliceQuery.setRange(start, "", false, limit);
 
@@ -535,9 +535,9 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 				oneMoreIteration = false;
 			}
 			Iterator<Row<String, String, ByteBuffer>> iterator = rows.iterator();
-			
+
 			Mutator<Integer> mutator = HFactory.createMutator(consistencyOneKeyspace, is);
-			
+
 			while (iterator.hasNext()) {
 				Row<String, String, ByteBuffer> row = iterator.next();
 				if (row.getColumnSlice().getColumnByName(emailColumn) != null) {
@@ -654,9 +654,15 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		
+
 		consistencyOneKeyspace = HFactory.createKeyspace(dbKeyspace, cluster, new AllOneConsistencyLevelPolicy());
 		consistencyQuorumKeyspace = HFactory.createKeyspace(dbKeyspace, cluster, new QuorumAllConsistencyLevelPolicy());
-		
+
+	}
+
+	@Override
+	public List<Answer> getAnswersByEmail(final String userEmail) {
+		// TODO Implement this
+		return null;
 	}
 }
