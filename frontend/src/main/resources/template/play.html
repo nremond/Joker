@@ -21,6 +21,9 @@
 		// Initialize the game to the first question
 		var questionNumber = 1;
 		
+		// Timeout for the player to answer the question
+		var answer_timeout;
+		
 		// Start the game
 		ask_question();
 	
@@ -37,6 +40,7 @@
 					}
 				});
 			} else {
+			
 				$.ajax({
 					url: '/api/ranking',
 					type: 'GET',
@@ -46,8 +50,8 @@
 					}
 				});
 			}
-			
 		}
+		
 		
 		function ranking_callback(data, textStatus, jqXHR) {
 			
@@ -107,12 +111,19 @@
 			
 			$("#info").html("");			
 			$("#questionForm").html(sform);
+			
+			
+			// Set a local timeout (in milliseconds) for the request.
+			answer_timeout = setTimeout("timeout_callback()", %QUESTION_TIMEOUT%);
 				
 			
 			$("#questionForm").submit(function(event) {
 
 				// stop form from submitting normally
 				event.preventDefault(); 
+			
+				// stop the timeout
+				clearTimeout(answer_timeout);
 			
 				var	answer = $('input:radio[name=answer]:checked').val();
 			
@@ -129,6 +140,19 @@
 			});
 			
 		}
+		
+		
+		function timeout_callback() {
+			
+			var msg = "<p>You've been to slow to answer. Going to the next question.</p>";
+			
+			$("#info").html(msg);
+			$("#questionForm").html("");
+			
+			questionNumber++;
+			ask_question();
+		}
+		
 	
 		function answer_callback(data, textStatus, jqXHR) {
 			

@@ -37,6 +37,7 @@ public class PlayController extends AbstractController {
 	private GameDAO gameDAO;
 
 	final private static String NB_QUESTIONS = "%NB_QUESTIONS%";
+	final private static String QUESTION_TIMEOUT = "%QUESTION_TIMEOUT%";
 
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
@@ -54,9 +55,11 @@ public class PlayController extends AbstractController {
 
 				assert game != null;
 
-				int nbQuestions = game.getNumberOfQuestion();
 				Map<String, String> mapping = new HashMap<String, String>();
-				mapping.put(NB_QUESTIONS, String.valueOf(nbQuestions));
+				mapping.put(NB_QUESTIONS,
+						String.valueOf(game.getNumberOfQuestion()));
+				mapping.put(QUESTION_TIMEOUT,
+						String.valueOf(game.getQuestionTimeLimit()));
 
 				writeHtml(e, playTemplate, mapping);
 			}
