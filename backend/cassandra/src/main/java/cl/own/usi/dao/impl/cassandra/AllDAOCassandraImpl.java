@@ -107,6 +107,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 	private List<User> loadUsers(List<String> userIds) {
 
+		long starttime = System.currentTimeMillis();
+		
 		if (userIds == null || userIds.isEmpty()) {
 			return Collections.<User> emptyList();
 		}
@@ -128,14 +130,40 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 					userId);
 			if (row != null) {
 				User user = toUser(userId, row.getColumnSlice());
-				user.setScore(getScore(user.getUserId()));
 				users.add(user);
 			}
 		}
+		
+		loadScores(userIds, users);
+		
+		logger.debug("Loaded {} users in {} ms", users.size(), (System.currentTimeMillis() - starttime));
+		
 		return users;
 	}
+	
+	private void loadScores(List<String> userIds, List<User> users) {
+		
+		// load scores
+		MultigetSliceQuery<String, String, Integer> multigetSliceQuery = HFactory
+			.createMultigetSliceQuery(consistencyOneKeyspace, ss, ss, is);
 
-	@Override
+		multigetSliceQuery.setColumnFamily(scoresColumnFamily);
+		multigetSliceQuery.setRange(DEFAULT_START_KEY, DEFAULT_START_KEY, true, 1);
+		multigetSliceQuery.setKeys(userIds);
+
+		QueryResult<Rows<String, String, Integer>> queryResult = multigetSliceQuery
+			.execute();
+		Rows<String, String, Integer> rows = queryResult.get();
+		
+		for (User user : users) {
+			Row<String, String, Integer> row = rows.getByKey(user.getUserId());
+			if (row != null && !row.getColumnSlice().getColumns().isEmpty()) {
+				user.setScore(row.getColumnSlice().getColumns().get(0).getValue());
+			}
+		}
+	}
+
+ 	@Override
 	public List<User> getAfter(User user, int limit) {
 
 		ensureOrderedScoresLoaded();

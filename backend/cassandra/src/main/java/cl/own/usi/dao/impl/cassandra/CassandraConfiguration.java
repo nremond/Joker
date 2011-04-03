@@ -12,14 +12,20 @@ import me.prettyprint.hector.api.ddl.ComparatorType;
 import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 import me.prettyprint.hector.api.factory.HFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+
 @Configuration
 public class CassandraConfiguration implements InitializingBean {
 
+	private static final Logger LOGGER = LoggerFactory
+	.getLogger(CassandraConfiguration.class);
+	
 	// Cluster
 	final static private String dbcluster = "JokerCluster";
 	final static private String dbhost = "localhost";
@@ -82,10 +88,16 @@ public class CassandraConfiguration implements InitializingBean {
 	}
 
 	public void dropKeyspace() {
+		
+		LOGGER.debug("Droping keyspace");
+		
 		cluster().dropKeyspace(dbKeyspace);
 	}
 
 	public void createKeyspace() {
+		
+		LOGGER.debug("Creating keyspace");
+		
 		// Definition of the Keyspace
 		BasicKeyspaceDefinition keyspaceDefinition = new BasicKeyspaceDefinition();
 		keyspaceDefinition.setName(dbKeyspace);
