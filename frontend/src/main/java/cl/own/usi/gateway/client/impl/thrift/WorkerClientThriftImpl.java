@@ -382,7 +382,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		}
 
 		Random r = new Random();
-
+		
 		protected WorkerHost getKey() {
 			if (keys.isEmpty()) {
 				return null;

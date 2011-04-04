@@ -64,7 +64,7 @@ public class BasicInjectorMain {
 	private final static int NBQUESTIONS = 5;
 	private final static int QUESTIONTIMEFRAME = 60;
 	private final static int SYNCHROTIME = 12;
-	private final static int LOGINTIMEOUT = 600;
+	private final static int LOGINTIMEOUT = 60;
 
 	private static int NBUSERS = DEFAULT_NBUSERS;
 	private static int MAXNOFILES = 395240;
@@ -77,7 +77,7 @@ public class BasicInjectorMain {
 	// Executor that will run players' sequences. Thread pool of number of
 	// processors * 2. No need to be bigger.
 	private final static ExecutorService executor = Executors
-			.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+			.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 4);
 	// List of players' workers
 	private static List<UserGameWorker> workers;
 
@@ -362,6 +362,8 @@ public class BasicInjectorMain {
 		private final Random random = new Random();
 		private volatile boolean currentQuestionRequested = false;
 
+		private final HttpClient httpClient = new HttpClient();
+		
 		public UserGameWorker(int questiontimeframe, int synchrotime,
 				int numquestions, String email, String password,
 				ExecutorService executor) {
@@ -376,7 +378,6 @@ public class BasicInjectorMain {
 		public void run() {
 
 			try {
-				HttpClient httpClient = new HttpClient();
 
 				// If user is not logged, go to the login process.
 				if (sessionId == null) {
@@ -416,7 +417,9 @@ public class BasicInjectorMain {
 							}
 
 							loginOk = true;
-
+							
+							LOGGER.info("Login ok for {} ", email);
+							
 						} else {
 							LOGGER.warn(
 									"Problem at login {} with response code {}",

@@ -32,12 +32,10 @@ import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.OrderedRows;
 import me.prettyprint.hector.api.beans.Row;
-import me.prettyprint.hector.api.beans.Rows;
 import me.prettyprint.hector.api.exceptions.HectorException;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.MutationResult;
 import me.prettyprint.hector.api.mutation.Mutator;
-import me.prettyprint.hector.api.query.MultigetSliceQuery;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.RangeSlicesQuery;
 import me.prettyprint.hector.api.query.SliceQuery;
@@ -104,64 +102,6 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 				orderedScores, true, userKey);
 
 		return users;
-	}
-
-	private List<User> loadUsers(List<String> userIds) {
-
-		long starttime = System.currentTimeMillis();
-		
-		if (userIds == null || userIds.isEmpty()) {
-			return Collections.<User> emptyList();
-		}
-
-		MultigetSliceQuery<String, String, ByteBuffer> multigetSliceQuery = HFactory
-				.createMultigetSliceQuery(consistencyOneKeyspace, ss, ss, bbs);
-
-		multigetSliceQuery.setColumnFamily(usersColumnFamily);
-		multigetSliceQuery.setColumnNames(emailColumn, firstnameColumn,
-				lastnameColumn, passwordColumn);
-		multigetSliceQuery.setKeys(userIds);
-
-		QueryResult<Rows<String, String, ByteBuffer>> queryResult = multigetSliceQuery
-				.execute();
-
-		List<User> users = new ArrayList<User>(userIds.size());
-		for (String userId : userIds) {
-			Row<String, String, ByteBuffer> row = queryResult.get().getByKey(
-					userId);
-			if (row != null) {
-				User user = toUser(userId, row.getColumnSlice());
-				users.add(user);
-			}
-		}
-		
-		loadScores(userIds, users);
-		
-		logger.debug("Loaded {} users in {} ms", users.size(), (System.currentTimeMillis() - starttime));
-		
-		return users;
-	}
-	
-	private void loadScores(List<String> userIds, List<User> users) {
-		
-		// load scores
-		MultigetSliceQuery<String, String, Integer> multigetSliceQuery = HFactory
-			.createMultigetSliceQuery(consistencyOneKeyspace, ss, ss, is);
-
-		multigetSliceQuery.setColumnFamily(scoresColumnFamily);
-		multigetSliceQuery.setRange(DEFAULT_START_KEY, DEFAULT_START_KEY, true, 1);
-		multigetSliceQuery.setKeys(userIds);
-
-		QueryResult<Rows<String, String, Integer>> queryResult = multigetSliceQuery
-			.execute();
-		Rows<String, String, Integer> rows = queryResult.get();
-		
-		for (User user : users) {
-			Row<String, String, Integer> row = rows.getByKey(user.getUserId());
-			if (row != null && !row.getColumnSlice().getColumns().isEmpty()) {
-				user.setScore(row.getColumnSlice().getColumns().get(0).getValue());
-			}
-		}
 	}
 
  	@Override
@@ -330,8 +270,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 				consistencyOneKeyspace, ss, ss, bbs);
 		q.setKey(userId);
 		q.setColumnFamily(usersColumnFamily);
-		q.setColumnNames(emailColumn, firstnameColumn, lastnameColumn,
-				passwordColumn);
+		q.setColumnNames(emailColumn, firstnameColumn, lastnameColumn);
 
 		QueryResult<ColumnSlice<String, ByteBuffer>> result = q.execute();
 		ColumnSlice<String, ByteBuffer> cs = result.get();
@@ -402,8 +341,10 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 				.getValue()));
 		user.setLastname(ss.fromByteBuffer(cs.getColumnByName(lastnameColumn)
 				.getValue()));
-		user.setPassword(ss.fromByteBuffer(cs.getColumnByName(passwordColumn)
-				.getValue()));
+		HColumn<String, ByteBuffer> passwordColum = cs.getColumnByName(passwordColumn);
+		if (passwordColum != null) {
+			user.setPassword(ss.fromByteBuffer(passwordColum.getValue()));
+		}
 		user.setUserId(userId);
 		return user;
 	}
@@ -558,14 +499,13 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 		do {
 
 			RangeSlicesQuery<String, String, ByteBuffer> rangeSliceQuery = HFactory
-					.createRangeSlicesQuery(consistencyQuorumKeyspace, ss, ss,
+					.createRangeSlicesQuery(consistencyOneKeyspace, ss, ss,
 							bbs);
 
 			rangeSliceQuery.setColumnFamily(usersColumnFamily);
 			rangeSliceQuery.setKeys(start, DEFAULT_START_KEY);
 			rangeSliceQuery.setRowCount(limit);
-			rangeSliceQuery.setColumnNames(emailColumn, firstnameColumn, lastnameColumn,
-					passwordColumn);
+			rangeSliceQuery.setColumnNames(emailColumn, firstnameColumn, lastnameColumn);
 			
 			QueryResult<OrderedRows<String, String, ByteBuffer>> result = rangeSliceQuery
 					.execute();
@@ -575,14 +515,14 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 			logger.debug("Query fetches {} rows in {} ms", rows.getCount(),
 					result.getExecutionTimeMicro());
 
-			if (rows.getCount() <= limit) {
+			if (rows.getCount() < limit) {
 				oneMoreIteration = false;
 			}
 			Iterator<Row<String, String, ByteBuffer>> iterator = rows
 					.iterator();
 
 			Mutator<Integer> mutator = HFactory.createMutator(
-					consistencyOneKeyspace, is);
+					consistencyQuorumKeyspace, is);
 
 			while (iterator.hasNext()) {
 				Row<String, String, ByteBuffer> row = iterator.next();
