@@ -243,8 +243,9 @@ public class UserDAOMongoImpl implements UserDAO {
 	}
 
 	@Override
-	public List<Answer> getAnswersByEmail(final String userEmail) {
-		// TODO implement this
-		return null;
+	public List<Answer> getAnswersByEmail(final String email) {
+
+		final String userId = DaoHelper.generateUserId(email);
+		return getAnswers(userId);
 	}
 }
