@@ -58,6 +58,7 @@ import cl.own.usi.model.User;
 public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean {
 
 	private static final String DEFAULT_START_KEY = "";
+	private static final String DEFAULT_FIELDS_SEPARATOR = "%%%";
 	private static final int DEFAULT_MAX_QUESTIONS = 20;
 
 	private List<Integer> orderedScores = Collections.<Integer> emptyList();
@@ -591,7 +592,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 					user.setScore(getScore(user.getUserId()));
 					String userKey = generateRankedUserKey(user);
 					mutator.addInsertion(user.getScore(), ranksColumnFamily,
-							HFactory.createColumn(userKey, user.getUserId(),
+							HFactory.createColumn(userKey, encodeUserToString(user),
 									ss, ss));
 					start = row.getKey();
 				}
@@ -658,7 +659,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	List<User> findRankedUsers(int limit, Integer startScore,
 			List<Integer> orderedScores, boolean reverseOrder, String startKey) {
 
-		List<String> userIds = new ArrayList<String>(limit);
+		List<User> users = new ArrayList<User>(limit);
 
 		boolean scoreFound = false;
 		boolean first = true;
@@ -694,15 +695,15 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 			ColumnSlice<String, String> columnSlice = sliceResult.get();
 			for (HColumn<String, String> column : columnSlice.getColumns()) {
 				if (start == null || !start.equals(column.getName())) {
-					userIds.add(column.getValue());
-					if (userIds.size() >= limit) {
+					users.add(decodeStringToUser(column.getValue()));
+					if (users.size() >= limit) {
 						break EXTERNALLOOP;
 					}
 				}
 			}
 		}
 
-		return loadUsers(userIds);
+		return users;
 
 	}
 
@@ -716,5 +717,35 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 	}
 	
+	private static String encodeUserToString(final User user) {
+		return user.getUserId() + DEFAULT_FIELDS_SEPARATOR + 
+		user.getFirstname() + DEFAULT_FIELDS_SEPARATOR + 
+		user.getLastname() + DEFAULT_FIELDS_SEPARATOR + 
+		user.getEmail() + DEFAULT_FIELDS_SEPARATOR + 
+		String.valueOf(user.getScore());
+	}
 	
+	private static User decodeStringToUser(final String userString) {
+		User user = new User();
+		
+		String[] parts = userString.split(DEFAULT_FIELDS_SEPARATOR);
+		
+		if (parts.length > 0) {
+			user.setUserId(parts[0]);
+		}
+		if (parts.length > 1) {
+			user.setFirstname(parts[1]);
+		}
+		if (parts.length > 2) {
+			user.setLastname(parts[2]);
+		}
+		if (parts.length > 3) {
+			user.setEmail(parts[3]);
+		}
+		if (parts.length > 4) {
+			user.setScore(Integer.valueOf(parts[4]));
+		}
+		
+		return user;
+	}
 }
