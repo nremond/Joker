@@ -118,7 +118,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	}
 
 	@Override
-	public int setBadAnswer(String userId, int questionNumber) {
+	public int setBadAnswer(final String userId, final int questionNumber) {
 
 		User user = getUserById(userId);
 		if (user != null) {
@@ -134,14 +134,12 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	}
 
 	@Override
-	public int setGoodAnswer(String userId, int questionNumber,
-			int questionValue) {
+	public int setGoodAnswer(final String userId, final int questionNumber,
+			final int questionValue) {
+		
+		if (userId != null) {
 
-		User user = getUserById(userId);
-
-		if (user != null) {
-
-			// int oldScore = user.getScore();
+			int oldScore = getScore(userId, questionNumber - 1);
 
 			SliceQuery<String, Integer, Boolean> q = HFactory.createSliceQuery(
 					consistencyOneKeyspace, ss, is, bs);
@@ -154,27 +152,16 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 			ColumnSlice<Integer, Boolean> columnSlice = result.get();
 
 			int newBonus = 0;
-			if (columnSlice.getColumns() != null
-					&& !columnSlice.getColumns().isEmpty()) {
-				List<HColumn<Integer, Boolean>> previousAnswers = columnSlice
-						.getColumns();
-				int searchedQuestion = questionNumber - 1;
-				for (HColumn<Integer, Boolean> previousAnswer : previousAnswers) {
-					if (previousAnswer.getName().compareTo(searchedQuestion) < 0) {
-						break;
-					} else if (previousAnswer.getName().compareTo(
-							searchedQuestion) == 0) {
-						if (previousAnswer.getValue()) {
-							newBonus++;
-						} else {
-							break;
-						}
-					}
-					searchedQuestion--;
+			for (int searchedQuestion = questionNumber - 1; searchedQuestion > 0; searchedQuestion--) {
+				HColumn<Integer, Boolean> previousAnswer = columnSlice.getColumnByName(searchedQuestion);
+				if (previousAnswer != null && previousAnswer.getValue()) {
+					newBonus++;
+				} else {
+					break;
 				}
 			}
 
-			int newScore = user.getScore() + questionValue + newBonus;
+			int newScore = oldScore + questionValue + newBonus;
 
 			Mutator<String> mutator = HFactory.createMutator(
 					consistencyOneKeyspace, StringSerializer.get());
@@ -186,14 +173,6 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 			mutator.execute();
 
-			// String userKey = generateRankedUserKey(user);
-			// Mutator<Integer> rankMutator = HFactory.createMutator(keyspace,
-			// is);
-			// rankMutator.addDeletion(oldScore, ranksColumnFamily, userKey,
-			// ss);
-			// rankMutator.addInsertion(newScore, ranksColumnFamily,
-			// HFactory.createColumn(userKey, user.getUserId(), ss, ss));
-			// rankMutator.execute();
 			return newScore;
 
 		} else {
@@ -294,13 +273,21 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	}
 
 	private int getScore(String userId) {
+		return getScore(userId, null);
+	}
+	
+	private int getScore(String userId, Integer tillQuestionNumber) {
 
 		// load score
 		SliceQuery<String, Integer, Integer> sliceQuery = HFactory
 				.createSliceQuery(consistencyOneKeyspace, ss, is, is);
 		sliceQuery.setKey(userId);
 		sliceQuery.setColumnFamily(scoresColumnFamily);
-		sliceQuery.setRange(DEFAULT_MAX_QUESTIONS, 0, true, 1);
+		if (tillQuestionNumber != null) {
+			sliceQuery.setRange(tillQuestionNumber, 0, true, 1);
+		} else {
+			sliceQuery.setRange(DEFAULT_MAX_QUESTIONS, 0, true, 1);			
+		}
 
 		QueryResult<ColumnSlice<Integer, Integer>> queryResult = sliceQuery
 				.execute();
