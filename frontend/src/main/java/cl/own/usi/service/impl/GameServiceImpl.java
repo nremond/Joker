@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -67,6 +68,8 @@ public class GameServiceImpl implements GameService {
 	
 	private String top100AsString;
 	
+	private final AtomicBoolean gameRunning = new AtomicBoolean(false);
+	
 	@Value(value = "${frontend.twitt:false}")
 	public void setTwitt(boolean twitt) {
 		this.twitt = twitt;
@@ -76,6 +79,10 @@ public class GameServiceImpl implements GameService {
 			int pollingTimeLimit, int synchroTimeLimit, int numberOfQuestion, 
 			List<Map<String, Map<String, Boolean>>> questions) {
 
+		if (!gameRunning.compareAndSet(false, true)) {
+			return false;
+		}
+		
 		resetPreviousGame();
 
 		Game game = gameDAO.insertGame(usersLimit, questionTimeLimit,
@@ -99,7 +106,6 @@ public class GameServiceImpl implements GameService {
 				QuestionSynchronization questionSynchronization = entry
 						.getValue();
 				questionSynchronization.questionReadyLatch.countDown();
-				// TODO : remove thread from pool.
 			}
 		}
 	}
@@ -157,8 +163,12 @@ public class GameServiceImpl implements GameService {
 		if (questionSync == null) {
 			return false;
 		} else {
+			int timeToWait = gameDAO.getGame().getQuestionTimeLimit() + gameDAO.getGame().getSynchroTimeLimit();
+			if (questionNumber == 1) {
+				timeToWait = gameDAO.getGame().getPollingTimeLimit();
+			}
 			boolean enter = questionSync.questionReadyLatch.await(
-					gameDAO.getGame().getPollingTimeLimit(), TimeUnit.SECONDS);
+					timeToWait + 5, TimeUnit.SECONDS);
 			return enter && gameSynchronization.currentQuestionRunning;
 		}
 	}
@@ -182,6 +192,7 @@ public class GameServiceImpl implements GameService {
 
 		public void run() {
 
+			try {
 			LOGGER.debug("Start game");
 
 			try {
@@ -309,8 +320,11 @@ public class GameServiceImpl implements GameService {
 			if (twitt) {
 				twitter.twitt(String.format(TWITTER_MESSAGE, gameSynchronization.game.getUsersLimit()));
 			}
-			
+			} finally {
+				gameRunning.set(false);
+			}
 		}
+		
 
 	}
 

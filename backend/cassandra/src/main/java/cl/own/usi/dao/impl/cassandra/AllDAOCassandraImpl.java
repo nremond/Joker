@@ -80,10 +80,10 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	private final IntegerSerializer is = IntegerSerializer.get();
 	private final LongSerializer ls = LongSerializer.get();
 	private final BooleanSerializer bs = BooleanSerializer.get();
-
+	
 	@Override
 	public List<User> getTop(int limit) {
-
+		
 		if (limit == 100) {
 			return top100;
 		} else {
@@ -500,8 +500,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 				return userId;
 			}
 		}
-		logger.debug("login failed for {}, returned columns = {}", email, cs
-				.getColumns().size());
+		logger.debug("login failed for {}, returned columns = {}, userId={}", new Object[] {email, cs
+				.getColumns().size(), userId});
 		return null;
 	}
 
@@ -522,69 +522,20 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	@Override
 	public void flushUsers() {
 
-		String from = DEFAULT_START_KEY;
-		int limit = 2000;
-		boolean oneMoreIteration = true;
-		do {
-			RangeSlicesQuery<String, String, ByteBuffer> rangeSlicesQuery = HFactory
-					.createRangeSlicesQuery(consistencyOneKeyspace, ss, ss, bbs);
-
-			rangeSlicesQuery.setColumnFamily(usersColumnFamily);
-			rangeSlicesQuery.setKeys(from, DEFAULT_START_KEY);
-			rangeSlicesQuery.setReturnKeysOnly();
-			rangeSlicesQuery.setRowCount(limit);
-
-			QueryResult<OrderedRows<String, String, ByteBuffer>> result = rangeSlicesQuery
-					.execute();
-			if (result.get().getCount() < limit) {
-				oneMoreIteration = false;
-			}
-
-			Iterator<Row<String, String, ByteBuffer>> iterator = result.get()
-					.iterator();
-			Mutator<String> mutator = HFactory.createMutator(
-					consistencyQuorumKeyspace, ss);
-
-			while (iterator.hasNext()) {
-				Row<String, String, ByteBuffer> row = iterator.next();
-				String key = row.getKey();
-				if (key.equals(from)) {
-					continue;
-				}
-				mutator.addDeletion(key, usersColumnFamily);
-				mutator.addDeletion(key, answersColumnFamily);
-				mutator.addDeletion(key, bonusesColumnFamily);
-				mutator.addDeletion(key, scoresColumnFamily);
-				mutator.addDeletion(key, loginsColumnFamily);
-				from = key;
-			}
-			MutationResult mutationResult = mutator.execute();
-			logger.debug("Flush batch executed in {} ms",
-					mutationResult.getExecutionTimeMicro());
-
-		} while (oneMoreIteration);
-
-		// Remove all entries in ranks.
-		RangeSlicesQuery<Integer, String, String> rangeSliceQuery = HFactory
-				.createRangeSlicesQuery(consistencyOneKeyspace, is, ss, ss);
-		rangeSliceQuery.setColumnFamily(ranksColumnFamily);
-		rangeSliceQuery.setReturnKeysOnly();
-		QueryResult<OrderedRows<Integer, String, String>> result = rangeSliceQuery
-				.execute();
-		Iterator<Row<Integer, String, String>> iterator = result.get()
-				.iterator();
-		Mutator<Integer> mutator = HFactory.createMutator(
-				consistencyQuorumKeyspace, is);
-		while (iterator.hasNext()) {
-			Row<Integer, String, String> row = iterator.next();
-			int key = row.getKey();
-			mutator.addDeletion(key, ranksColumnFamily);
-		}
-		MutationResult mutationResult = mutator.execute();
-		logger.debug("Flush ranking batch executed in {} ms",
-				mutationResult.getExecutionTimeMicro());
+		long starttime = System.currentTimeMillis();
+		
+		cluster.truncate(dbKeyspace, answersColumnFamily);
+		cluster.truncate(dbKeyspace, usersColumnFamily);
+		cluster.truncate(dbKeyspace, bonusesColumnFamily);
+		cluster.truncate(dbKeyspace, ranksColumnFamily);
+		cluster.truncate(dbKeyspace, scoresColumnFamily);
+		cluster.truncate(dbKeyspace, loginsColumnFamily);
+		
 		orderedScores = Collections.<Integer> emptyList();
 		reverseOrderedScores = Collections.<Integer> emptyList();
+		
+		logger.debug("Keyspace flushed in {} ms.", (System.currentTimeMillis() - starttime));
+		
 	}
 
 	@Override
@@ -757,11 +708,13 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-
+		
 		consistencyOneKeyspace = HFactory.createKeyspace(dbKeyspace, cluster,
 				new AllOneConsistencyLevelPolicy());
 		consistencyQuorumKeyspace = HFactory.createKeyspace(dbKeyspace,
 				cluster, new QuorumAllConsistencyLevelPolicy());
 
 	}
+	
+	
 }
