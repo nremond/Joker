@@ -64,7 +64,7 @@ public class DaoHelper {
 	public static String generateUserId(final String email) {
 		String hash = sha1(email + USER_ID_SALT);
 		ChannelBuffer chanBuff = wrappedBuffer(hash.getBytes(CharsetUtil.UTF_8));
-		return Base64.encode(chanBuff, Base64Dialect.ORDERED).toString(
+		return Base64.encode(chanBuff, Base64Dialect.STANDARD).toString(
 				CharsetUtil.UTF_8);
 	}
 
