@@ -13,7 +13,7 @@ import cl.own.usi.service.ScoreService;
 public class ScoreServiceImpl implements ScoreService {
 
 	@Autowired
-	ScoreDAO scoreDAO;
+	private ScoreDAO scoreDAO;
 
 	private static final int FIFTY = 50;
 	private static final int HUNDRED = 100;
@@ -22,7 +22,8 @@ public class ScoreServiceImpl implements ScoreService {
 			String userId, boolean answerCorrect) {
 
 		if (answerCorrect) {
-			return scoreDAO.setGoodAnswer(userId, questionNumber, questionValue);
+			return scoreDAO
+					.setGoodAnswer(userId, questionNumber, questionValue);
 		} else {
 			return scoreDAO.setBadAnswer(userId, questionNumber);
 		}

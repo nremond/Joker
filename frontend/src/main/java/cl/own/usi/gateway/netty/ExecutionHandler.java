@@ -10,10 +10,11 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.handler.execution.ChannelEventRunnable;
 import org.jboss.netty.util.ExternalResourceReleasable;
 import org.jboss.netty.util.internal.ExecutorUtil;
+import org.springframework.util.Assert;
 
 /**
  * Custom execution handler that only forward MessageEvent to the handlers.
- * 
+ *
  * @author bperroud
  *
  */
@@ -23,20 +24,19 @@ public class ExecutionHandler implements ChannelUpstreamHandler,
 	private final ExecutorService executor;
 
 	public ExecutionHandler(ExecutorService executor) {
-		if (executor == null) {
-			throw new NullPointerException("executor");
-		}
+		Assert.notNull(executor, "the 'executor' parameter cannot be null!");
 		this.executor = executor;
 	}
 
 	public Executor getExecutor() {
-        return executor;
-    }
-	
-	public void releaseExternalResources() {
-        ExecutorUtil.terminate(getExecutor());
-    }
+		return executor;
+	}
 
+	public void releaseExternalResources() {
+		ExecutorUtil.terminate(getExecutor());
+	}
+
+	@Override
 	public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e)
 			throws Exception {
 		if (e instanceof MessageEvent) {

@@ -1,8 +1,6 @@
 package cl.own.usi.model;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
@@ -25,8 +23,6 @@ public class User implements Serializable {
 	public void setUserId(String userId) {
 		this.userId = userId;
 	}
-
-	List<Integer> answers = new ArrayList<Integer>();
 
 	public String getEmail() {
 		return email;
@@ -89,7 +85,6 @@ public class User implements Serializable {
 
 		User rhs = (User) obj;
 		return new EqualsBuilder().append(email, rhs.email).isEquals();
-
 	}
 
 	@Override

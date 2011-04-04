@@ -2,6 +2,8 @@ package cl.own.usi.gateway.client;
 
 import java.util.List;
 
+import cl.own.usi.model.Game;
+
 /**
  * Client interface to interact with remote workers.
  *
@@ -35,6 +37,6 @@ public interface WorkerClient {
 
 	void startRankingsComputation();
 
-	String getAnswersAsJson(String email, Integer questionNumber);
+	String getAnswersAsJson(String email, Integer questionNumber, Game game);
 
 }

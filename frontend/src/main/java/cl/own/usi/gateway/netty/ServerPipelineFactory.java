@@ -12,28 +12,30 @@ import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import static org.jboss.netty.channel.Channels.*;
 
 /**
  * Netty pipeline.
- * 
- * Upstream pipeline decodes the message, send it to an execution worker and handle it. 
- * Downstream pipeline reencode the message.
- * 
+ *
+ * Upstream pipeline decodes the message, send it to an execution worker and
+ * handle it. Downstream pipeline reencode the message.
+ *
  * @author bperroud
  *
  */
 @Component
-public class ServerPipelineFactory implements ChannelPipelineFactory, InitializingBean {
+public class ServerPipelineFactory implements ChannelPipelineFactory,
+		InitializingBean {
 
 	private ExecutorService executor;
-	
+
 	@Autowired
 	private ChannelUpstreamHandler upstreamHandler;
-	
+
 	private ExecutionHandler executionHandler;
-	
+
 	public ExecutorService getExecutor() {
 		return executor;
 	}
@@ -50,6 +52,7 @@ public class ServerPipelineFactory implements ChannelPipelineFactory, Initializi
 		this.upstreamHandler = upstreamHandler;
 	}
 
+	@Override
 	public ChannelPipeline getPipeline() throws Exception {
 
 		ChannelPipeline pipeline = pipeline();
@@ -60,7 +63,7 @@ public class ServerPipelineFactory implements ChannelPipelineFactory, Initializi
 		pipeline.addLast("encoder", new HttpResponseEncoder());
 		// Remove the following line if you don't want automatic content
 		// compression.
-//		pipeline.addLast("deflater", new HttpContentCompressor());
+		// pipeline.addLast("deflater", new HttpContentCompressor());
 
 		pipeline.addLast("executor1", executionHandler);
 		pipeline.addLast("handler1", getUpstreamHandler());
@@ -72,10 +75,10 @@ public class ServerPipelineFactory implements ChannelPipelineFactory, Initializi
 		if (getExecutor() == null) {
 			setExecutor(Executors.newCachedThreadPool());
 		}
-		if (getUpstreamHandler() == null) {
-			throw new NullPointerException("UpstreamHandler");
-		}
-		
+
+		Assert.notNull(upstreamHandler,
+				"the 'upstreamHandler' parameter cannot be null!");
+
 		executionHandler = new ExecutionHandler(getExecutor());
 	}
 }

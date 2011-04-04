@@ -1,5 +1,9 @@
 package cl.own.usi.service;
 
+import java.util.List;
+
+import cl.own.usi.model.AuditAnswer;
+import cl.own.usi.model.AuditAnswers;
 import cl.own.usi.model.User;
 
 public interface UserService {
@@ -13,7 +17,8 @@ public interface UserService {
 	 * @param lastname
 	 * @return
 	 */
-	boolean insertUser(String email, String password, String firstname, String lastname);
+	boolean insertUser(String email, String password, String firstname,
+			String lastname);
 
 	/**
 	 * Login a {@link User}
@@ -52,9 +57,10 @@ public interface UserService {
 	boolean logout(String userId);
 
 	/**
-	 * Map the "userId" returned by a previous {@link #login(String, String)} call to an existing {@link User}
+	 * Map the "userId" returned by a previous {@link #login(String, String)}
+	 * call to an existing {@link User}
 	 *
-	 *@TODO remove this method
+	 * @TODO remove this method
 	 * @param userId
 	 * @return
 	 */
@@ -64,5 +70,10 @@ public interface UserService {
 	 * Remove all {@link User}s
 	 */
 	void flushUsers();
+
+	AuditAnswers getAuditAnswers(String userEmail, List<Integer> goodAnswers);
+
+	AuditAnswer getAuditAnswerFor(String userEmail, int questionNumber,
+			String question, int goodAnswer);
 
 }
