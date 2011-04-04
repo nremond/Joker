@@ -542,7 +542,7 @@ public class BasicInjectorMain {
 				}
 
 			} catch (IOException e) {
-				e.printStackTrace();
+				LOGGER.error("IOException", e);
 			}
 		}
 
@@ -595,6 +595,12 @@ public class BasicInjectorMain {
 								response.getStatusCode(), userId });
 				return -1;
 			}
+		}
+
+		@Override
+		public void onThrowable(Throwable t) {
+			super.onThrowable(t);
+			LOGGER.error("Throwable on getting question", t);
 		}
 
 	}
