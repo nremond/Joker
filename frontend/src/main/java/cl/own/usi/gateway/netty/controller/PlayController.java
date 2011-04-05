@@ -59,7 +59,7 @@ public class PlayController extends AbstractController {
 				mapping.put(NB_QUESTIONS,
 						String.valueOf(game.getNumberOfQuestion()));
 				mapping.put(QUESTION_TIMEOUT,
-						String.valueOf(game.getQuestionTimeLimit()));
+						String.valueOf(game.getQuestionTimeLimit() * 1000));
 
 				writeHtml(e, playTemplate, mapping);
 			}
