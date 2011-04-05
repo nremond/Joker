@@ -309,9 +309,9 @@ public class GameServiceImpl implements GameService {
 
 				long stoptime = System.currentTimeMillis();
 
-				LOGGER.error(
-						"Ranking computation and top100 query done in {} ms.",
-						(stoptime - starttime));
+				LOGGER.info(
+						"Ranking computation and top100 query done in {} ms. Returns {} UserInfoAndScores.",
+						(stoptime - starttime), top100.size());
 
 				long synchrotime = (gameSynchronization.game
 						.getSynchroTimeLimit() * 1000) + starttime - stoptime;

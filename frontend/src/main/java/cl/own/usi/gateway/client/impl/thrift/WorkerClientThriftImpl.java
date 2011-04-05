@@ -124,7 +124,15 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 			@Override
 			protected Boolean action(Client client) throws TException {
-				return client.insertUser(email, password, firstname, lastname);
+				int retry = 2;
+				do {
+					if (client.insertUser(email, password, firstname, lastname)) {
+						return true;
+					} else {
+						retry--;
+					}
+				} while (retry > 0);
+				return false;
 			}
 		}.doAction();
 

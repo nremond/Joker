@@ -32,10 +32,12 @@ import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.OrderedRows;
 import me.prettyprint.hector.api.beans.Row;
+import me.prettyprint.hector.api.beans.Rows;
 import me.prettyprint.hector.api.exceptions.HectorException;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.MutationResult;
 import me.prettyprint.hector.api.mutation.Mutator;
+import me.prettyprint.hector.api.query.MultigetSliceQuery;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.RangeSlicesQuery;
 import me.prettyprint.hector.api.query.SliceQuery;
@@ -62,7 +64,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	private List<Integer> orderedScores = Collections.<Integer> emptyList();
 	private List<Integer> reverseOrderedScores = Collections
 			.<Integer> emptyList();
-	private List<User> top100 = Collections.<User> emptyList();
+	private final List<User> top100 = new ArrayList<User>(100);
 
 	private final ReentrantLock scoresComputationLock = new ReentrantLock();
 
@@ -120,17 +122,14 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	@Override
 	public int setBadAnswer(final String userId, final int questionNumber) {
 
-		User user = getUserById(userId);
-		if (user != null) {
-			Mutator<String> mutator = HFactory.createMutator(
-					consistencyOneKeyspace, StringSerializer.get());
-			mutator.addInsertion(userId, bonusesColumnFamily, HFactory
-					.createColumn(questionNumber, Boolean.FALSE, is, bs));
-			mutator.execute();
-			return user.getScore();
-		} else {
-			return 0;
-		}
+		int score = getScore(userId);
+		
+		Mutator<String> mutator = HFactory.createMutator(
+				consistencyOneKeyspace, StringSerializer.get());
+		mutator.addInsertion(userId, bonusesColumnFamily, HFactory
+				.createColumn(questionNumber, Boolean.FALSE, is, bs));
+		mutator.execute();
+		return score;
 	}
 
 	@Override
@@ -233,7 +232,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 		QueryResult<ColumnSlice<String, ByteBuffer>> result = q.execute();
 		ColumnSlice<String, ByteBuffer> cs = result.get();
 
-		return cs.getColumns().size() != 0;
+		return !cs.getColumns().isEmpty();
 	}
 
 	@Override
@@ -273,14 +272,18 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	}
 
 	private int getScore(String userId) {
-		return getScore(userId, null);
+		return getScore(userId, null, false);
 	}
 	
 	private int getScore(String userId, Integer tillQuestionNumber) {
+		return getScore(userId, tillQuestionNumber, false);
+	}
+	
+	private int getScore(String userId, Integer tillQuestionNumber, boolean quorum) {
 
 		// load score
 		SliceQuery<String, Integer, Integer> sliceQuery = HFactory
-				.createSliceQuery(consistencyOneKeyspace, ss, is, is);
+				.createSliceQuery(quorum ? consistencyQuorumKeyspace : consistencyOneKeyspace, ss, is, is);
 		sliceQuery.setKey(userId);
 		sliceQuery.setColumnFamily(scoresColumnFamily);
 		if (tillQuestionNumber != null) {
@@ -463,6 +466,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 		orderedScores = Collections.<Integer> emptyList();
 		reverseOrderedScores = Collections.<Integer> emptyList();
 		
+		top100.clear();
+		
 		logger.debug("Keyspace flushed in {} ms.", (System.currentTimeMillis() - starttime));
 		
 	}
@@ -472,9 +477,11 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 		insertRankings();
 
-		top100 = new ArrayList<User>(100);
-		top100 = computeTop(100);
-
+		List<User> newTop100 = computeTop(100);
+		for (User user : newTop100) {
+			top100.add(user);
+		}
+		
 	}
 
 	private void insertRankings() {
@@ -486,7 +493,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 		do {
 
 			RangeSlicesQuery<String, String, ByteBuffer> rangeSliceQuery = HFactory
-					.createRangeSlicesQuery(consistencyOneKeyspace, ss, ss,
+					.createRangeSlicesQuery(consistencyQuorumKeyspace, ss, ss,
 							bbs);
 
 			rangeSliceQuery.setColumnFamily(usersColumnFamily);
@@ -511,18 +518,27 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 			Mutator<Integer> mutator = HFactory.createMutator(
 					consistencyQuorumKeyspace, is);
 
+			List<User> users = new ArrayList<User>(rows.getCount());
+			List<String> userIds = new ArrayList<String>(rows.getCount());
+			
 			while (iterator.hasNext()) {
 				Row<String, String, ByteBuffer> row = iterator.next();
 				if (!row.getKey().equals(start)
 						&& row.getColumnSlice().getColumnByName(emailColumn) != null) {
 					User user = toUser(row.getKey(), row.getColumnSlice());
-					user.setScore(getScore(user.getUserId()));
-					String userKey = generateRankedUserKey(user);
-					mutator.addInsertion(user.getScore(), ranksColumnFamily,
-							HFactory.createColumn(userKey, encodeUserToString(user),
-									ss, ss));
+					users.add(user);
+					userIds.add(row.getKey());
 					start = row.getKey();
 				}
+			}
+			
+			loadScores(userIds, users);
+			
+			for (User user : users) {
+				String userKey = generateRankedUserKey(user);
+				mutator.addInsertion(user.getScore(), ranksColumnFamily,
+						HFactory.createColumn(userKey, encodeUserToString(user),
+								ss, ss));
 			}
 
 			MutationResult mutationResult = mutator.execute();
@@ -534,6 +550,39 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 	}
 
+	private void loadScores(List<String> userIds, List<User> users) {
+		
+		final long starttime = System.currentTimeMillis();
+		
+		// load score
+		MultigetSliceQuery<String, Integer, Integer> sliceQuery = HFactory
+				.createMultigetSliceQuery(consistencyOneKeyspace, ss, is, is);
+		sliceQuery.setKeys(userIds);
+		sliceQuery.setColumnFamily(scoresColumnFamily);
+		sliceQuery.setRange(DEFAULT_MAX_QUESTIONS, 0, true, 1);			
+
+		QueryResult<Rows<String, Integer, Integer>> queryResult = sliceQuery
+				.execute();
+		Rows<String, Integer, Integer> rows = queryResult.get();
+		for (User user : users) {
+			Row<String, Integer, Integer> row = rows.getByKey(user.getUserId());
+			
+			if (row != null) {
+				ColumnSlice<Integer, Integer> columnSlice = row.getColumnSlice();
+				if (!columnSlice.getColumns().isEmpty()) {
+					user.setScore(columnSlice.getColumns().get(0).getValue());
+				} else {
+					user.setScore(0);
+				}
+			} else {
+				user.setScore(0);
+			}
+		}
+		
+		logger.debug("Loaded {} scores in {} ms", users.size(), (System.currentTimeMillis() - starttime));
+		
+	}
+	
 	private void ensureOrderedScoresLoaded() {
 
 		if (orderedScores.isEmpty()) {
@@ -611,12 +660,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 			sliceQuery.setColumnFamily(ranksColumnFamily);
 			sliceQuery.setKey(score);
-			if (reverseOrder) {
-				sliceQuery.setRange(DEFAULT_START_KEY, start, true, limit);
-			} else {
-				sliceQuery.setRange(start, DEFAULT_START_KEY, false, limit);
-			}
-
+			sliceQuery.setRange(start, DEFAULT_START_KEY, reverseOrder, limit);
+			
 			QueryResult<ColumnSlice<String, String>> sliceResult = sliceQuery
 					.execute();
 			ColumnSlice<String, String> columnSlice = sliceResult.get();
@@ -628,6 +673,10 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 					}
 				}
 			}
+		}
+		
+		if (!scoreFound) {
+			logger.error("Heum, dude, score {} not found for user {}", startScore, startKey);
 		}
 
 		return users;
