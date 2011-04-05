@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cl.own.usi.thrift.UserLogin;
 import cl.own.usi.thrift.WorkerRPC.Client;
 
 /**
@@ -31,8 +32,8 @@ public class WorkerFacadeTester {
 			TProtocol protocol = new TBinaryProtocol(transport);
 			Client client = new Client(protocol);
 			transport.open();
-			String userId = client.loginUser("email", "password");
-			logger.info("UserId from logged user : " + userId);
+			UserLogin userLogin = client.loginUser("email", "password");
+			logger.info("UserId from logged user : " + userLogin.userId);
 			transport.close();
 		} catch (TTransportException e) {
 			e.printStackTrace();

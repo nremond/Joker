@@ -38,8 +38,8 @@ public class Inject1000001UsersMain {
 	/*
 	 * Concurrency parameters
 	 */
-	private final static int CONCURRENT_WORKERS = 4; // Runtime.getRuntime().availableProcessors() * 2
-	private final static int NUMBER_OF_USERS_TO_INSERT = 100; //Integer.MAX_VALUE;
+	private final static int CONCURRENT_WORKERS = Runtime.getRuntime().availableProcessors() * 2;
+	private final static int NUMBER_OF_USERS_TO_INSERT = Integer.MAX_VALUE;
 	
 	private static final ExecutorService executor = Executors
 			.newFixedThreadPool(CONCURRENT_WORKERS);
@@ -48,13 +48,27 @@ public class Inject1000001UsersMain {
 	public static void main(String[] args) throws IllegalArgumentException,
 			IOException, InterruptedException, ExecutionException {
 
-		LOGGER.info("Starting up Injector ... ");
+		String host = HOST;
+		int port = PORT;
+		int nbusers = NUMBER_OF_USERS_TO_INSERT;
+		
+		if (args.length > 0) {
+			host = args[0];
+		}
+		if (args.length > 1) {
+			port = Integer.valueOf(args[1]);
+		}
+		if (args.length > 2) {
+			nbusers = Integer.valueOf(args[2]);
+		}
+		
+		LOGGER.info("Starting up Injector for at max {} users ... ", nbusers);
 
 		File userFile = new File("../tools/1million_users_1.csv");
 		BufferedReader reader = new BufferedReader(new FileReader(userFile));
 		
 		for (int i = 0; i < CONCURRENT_WORKERS; i++) {
-			executor.execute(new InsertionWorker());
+			executor.execute(new InsertionWorker(host, port));
 		}
 		
 		long starttime = System.currentTimeMillis();
@@ -63,10 +77,10 @@ public class Inject1000001UsersMain {
 			String line;
 			int i = 0;
 			while ((line = reader.readLine()) != null) {
-				if (i >= NUMBER_OF_USERS_TO_INSERT) {
+				if (i >= nbusers) {
 					break;
 				}
-				fileLines.offer(line, 10, TimeUnit.SECONDS);
+				fileLines.offer(line, 100, TimeUnit.SECONDS);
 				i++;
 			}
 		} finally {
@@ -83,6 +97,14 @@ public class Inject1000001UsersMain {
 
 	private static class InsertionWorker implements Runnable {
 
+		private final String host;
+		private final int port;
+		
+		public InsertionWorker(final String host, final int port) {
+			this.host = host;
+			this.port = port;
+		}
+		
 		@Override
 		public void run() {
 
@@ -94,7 +116,7 @@ public class Inject1000001UsersMain {
 					String[] fields = line.split(",");
 					if (fields.length == 4) {
 	
-						String postUrl = "http://" + HOST + ":" + PORT
+						String postUrl = "http://" + host + ":" + port
 								+ "/api/user";
 	
 						String postBody = "{ \"firstname\" : \"" + fields[0]

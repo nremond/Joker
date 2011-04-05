@@ -17,6 +17,8 @@ public class LogoutController extends AbstractController {
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 			throws Exception {
 
+		
+		// TODO : remove user from cacheManager
 	}
 
 }

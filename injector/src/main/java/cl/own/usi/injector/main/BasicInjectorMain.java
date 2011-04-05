@@ -28,19 +28,19 @@ import com.ning.http.client.Response;
 
 /**
  * Multithreaded game injector.
- *
+ * 
  * Increase NBUSERS and NBQUESTIONS to add load.
- *
+ * 
  * Game creation, user insertion, question answers are based on
  * {@link HttpClient} (OIO), and question request is based on
  * {@link AsyncHttpClient} (NIO). {@link UserGameWorker#questionRecieved()} is
  * called asynchronously when the server has sent the question.
- *
+ * 
  * One {@link UserGameWorker} is instanciated for each user, and store the state
  * of this user.
- *
+ * 
  * @author bperroud
- *
+ * 
  */
 public class BasicInjectorMain {
 
@@ -61,9 +61,9 @@ public class BasicInjectorMain {
 	 */
 	private final static boolean FLUSHUSERSTABLE = true;
 	private final static int DEFAULT_NBUSERS = 10;
-	private final static int NBQUESTIONS = 17;
-	private final static int QUESTIONTIMEFRAME = 30;
-	private final static int SYNCHROTIME = 10;
+	private final static int NBQUESTIONS = 5;
+	private final static int QUESTIONTIMEFRAME = 60;
+	private final static int SYNCHROTIME = 12;
 	private final static int LOGINTIMEOUT = 60;
 
 	private static int NBUSERS = DEFAULT_NBUSERS;
@@ -77,7 +77,7 @@ public class BasicInjectorMain {
 	// Executor that will run players' sequences. Thread pool of number of
 	// processors * 2. No need to be bigger.
 	private final static ExecutorService executor = Executors
-			.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+			.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 4);
 	// List of players' workers
 	private static List<UserGameWorker> workers;
 
@@ -95,7 +95,10 @@ public class BasicInjectorMain {
 		ASYNC_HTTP_CLIENT_CONFIG_BUILDER
 				.setMaximumConnectionsPerHost(MAXNOFILES);
 		ASYNC_HTTP_CLIENT_CONFIG_BUILDER.setMaximumConnectionsTotal(MAXNOFILES);
+		ASYNC_HTTP_CLIENT_CONFIG_BUILDER.setRequestTimeoutInMs(Math.max(QUESTIONTIMEFRAME + SYNCHROTIME, LOGINTIMEOUT) * 1000 * 2);
+		ASYNC_HTTP_CLIENT_CONFIG_BUILDER.setConnectionTimeoutInMs(Math.min(QUESTIONTIMEFRAME + SYNCHROTIME, LOGINTIMEOUT) * 1000);
 	}
+	
 	private static final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
 			ASYNC_HTTP_CLIENT_CONFIG_BUILDER.build());
 
@@ -119,15 +122,19 @@ public class BasicInjectorMain {
 		}
 
 		workers = new ArrayList<BasicInjectorMain.UserGameWorker>(NBUSERS);
-		gamersHaveAnsweredAllQuestions = new CountDownLatch(1); // 1 and not
-																// NBUSERS is
-																// case we loose
-																// players in
-																// the way.
-		gameFinishedSynchroLatch = new CountDownLatch(NBUSERS);
+		
+		// 1 and not NBUSERS in case we loose players in the way.
+		gamersHaveAnsweredAllQuestions = new CountDownLatch(1); 
+		gameFinishedSynchroLatch = new CountDownLatch(1);
 
 		createGame();
 
+		try {
+			Thread.sleep(5);
+		} catch (InterruptedException e) {
+			return;
+		}
+		
 		insertUsers(NBUSERS);
 
 		try {
@@ -176,7 +183,7 @@ public class BasicInjectorMain {
 
 	/**
 	 * Insert players. Read players from 1million_users_1.csv file.
-	 *
+	 * 
 	 * @param limit
 	 * @throws IOException
 	 * @throws InterruptedException
@@ -250,7 +257,7 @@ public class BasicInjectorMain {
 
 	/**
 	 * Create game. All game parameters are given as constants.
-	 *
+	 * 
 	 * @throws HttpException
 	 * @throws IOException
 	 */
@@ -320,17 +327,17 @@ public class BasicInjectorMain {
 
 	/**
 	 * Players class that handle.
-	 *
+	 * 
 	 * This class is run by an {@link Executor}. The runnable function do one
 	 * step at a time, rescheduling itself after each step. This permit to
 	 * emulate concurrency with much lower threads.
-	 *
+	 * 
 	 * There is one step to login, one to request the question, one to answer it
 	 * (these two steps are repeated as much as needed by the game), and one
 	 * last step for the ranking.
-	 *
+	 * 
 	 * @author bperroud
-	 *
+	 * 
 	 */
 	private static class UserGameWorker implements Runnable {
 
@@ -353,8 +360,10 @@ public class BasicInjectorMain {
 		private final ExecutorService executor;
 
 		private final Random random = new Random();
-		private boolean currentQuestionRequested = false;
+		private volatile boolean currentQuestionRequested = false;
 
+		private final HttpClient httpClient = new HttpClient();
+		
 		public UserGameWorker(int questiontimeframe, int synchrotime,
 				int numquestions, String email, String password,
 				ExecutorService executor) {
@@ -369,7 +378,6 @@ public class BasicInjectorMain {
 		public void run() {
 
 			try {
-				HttpClient httpClient = new HttpClient();
 
 				// If user is not logged, go to the login process.
 				if (sessionId == null) {
@@ -409,7 +417,9 @@ public class BasicInjectorMain {
 							}
 
 							loginOk = true;
-
+							
+							LOGGER.info("Login ok for {} ", email);
+							
 						} else {
 							LOGGER.warn(
 									"Problem at login {} with response code {}",
@@ -422,7 +432,8 @@ public class BasicInjectorMain {
 
 					long delta = System.currentTimeMillis() - starttime;
 					if (delta > SLA) {
-						LOGGER.warn("[SLA] Login for user {} took {} ms", email, delta);
+						LOGGER.warn("[SLA] Login for user {} took {} ms",
+								email, delta);
 					}
 
 					if (loginOk) {
@@ -446,7 +457,7 @@ public class BasicInjectorMain {
 								.setHeader("Cookie", cookieHeader.getValue())
 								.execute(
 										new MyAsyncHandler(this,
-												currentQuestion));
+												currentQuestion, sessionId));
 
 					} else {
 
@@ -483,7 +494,10 @@ public class BasicInjectorMain {
 
 						long delta = System.currentTimeMillis() - starttime;
 						if (delta > SLA) {
-							LOGGER.warn("[SLA] Answer question {} for user {} took {} ms", new Object[] {currentQuestion, email, delta});
+							LOGGER.warn(
+									"[SLA] Answer question {} for user {} took {} ms",
+									new Object[] { currentQuestion, email,
+											delta });
 						}
 
 						currentQuestion++;
@@ -510,8 +524,11 @@ public class BasicInjectorMain {
 
 						if (httpResponseCode == 200) {
 
-							LOGGER.info("Everything went fine for user {}",
-									email);
+							String body = get.getResponseBodyAsString();
+
+							LOGGER.info(
+									"Everything went fine for user {} : {}",
+									email, body);
 
 						} else {
 							LOGGER.error(
@@ -525,7 +542,9 @@ public class BasicInjectorMain {
 
 					long delta = System.currentTimeMillis() - starttime;
 					if (delta > SLA) {
-						LOGGER.warn("[SLA] Ranking request for user {} took {} ms", email, delta);
+						LOGGER.warn(
+								"[SLA] Ranking request for user {} took {} ms",
+								email, delta);
 					}
 
 					gameFinishedSynchroLatch.countDown();
@@ -533,13 +552,13 @@ public class BasicInjectorMain {
 				}
 
 			} catch (IOException e) {
-				e.printStackTrace();
+				LOGGER.error("IOException", e);
 			}
 		}
 
 		/**
 		 * Callback function when the question is received.
-		 *
+		 * 
 		 */
 		public void questionReceived(int questionRequested) {
 
@@ -556,18 +575,21 @@ public class BasicInjectorMain {
 	/**
 	 * {@link AsyncHttpClient} handler that will call
 	 * {@link UserGameWorker#questionRecieved()} when the request returns.
-	 *
+	 * 
 	 * @author bperroud
-	 *
+	 * 
 	 */
 	private static class MyAsyncHandler extends AsyncCompletionHandler<Integer> {
 
 		private final UserGameWorker worker;
 		private final int questionRequested;
+		private final String userId;
 
-		public MyAsyncHandler(UserGameWorker worker, int questionRequested) {
+		public MyAsyncHandler(UserGameWorker worker, int questionRequested,
+				String userId) {
 			this.worker = worker;
 			this.questionRequested = questionRequested;
+			this.userId = userId;
 		}
 
 		@Override
@@ -575,8 +597,20 @@ public class BasicInjectorMain {
 
 			if (response != null && response.getStatusCode() == 200) {
 				worker.questionReceived(questionRequested);
+				return 200;
+			} else {
+				LOGGER.warn(
+						"Question {} request completed, but recieve wrong response code {} for user {}",
+						new Object[] { questionRequested,
+								response.getStatusCode(), userId });
+				return -1;
 			}
-			return 200;
+		}
+
+		@Override
+		public void onThrowable(Throwable t) {
+			super.onThrowable(t);
+			LOGGER.error("Throwable on getting question", t);
 		}
 
 	}

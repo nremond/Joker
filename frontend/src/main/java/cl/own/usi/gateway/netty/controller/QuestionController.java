@@ -12,8 +12,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import cl.own.usi.gateway.client.UserAndScore;
-import cl.own.usi.gateway.client.WorkerClient;
+import cl.own.usi.cache.CachedUser;
 import cl.own.usi.gateway.netty.QuestionWorker;
 import cl.own.usi.model.Question;
 import cl.own.usi.service.GameService;
@@ -33,9 +32,6 @@ public class QuestionController extends AbstractController {
 	@Autowired
 	private GameService gameService;
 
-	@Autowired
-	private WorkerClient workerClient;
-
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 			throws Exception {
@@ -45,14 +41,14 @@ public class QuestionController extends AbstractController {
 		uri = uri.substring(URI_API_LENGTH);
 
 		if (request.getMethod() == HttpMethod.GET) {
-			String userId = getCookie(request, COOKIE_AUTH_NAME);
+			final String userId = getCookie(request, COOKIE_AUTH_NAME);
 
 			if (userId == null) {
 				writeResponse(e, UNAUTHORIZED);
 				getLogger().info("User not authorized");
 			} else {
 				try {
-					int questionNumber = Integer.parseInt(uri
+					final int questionNumber = Integer.parseInt(uri
 							.substring(URI_QUESTION_LENGTH));
 
 					if (!gameService.validateQuestionToRequest(questionNumber)) {
@@ -61,22 +57,30 @@ public class QuestionController extends AbstractController {
 								"Invalid question number " + questionNumber);
 					} else {
 
-						UserAndScore userAndScore = workerClient
-								.validateUserAndInsertQuestionRequest(userId,
-										questionNumber);
-
-						if (userAndScore == null
-								|| userAndScore.getUserId() == null) {
-							writeResponse(e, BAD_REQUEST);
-							getLogger().info("Invalid userId {}", userId);
+						final CachedUser cachedUser = getCacheManager().loadUser(userId);
+						
+						if (cachedUser == null) {
+							writeResponse(e, UNAUTHORIZED);
+							getLogger().info("User not authorized");
+							return;
+//						}
+//						
+//						UserAndScore userAndScore = workerClient
+//								.validateUserAndInsertQuestionRequest(userId,
+//										questionNumber);
+//
+//						if (userAndScore == null
+//								|| userAndScore.getUserId() == null) {
+//							writeResponse(e, UNAUTHORIZED);
+//							getLogger().info("Invalid userId {}", userId);
 						} else {
 							getLogger().debug("Get Question {} for user {}",
 									questionNumber, userId);
 
-							Question question = gameService
+							final Question question = gameService
 									.getQuestion(questionNumber);
 
-							StringBuilder sb = new StringBuilder("{");
+							final StringBuilder sb = new StringBuilder("{");
 							sb.append("\"question\":\"")
 									.append(question.getLabel()).append("\"");
 							int i = 0;
@@ -89,8 +93,7 @@ public class QuestionController extends AbstractController {
 
 							gameService
 									.scheduleQuestionReply(new QuestionWorker(
-											questionNumber, userAndScore
-													.getScore(), e, sb
+											questionNumber, cachedUser.getScore(), e, sb
 													.toString(), gameService));
 						}
 					}

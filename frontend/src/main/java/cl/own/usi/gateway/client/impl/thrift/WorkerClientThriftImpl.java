@@ -16,9 +16,12 @@ import org.apache.thrift.transport.TTransportException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import cl.own.usi.gateway.client.ExtendedUserInfoAndScore;
 import cl.own.usi.gateway.client.UserAndScore;
 import cl.own.usi.gateway.client.UserAndScoreAndAnswer;
+import cl.own.usi.gateway.client.BeforeAndAfterScores;
 import cl.own.usi.gateway.client.UserInfoAndScore;
+import cl.own.usi.gateway.client.UserLogin;
 import cl.own.usi.gateway.client.WorkerClient;
 import cl.own.usi.gateway.client.pool.MultiPool;
 import cl.own.usi.gateway.client.pool.ObjectPoolFactory;
@@ -33,9 +36,9 @@ import cl.own.usi.thrift.WorkerRPC.Client;
 
 /**
  * Thrift client.
- *
+ * 
  * @author bperroud
- *
+ * 
  */
 @Component
 public class WorkerClientThriftImpl implements WorkerClient {
@@ -98,15 +101,19 @@ public class WorkerClientThriftImpl implements WorkerClient {
 	}
 
 	@Override
-	public String loginUser(final String email, final String password) {
+	public UserLogin loginUser(final String email, final String password) {
 
-		return new ThriftAction<String>(pools) {
+		return new ThriftAction<UserLogin>(pools) {
 
 			@Override
-			protected String action(Client client) throws TException {
-				return client.loginUser(email, password);
+			protected UserLogin action(Client client) throws TException {
+				cl.own.usi.thrift.UserLogin userLogin = client.loginUser(email,
+						password);
+
+				return map(userLogin);
 			}
 		}.doAction();
+
 	}
 
 	@Override
@@ -170,11 +177,8 @@ public class WorkerClientThriftImpl implements WorkerClient {
 				final List<cl.own.usi.thrift.UserInfoAndScore> users = client
 						.get50Before(userId);
 
-				final List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(
-						users.size());
-				for (cl.own.usi.thrift.UserInfoAndScore user : users) {
-					retUsers.add(map(user));
-				}
+				final List<UserInfoAndScore> retUsers = map(users);
+
 				return retUsers;
 			}
 		}.doAction();
@@ -191,11 +195,8 @@ public class WorkerClientThriftImpl implements WorkerClient {
 				final List<cl.own.usi.thrift.UserInfoAndScore> users = client
 						.get50After(userId);
 
-				final List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(
-						users.size());
-				for (cl.own.usi.thrift.UserInfoAndScore user : users) {
-					retUsers.add(map(user));
-				}
+				final List<UserInfoAndScore> retUsers = map(users);
+
 				return retUsers;
 			}
 		}.doAction();
@@ -273,8 +274,26 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		}
 	}
 
+	private ExtendedUserInfoAndScore map(
+			final cl.own.usi.thrift.ExtendedUserInfoAndScore extendedUserInfoAndScore) {
+		if (extendedUserInfoAndScore == null) {
+			return null;
+		} else {
+			final ExtendedUserInfoAndScore newExtendedUserInfoAndScore = new ExtendedUserInfoAndScore(
+					extendedUserInfoAndScore.userId,
+					extendedUserInfoAndScore.score,
+					extendedUserInfoAndScore.email,
+					extendedUserInfoAndScore.firstname,
+					extendedUserInfoAndScore.lastname,
+					extendedUserInfoAndScore.isLogged,
+					extendedUserInfoAndScore.lastQuestionAnwered);
+			return newExtendedUserInfoAndScore;
+		}
+	}
+
 	private UserAndScoreAndAnswer map(
-			cl.own.usi.thrift.UserAndScore userAndScore, boolean answer) {
+			final cl.own.usi.thrift.UserAndScore userAndScore,
+			final boolean answer) {
 		if (userAndScore == null) {
 			return null;
 		} else {
@@ -285,7 +304,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 	}
 
 	private UserInfoAndScore map(
-			cl.own.usi.thrift.UserInfoAndScore userInfoAndScore) {
+			final cl.own.usi.thrift.UserInfoAndScore userInfoAndScore) {
 		if (userInfoAndScore == null) {
 			return null;
 		} else {
@@ -294,6 +313,40 @@ public class WorkerClientThriftImpl implements WorkerClient {
 					userInfoAndScore.email, userInfoAndScore.firstname,
 					userInfoAndScore.lastname);
 			return newUserInfoAndScore;
+		}
+	}
+
+	private List<UserInfoAndScore> map(
+			final List<cl.own.usi.thrift.UserInfoAndScore> userInfoAndScores) {
+
+		final List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(
+				userInfoAndScores.size());
+		for (cl.own.usi.thrift.UserInfoAndScore user : userInfoAndScores) {
+			retUsers.add(map(user));
+		}
+		return retUsers;
+
+	}
+
+	private BeforeAndAfterScores map(
+			final cl.own.usi.thrift.BeforeAndAfterScores beforeAndAfterScores) {
+		if (beforeAndAfterScores == null) {
+			return null;
+		} else {
+			final BeforeAndAfterScores newBeforeAndAfterScores = new BeforeAndAfterScores(
+					map(beforeAndAfterScores.beforeUsers),
+					map(beforeAndAfterScores.afterUsers));
+			return newBeforeAndAfterScores;
+		}
+	}
+
+	private UserLogin map(final cl.own.usi.thrift.UserLogin userLogin) {
+		if (userLogin == null) {
+			return null;
+		} else {
+			final UserLogin newUserLogin = new UserLogin(userLogin.userId,
+					userLogin.alreadyLogged);
+			return newUserLogin;
 		}
 	}
 
@@ -410,6 +463,38 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		public int getPort() {
 			return port;
 		}
+
+	}
+
+	@Override
+	public BeforeAndAfterScores get50BeforeAnd50After(final String userId) {
+
+		return new ThriftAction<BeforeAndAfterScores>(pools) {
+
+			@Override
+			protected BeforeAndAfterScores action(Client client)
+					throws TException {
+				final cl.own.usi.thrift.BeforeAndAfterScores beforeAndAfterScores = client
+						.get50BeforeAnd50After(userId);
+				return map(beforeAndAfterScores);
+			}
+		}.doAction();
+
+	}
+
+	@Override
+	public ExtendedUserInfoAndScore getExtendedUserInfo(final String userId) {
+
+		return new ThriftAction<ExtendedUserInfoAndScore>(pools) {
+
+			@Override
+			protected ExtendedUserInfoAndScore action(Client client)
+					throws TException {
+				final cl.own.usi.thrift.ExtendedUserInfoAndScore beforeAndAfterScores = client
+						.getExtendedUserInfo(userId);
+				return map(beforeAndAfterScores);
+			}
+		}.doAction();
 
 	}
 

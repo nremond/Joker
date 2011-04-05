@@ -6,7 +6,7 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
 public class User implements Serializable {
-
+	
 	private static final long serialVersionUID = 1L;
 
 	private String userId;
@@ -15,7 +15,7 @@ public class User implements Serializable {
 	private String firstname;
 	private String lastname;
 	private int score = 0;
-
+	
 	public String getUserId() {
 		return userId;
 	}

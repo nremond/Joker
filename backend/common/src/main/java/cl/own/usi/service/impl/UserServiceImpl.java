@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import cl.own.usi.dao.ScoreDAO;
 import cl.own.usi.dao.UserDAO;
+import cl.own.usi.exception.UserAlreadyLoggedException;
 import cl.own.usi.model.Answer;
 import cl.own.usi.model.AuditAnswer;
 import cl.own.usi.model.AuditAnswers;
@@ -41,8 +42,7 @@ public class UserServiceImpl implements UserService {
 		}
 	}
 
-	@Override
-	public String login(String email, String password) {
+	public String login(String email, String password) throws UserAlreadyLoggedException {
 
 		if (email == null || password == null) {
 			return null;
@@ -51,29 +51,26 @@ public class UserServiceImpl implements UserService {
 		}
 	}
 
-	// TODO String userId in the signature
-	@Override
 	public void insertRequest(String userId, int questionNumber) {
 		userDAO.insertRequest(userId, questionNumber);
 	}
 
-	@Override
 	public void insertAnswer(String userId, int questionNumber,
 			Integer answerNumber) {
 
-		List<Answer> answers = userDAO.getAnswers(userId);
-
-		if (answers.size() >= questionNumber
-				&& answers.get(questionNumber - 1) != null) {
-			throw new IllegalArgumentException(
-					"User has already answered this question.");
-		} else {
+//		List<Answer> answers = userDAO.getAnswers(userId);
+//
+//		if (answers.size() >= questionNumber
+//				&& answers.get(questionNumber - 1) != null) {
+//			throw new IllegalArgumentException(
+//					"User has already answered this question.");
+//		} else {
 			Answer answer = new Answer();
 			answer.setQuestionNumber(questionNumber);
 			answer.setUserId(userId);
 			answer.setAnswerNumber(answerNumber);
 			userDAO.insertAnswer(answer);
-		}
+//		}
 	}
 
 	@Override

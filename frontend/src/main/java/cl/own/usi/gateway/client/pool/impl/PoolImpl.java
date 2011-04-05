@@ -97,7 +97,7 @@ public class PoolImpl<V> implements Pool<V> {
 		}
 	}
 
-	public void release(V object) throws PoolException {
+	public void release(final V object) throws PoolException {
 		if (borrowedObjects.remove(object)) {
 			
 			if (objectValidationPolicy.validateOnRelease()
@@ -111,19 +111,19 @@ public class PoolImpl<V> implements Pool<V> {
 		}
 	}
 
-	public void invalidate(V object) {
+	public void invalidate(final V object) {
 		if (borrowedObjects.remove(object)) {
 			invalidate0(object);
 		}
 	}
 	
-	private void invalidate0(V object) {
+	private void invalidate0(final V object) {
 		factory.destroy(object);
 		currentPoolSize.decrementAndGet();
 	}
 	
 
-	public void setFactory(ObjectPoolFactory<V> factory) {
+	public void setFactory(final ObjectPoolFactory<V> factory) {
 		if (this.factory != null) {
 			throw new IllegalArgumentException();
 		} else {

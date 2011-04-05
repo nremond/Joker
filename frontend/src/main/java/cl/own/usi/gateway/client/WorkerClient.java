@@ -20,7 +20,7 @@ public interface WorkerClient {
 
 	UserAndScore validateUserAndGetScore(String userId);
 
-	String loginUser(String email, String password);
+	UserLogin loginUser(String email, String password);
 
 	boolean insertUser(String email, String password, String firstname,
 			String lastname);
@@ -29,9 +29,13 @@ public interface WorkerClient {
 
 	List<UserInfoAndScore> getTop100();
 
+	@Deprecated
 	List<UserInfoAndScore> get50Before(String userId);
 
+	@Deprecated
 	List<UserInfoAndScore> get50After(String userId);
+	
+	BeforeAndAfterScores get50BeforeAnd50After(String userId);
 
 	boolean addWorkerNode(String host, int port);
 
@@ -39,4 +43,6 @@ public interface WorkerClient {
 
 	String getAnswersAsJson(String email, Integer questionNumber, Game game);
 
+	ExtendedUserInfoAndScore getExtendedUserInfo(String userId);
+	
 }

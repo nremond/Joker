@@ -2,6 +2,7 @@ package cl.own.usi.dao;
 
 import java.util.List;
 
+import cl.own.usi.exception.UserAlreadyLoggedException;
 import cl.own.usi.model.Answer;
 import cl.own.usi.model.User;
 
@@ -33,7 +34,7 @@ public interface UserDAO {
 	 *
 	 * @return The userId is the credentials are good, null otherwise
 	 */
-	String login(String email, String password);
+	String login(String email, String password) throws UserAlreadyLoggedException;
 
 	void logout(String userId);
 

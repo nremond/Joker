@@ -19,7 +19,10 @@ import org.jboss.netty.handler.codec.http.CookieDecoder;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+
+import cl.own.usi.cache.CacheManager;
 
 /**
  * Abstract Controller.
@@ -30,6 +33,9 @@ import org.springframework.core.io.Resource;
  */
 public abstract class AbstractController {
 
+	@Autowired
+	CacheManager cacheManager;
+	
 	protected static final String COOKIE_AUTH_NAME = "session_key";
 	public static final String URI_API = "/api";
 	public static final int URI_API_LENGTH = URI_API.length();
@@ -95,4 +101,7 @@ public abstract class AbstractController {
 		writeHtml(e, htmlTemplate, mapping);
 	}
 
+	protected CacheManager getCacheManager() {
+		return cacheManager;
+	}
 }

@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -20,9 +21,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import cl.own.usi.dao.GameDAO;
+import cl.own.usi.gateway.client.UserInfoAndScore;
 import cl.own.usi.gateway.client.WorkerClient;
 import cl.own.usi.gateway.netty.QuestionWorker;
 import cl.own.usi.gateway.utils.ExecutorUtil;
+import cl.own.usi.gateway.utils.ScoresHelper;
 import cl.own.usi.gateway.utils.Twitter;
 import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
@@ -63,6 +66,10 @@ public class GameServiceImpl implements GameService {
 
 	private boolean twitt = false;
 
+	private String top100AsString;
+
+	private final AtomicBoolean gameRunning = new AtomicBoolean(false);
+
 	@Value(value = "${frontend.twitt:false}")
 	public void setTwitt(boolean twitt) {
 		this.twitt = twitt;
@@ -71,6 +78,10 @@ public class GameServiceImpl implements GameService {
 	public boolean insertGame(int usersLimit, int questionTimeLimit,
 			int pollingTimeLimit, int synchroTimeLimit, int numberOfQuestion,
 			List<Map<String, Map<String, Boolean>>> questions) {
+
+		if (!gameRunning.compareAndSet(false, true)) {
+			return false;
+		}
 
 		resetPreviousGame();
 
@@ -99,7 +110,6 @@ public class GameServiceImpl implements GameService {
 				QuestionSynchronization questionSynchronization = entry
 						.getValue();
 				questionSynchronization.questionReadyLatch.countDown();
-				// TODO : remove thread from pool.
 			}
 		}
 	}
@@ -157,8 +167,12 @@ public class GameServiceImpl implements GameService {
 		if (questionSync == null) {
 			return false;
 		} else {
-			boolean enter = questionSync.questionReadyLatch.await(gameDAO
-					.getGame().getPollingTimeLimit(), TimeUnit.SECONDS);
+			int timeToWait = gameDAO.getGame().getQuestionTimeLimit() + gameDAO.getGame().getSynchroTimeLimit();
+			if (questionNumber == 1) {
+				timeToWait = gameDAO.getGame().getPollingTimeLimit();
+			}
+			boolean enter = questionSync.questionReadyLatch.await(
+					timeToWait + 5, TimeUnit.SECONDS);
 			return enter && gameSynchronization.currentQuestionRunning;
 		}
 	}
@@ -184,6 +198,7 @@ public class GameServiceImpl implements GameService {
 		@Override
 		public void run() {
 
+			try {
 			LOGGER.debug("Start game");
 
 			try {
@@ -285,14 +300,17 @@ public class GameServiceImpl implements GameService {
 
 			workerClient.startRankingsComputation();
 
+			List<UserInfoAndScore> top100 = workerClient.getTop100();
+			StringBuilder sb = new StringBuilder();
+			ScoresHelper.appendUsersScores(top100, sb);
+			top100AsString = sb.toString();
+
 			long stoptime = System.currentTimeMillis();
 
-			LOGGER.error("Ranking computation done in {} ms.",
-					(stoptime - starttime));
+			LOGGER.error("Ranking computation and top100 query done in {} ms.", (stoptime - starttime));
 
-			long synchrotime = TimeUnit.SECONDS
-					.toMillis(gameSynchronization.game.getSynchroTimeLimit())
-					+ starttime - stoptime;
+			long synchrotime = (gameSynchronization.game
+			.getSynchroTimeLimit() * 1000) + starttime - stoptime;
 			if (synchrotime > 0) {
 				try {
 					// mmmh, weird specs again...
@@ -313,9 +331,10 @@ public class GameServiceImpl implements GameService {
 				twitter.twitt(String.format(TWITTER_MESSAGE,
 						gameSynchronization.game.getUsersLimit()));
 			}
-
+			} finally {
+				gameRunning.set(false);
+			}
 		}
-
 	}
 
 	@Override
@@ -462,4 +481,10 @@ public class GameServiceImpl implements GameService {
 		return gameSynchronization != null
 				&& gameSynchronization.rankingRequestAllowed;
 	}
+
+	@Override
+	public String getTop100AsString() {
+		return top100AsString;
+	}
+
 }
