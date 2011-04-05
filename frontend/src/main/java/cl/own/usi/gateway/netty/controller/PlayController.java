@@ -1,6 +1,7 @@
 package cl.own.usi.gateway.netty.controller;
 
 import static cl.own.usi.gateway.netty.ResponseHelper.writeResponse;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_IMPLEMENTED;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 
@@ -38,6 +39,7 @@ public class PlayController extends AbstractController {
 
 	final private static String NB_QUESTIONS = "%NB_QUESTIONS%";
 	final private static String QUESTION_TIMEOUT = "%QUESTION_TIMEOUT%";
+	final private static String RANKING_WAITING_TIME = "%RANKING_WAITING_TIME%";
 
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
@@ -53,15 +55,22 @@ public class PlayController extends AbstractController {
 			} else {
 				Game game = gameDAO.getGame();
 
-				assert game != null;
+				if (game != null) {
+					Map<String, String> mapping = new HashMap<String, String>();
+					mapping.put(NB_QUESTIONS,
+							String.valueOf(game.getNumberOfQuestion()));
+					mapping.put(QUESTION_TIMEOUT,
+							String.valueOf(game.getQuestionTimeLimit() * 1000));
+					mapping.put(RANKING_WAITING_TIME, String.valueOf((game
+							.getQuestionTimeLimit() + game
+							.getSynchroTimeLimit()) * 1000));
 
-				Map<String, String> mapping = new HashMap<String, String>();
-				mapping.put(NB_QUESTIONS,
-						String.valueOf(game.getNumberOfQuestion()));
-				mapping.put(QUESTION_TIMEOUT,
-						String.valueOf(game.getQuestionTimeLimit() * 1000));
+					writeHtml(e, playTemplate, mapping);
+				} else {
+					writeResponse(e, BAD_REQUEST);
+					getLogger().info("Wrong method");
+				}
 
-				writeHtml(e, playTemplate, mapping);
 			}
 		} else {
 			writeResponse(e, NOT_IMPLEMENTED);

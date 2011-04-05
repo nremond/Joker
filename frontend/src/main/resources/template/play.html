@@ -24,8 +24,36 @@
 		// Timeout for the player to answer the question
 		var answer_timeout;
 		
+		// Register a callback function for the question form
+		$("#questionForm").submit(function(event) {
+
+			// stop form from submitting normally
+			event.preventDefault(); 
+			
+			// stop the timeout
+			clearTimeout(answer_timeout);
+			
+			var	answer = $('input:radio[name=answer]:checked').val();
+			
+			$.ajax({
+				url :  '/api/answer/' + questionNumber,
+				data : '{ "answer" : ' + answer +' }',
+				type : 'POST',
+				dataType: 'json',
+				success: function(data, textStatus, jqXHR) {
+					answer_callback(data, textStatus, jqXHR);
+				}
+			});						
+		});
+		
+		// is the game finished so that we can ask for the ranking ?
+		var ranking_authorized = false;
+		var ranking_interval;
+		
 		// Start the game
 		ask_question();
+	
+	
 	
 		function ask_question() {
 			
@@ -40,7 +68,17 @@
 					}
 				});
 			} else {
-			
+				// try to call the ranking until we are allowed to
+				ranking_interval = setInterval("call_ranking()", %RANKING_WAITING_TIME%);
+			}
+		}
+		
+		function call_ranking() {
+		
+			if(ranking_authorized){
+		
+				ranking_interval(ranking_timeout);
+		
 				$.ajax({
 					url: '/api/ranking',
 					type: 'GET',
@@ -49,6 +87,8 @@
 						ranking_callback(data, textStatus, jqXHR);
 					}
 				});
+			} else {
+				// do nothing
 			}
 		}
 		
@@ -114,31 +154,12 @@
 			
 			
 			// Set a local timeout (in milliseconds) for the request.
-			answer_timeout = setTimeout("timeout_callback()", %QUESTION_TIMEOUT%);
-				
+			answer_timeout = setTimeout("timeout_callback()", %QUESTION_TIMEOUT%);	
 			
-			$("#questionForm").submit(function(event) {
-
-				// stop form from submitting normally
-				event.preventDefault(); 
-			
-				// stop the timeout
-				clearTimeout(answer_timeout);
-			
-				var	answer = $('input:radio[name=answer]:checked').val();
-			
-				$.ajax({
-					url :  '/api/answer/' + questionNumber,
-					data : '{ "answer" : ' + answer +' }',
-					type : 'POST',
-					dataType: 'json',
-					success: function(data, textStatus, jqXHR) {
-						answer_callback(data, textStatus, jqXHR);
-					}
-				});
-						
-			});
-			
+			if(questionNumber = %NB_QUESTIONS%) {
+				// Last question, launch the timeout to authorize the ranking of the users
+				setTimeout(function() { ranking_authorized = true; }, %RANKING_WAITING_TIME%);
+			}
 		}
 		
 		
