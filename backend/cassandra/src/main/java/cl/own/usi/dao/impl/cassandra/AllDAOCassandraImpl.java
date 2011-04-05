@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import me.prettyprint.cassandra.model.AllOneConsistencyLevelPolicy;
@@ -568,11 +569,14 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	private void ensureOrderedScoresLoaded() {
 
 		if (orderedScores.isEmpty()) {
-			scoresComputationLock.lock();
-			if (orderedScores.isEmpty()) {
-				computeOrderedScores();
-			}
-			scoresComputationLock.unlock();
+			try {
+				if (scoresComputationLock.tryLock(60, TimeUnit.SECONDS)) {
+					if (orderedScores.isEmpty()) {
+						computeOrderedScores();
+					}
+					scoresComputationLock.unlock();
+				}
+			} catch (InterruptedException e) {}
 		}
 	}
 
