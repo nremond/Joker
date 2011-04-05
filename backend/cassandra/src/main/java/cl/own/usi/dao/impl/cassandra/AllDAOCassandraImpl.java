@@ -64,7 +64,6 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	private List<Integer> orderedScores = Collections.<Integer> emptyList();
 	private List<Integer> reverseOrderedScores = Collections
 			.<Integer> emptyList();
-	private final List<User> top100 = new ArrayList<User>(100);
 
 	private final ReentrantLock scoresComputationLock = new ReentrantLock();
 
@@ -84,12 +83,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	
 	@Override
 	public List<User> getTop(int limit) {
-		
-		if (limit == 100) {
-			return top100;
-		} else {
-			return computeTop(limit);
-		}
+	
+		return computeTop(limit);
 
 	}
 
@@ -216,7 +211,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 					new Object[] { user.getEmail(),
 							result.getExecutionTimeMicro(), userId });
 		} catch (HectorException e) {
-			logger.error("An error occured while inserting user", e);
+			logger.error("An error occured while inserting user " + user.getEmail(), e);
 			return false;
 		}
 		return true;
@@ -466,25 +461,12 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 		orderedScores = Collections.<Integer> emptyList();
 		reverseOrderedScores = Collections.<Integer> emptyList();
 		
-		top100.clear();
-		
 		logger.debug("Keyspace flushed in {} ms.", (System.currentTimeMillis() - starttime));
 		
 	}
 
 	@Override
 	public void computeRankings() {
-
-		insertRankings();
-
-		List<User> newTop100 = computeTop(100);
-		for (User user : newTop100) {
-			top100.add(user);
-		}
-		
-	}
-
-	private void insertRankings() {
 
 		int limit = 2000;
 		String start = DEFAULT_START_KEY;

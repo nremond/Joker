@@ -13,6 +13,8 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -43,10 +45,12 @@ import cl.own.usi.thrift.WorkerRPC.Client;
 @Component
 public class WorkerClientThriftImpl implements WorkerClient {
 
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+	
 	@Autowired
 	private GameService gameService;
 
-	private MultiPool<WorkerHost, Client> pools = new ThriftMultiPool();
+	private final MultiPool<WorkerHost, Client> pools = new ThriftMultiPool();
 
 	@Override
 	public UserAndScore validateUserAndInsertQuestionRequest(
@@ -55,7 +59,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		return new ThriftAction<UserAndScore>(pools) {
 
 			@Override
-			protected UserAndScore action(Client client) throws TException {
+			protected UserAndScore action(final Client client) throws TException {
 				final cl.own.usi.thrift.UserAndScore userAndScore = client
 						.validateUserAndInsertQuestionRequest(userId,
 								questionNumber);
@@ -71,7 +75,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		return new ThriftAction<UserAndScoreAndAnswer>(pools) {
 
 			@Override
-			protected UserAndScoreAndAnswer action(Client client)
+			protected UserAndScoreAndAnswer action(final Client client)
 					throws TException {
 				boolean answerCorrect = gameService.isAnswerCorrect(
 						questionNumber, answer);
@@ -91,7 +95,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		return new ThriftAction<UserAndScore>(pools) {
 
 			@Override
-			protected UserAndScore action(Client client) throws TException {
+			protected UserAndScore action(final Client client) throws TException {
 				cl.own.usi.thrift.UserAndScore userAndScore = client
 						.validateUserAndGetScore(userId);
 				return map(userAndScore);
@@ -106,7 +110,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		return new ThriftAction<UserLogin>(pools) {
 
 			@Override
-			protected UserLogin action(Client client) throws TException {
+			protected UserLogin action(final Client client) throws TException {
 				cl.own.usi.thrift.UserLogin userLogin = client.loginUser(email,
 						password);
 
@@ -123,13 +127,14 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		final Boolean isInserted = new ThriftAction<Boolean>(pools) {
 
 			@Override
-			protected Boolean action(Client client) throws TException {
+			protected Boolean action(final Client client) throws TException {
 				int retry = 2;
 				do {
 					if (client.insertUser(email, password, firstname, lastname)) {
 						return true;
 					} else {
 						retry--;
+						logger.warn("Insertion failed, for user {}, need to retry", email);
 					}
 				} while (retry > 0);
 				return false;
@@ -146,7 +151,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		new ThriftAction<Boolean>(pools) {
 
 			@Override
-			protected Boolean action(Client client) throws TException {
+			protected Boolean action(final Client client) throws TException {
 				client.flushUsers();
 				return Boolean.TRUE;
 			}
@@ -159,10 +164,12 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		return new ThriftAction<List<UserInfoAndScore>>(pools) {
 
 			@Override
-			protected List<UserInfoAndScore> action(Client client)
+			protected List<UserInfoAndScore> action(final Client client)
 					throws TException {
 				final List<cl.own.usi.thrift.UserInfoAndScore> users = client
 						.getTop100();
+				
+				logger.debug("Returned {} users", users.size());
 
 				final List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(
 						users.size());
@@ -380,8 +387,8 @@ public class WorkerClientThriftImpl implements WorkerClient {
 			try {
 				transport = new TSocket(workerHost.getHost(),
 						workerHost.getPort());
-				TProtocol protocol = new TBinaryProtocol(transport);
-				Client client = new Client(protocol);
+				final TProtocol protocol = new TBinaryProtocol(transport);
+				final Client client = new Client(protocol);
 				transport.open();
 				transports.put(client, transport);
 				return client;
@@ -391,7 +398,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		}
 
 		@Override
-		public boolean validate(Client object) throws FactoryException {
+		public boolean validate(final Client object) throws FactoryException {
 			TTransport transport = transports.get(object);
 			if (transport != null) {
 				return transport.isOpen();
@@ -401,7 +408,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		}
 
 		@Override
-		public void destroy(Client object) {
+		public void destroy(final Client object) {
 
 			TTransport transport = transports.remove(object);
 			if (transport != null) {
@@ -417,7 +424,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		private final Random r = new Random();
 
 		@Override
-		protected Pool<Client> createPool(WorkerHost key) {
+		protected Pool<Client> createPool(final WorkerHost key) {
 			Pool<Client> pool = new PoolImpl<Client>();
 			ObjectPoolFactory<Client> factory = new ThriftClientFactory(key);
 			pool.setFactory(factory);
@@ -437,9 +444,9 @@ public class WorkerClientThriftImpl implements WorkerClient {
 	static final class WorkerHost {
 		private final String host;
 		private final int port;
-		private static ConcurrentMap<String, WorkerHost> workerHosts = new ConcurrentHashMap<String, WorkerHost>();
+		private static final ConcurrentMap<String, WorkerHost> workerHosts = new ConcurrentHashMap<String, WorkerHost>();
 
-		public static WorkerHost create(String host, int port) {
+		public static WorkerHost create(final String host, final int port) {
 			String key = key(host, port);
 
 			if (!workerHosts.containsKey(key)) {
@@ -480,7 +487,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		return new ThriftAction<BeforeAndAfterScores>(pools) {
 
 			@Override
-			protected BeforeAndAfterScores action(Client client)
+			protected BeforeAndAfterScores action(final Client client)
 					throws TException {
 				final cl.own.usi.thrift.BeforeAndAfterScores beforeAndAfterScores = client
 						.get50BeforeAnd50After(userId);
@@ -496,7 +503,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		return new ThriftAction<ExtendedUserInfoAndScore>(pools) {
 
 			@Override
-			protected ExtendedUserInfoAndScore action(Client client)
+			protected ExtendedUserInfoAndScore action(final Client client)
 					throws TException {
 				final cl.own.usi.thrift.ExtendedUserInfoAndScore beforeAndAfterScores = client
 						.getExtendedUserInfo(userId);

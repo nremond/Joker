@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -66,7 +67,7 @@ public class GameServiceImpl implements GameService {
 
 	private boolean twitt = false;
 
-	private String top100AsString;
+	private AtomicReference<String> top100AsString = new AtomicReference<String>();
 
 	private final AtomicBoolean gameRunning = new AtomicBoolean(false);
 
@@ -305,7 +306,7 @@ public class GameServiceImpl implements GameService {
 				List<UserInfoAndScore> top100 = workerClient.getTop100();
 				StringBuilder sb = new StringBuilder();
 				ScoresHelper.appendUsersScores(top100, sb);
-				top100AsString = sb.toString();
+				top100AsString.set(sb.toString());
 
 				long stoptime = System.currentTimeMillis();
 
@@ -488,7 +489,7 @@ public class GameServiceImpl implements GameService {
 
 	@Override
 	public String getTop100AsString() {
-		return top100AsString;
+		return top100AsString.get();
 	}
 
 }

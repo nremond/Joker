@@ -38,7 +38,7 @@ public class Inject1000001UsersMain {
 	/*
 	 * Concurrency parameters
 	 */
-	private final static int CONCURRENT_WORKERS = Runtime.getRuntime().availableProcessors() * 2;
+	private final static int CONCURRENT_WORKERS = Runtime.getRuntime().availableProcessors() * 8;
 	private final static int NUMBER_OF_USERS_TO_INSERT = Integer.MAX_VALUE;
 	
 	private static final ExecutorService executor = Executors
@@ -88,7 +88,7 @@ public class Inject1000001UsersMain {
 		}
 
 		executor.shutdown();
-		executor.awaitTermination(3600, TimeUnit.SECONDS);
+		executor.awaitTermination(7200, TimeUnit.SECONDS);
 		
 		long stoptime = System.currentTimeMillis();
 		
@@ -129,7 +129,7 @@ public class Inject1000001UsersMain {
 						try {
 							int httpResponseCode = httpClient.executeMethod(post);
 							if (httpResponseCode != 201) {
-								LOGGER.error("Error inserting {}", line);
+								LOGGER.error("Error inserting {}, httpResponseCode is {} ", line);
 							}
 						} finally {
 							post.releaseConnection();

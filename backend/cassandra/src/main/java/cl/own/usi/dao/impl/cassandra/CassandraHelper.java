@@ -23,4 +23,8 @@ public class CassandraHelper {
 		return generateUserId(user.getEmail());
 	}
 	
+	public static void main(String[] args){
+		
+		System.out.println(generateUserId("williams.bullock@gmail.com"));
+	}
 }
