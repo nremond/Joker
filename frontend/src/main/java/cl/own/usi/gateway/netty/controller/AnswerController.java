@@ -15,6 +15,7 @@ import org.json.simple.JSONValue;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import cl.own.usi.cache.CachedUser;
 import cl.own.usi.gateway.client.UserAndScoreAndAnswer;
 import cl.own.usi.gateway.client.WorkerClient;
 import cl.own.usi.model.Question;
@@ -47,14 +48,14 @@ public class AnswerController extends AbstractController {
 		String uri = request.getUri();
 		uri = uri.substring(URI_API_LENGTH);
 
-		String userId = getCookie(request, COOKIE_AUTH_NAME);
+		final String userId = getCookie(request, COOKIE_AUTH_NAME);
 
 		if (userId == null) {
 			writeResponse(e, UNAUTHORIZED);
 			getLogger().info("User not authorized");
 		} else {
 			try {
-				int questionNumber = Integer.parseInt(uri
+				final int questionNumber = Integer.parseInt(uri
 						.substring(URI_ANSWER_LENGTH));
 
 				if (!gameService.validateQuestionToAnswer(questionNumber)) {
@@ -63,15 +64,22 @@ public class AnswerController extends AbstractController {
 							.info("Invalid question number {}", questionNumber);
 				} else {
 
+					final CachedUser cachedUser = getCacheManager().loadUser(userId);
+					
+					if (cachedUser == null) {
+						writeResponse(e, UNAUTHORIZED);
+						getLogger().info("Invalid userId {}", userId);
+						return;
+					}
 					getLogger().debug(
 							"Answer Question {} for user {} ", questionNumber, userId);
 
 //					gameService.userAnswer(questionNumber);
 
-					JSONObject object = (JSONObject) JSONValue.parse(request
+					final JSONObject object = (JSONObject) JSONValue.parse(request
 							.getContent().toString(CharsetUtil.UTF_8));
 
-					Question question = gameService.getQuestion(questionNumber);
+					final Question question = gameService.getQuestion(questionNumber);
 
 					Long answerLong = ((Long) object.get("answer"));
 					Integer answer = null;
@@ -86,16 +94,25 @@ public class AnswerController extends AbstractController {
 					// gameService.isAnswerCorrect(questionNumber,
 					// answer);
 
-					UserAndScoreAndAnswer userAndScoreAndAnswer = workerClient
+					final UserAndScoreAndAnswer userAndScoreAndAnswer = workerClient
 							.validateUserAndInsertQuestionResponseAndUpdateScore(
 									userId, questionNumber, answer);
 
 					if (userAndScoreAndAnswer == null
 							|| userAndScoreAndAnswer.getUserId() == null) {
-						writeResponse(e, BAD_REQUEST);
-						getLogger().info("Invalid userId " + userId);
+						writeResponse(e, UNAUTHORIZED);
+						getLogger().info("Invalid userId {}", userId);
 					} else {
-						StringBuilder sb = new StringBuilder(
+						
+						if (!cachedUser.setLastAnswerdQuestion(questionNumber)) {
+							writeResponse(e, BAD_REQUEST);
+							getLogger().info("User {} has already answered the question {} ", userId, questionNumber);
+							return;
+						}
+						
+						cachedUser.setScore(userAndScoreAndAnswer.getScore());
+						
+						final StringBuilder sb = new StringBuilder(
 								"{ \"are_u_ok\" : ");
 						if (userAndScoreAndAnswer.isAnswer()) {
 							sb.append("true");

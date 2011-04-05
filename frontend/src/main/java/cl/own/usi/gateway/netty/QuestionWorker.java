@@ -29,8 +29,8 @@ public class QuestionWorker implements Runnable {
 
 	private GameService gameService;
 
-	public QuestionWorker(int questionNumber, int score, MessageEvent e,
-			String questionFirstPart, GameService gameService) {
+	public QuestionWorker(final int questionNumber, final int score, final MessageEvent e,
+			final String questionFirstPart, final GameService gameService) {
 		this.questionNumber = questionNumber;
 		this.score = score;
 		this.e = e;

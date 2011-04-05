@@ -17,5 +17,7 @@
 		ignore-resource-not-found="true" />
 		
 	<bean class="cl.own.usi.gateway.utils.Twitter"/>
+
+	<bean class="cl.own.usi.cache.impl.CacheManagerImpl"/>
 	
 </beans>

@@ -6,17 +6,16 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 
-import java.util.List;
-
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import cl.own.usi.gateway.client.BeforeAndAfterScores;
 import cl.own.usi.gateway.client.UserAndScore;
-import cl.own.usi.gateway.client.UserInfoAndScore;
 import cl.own.usi.gateway.client.WorkerClient;
+import cl.own.usi.gateway.utils.ScoresHelper;
 import cl.own.usi.service.GameService;
 
 /**
@@ -62,21 +61,18 @@ public class RankingController extends AbstractController {
 					sb.append(" \"my_score\" : ")
 							.append(userAndScore.getScore()).append(", ");
 
-					sb.append(" \"top_scores\" : { ");
-					List<UserInfoAndScore> topUsers = workerClient.getTop100();
-					appendUsersScores(topUsers, sb);
-					sb.append(" }, ");
+					sb.append(" \"top_scores\" : { ")
+					.append(gameService.getTop100AsString())
+					.append(" }, ");
 
+					BeforeAndAfterScores beforeAndAfterScores = workerClient.get50BeforeAnd50After(userId);
+					
 					sb.append(" \"before_me\" : { ");
-					List<UserInfoAndScore> beforeScores = workerClient
-							.get50Before(userId);
-					appendUsersScores(beforeScores, sb);
+					ScoresHelper.appendUsersScores(beforeAndAfterScores.getScoresBefore(), sb);
 					sb.append(" }, ");
 
 					sb.append(" \"after_me\" : { ");
-					List<UserInfoAndScore> afterScores = workerClient
-							.get50After(userId);
-					appendUsersScores(afterScores, sb);
+					ScoresHelper.appendUsersScores(beforeAndAfterScores.getScoresAfter(), sb);
 					sb.append(" } ");
 
 					sb.append(" } ");
@@ -85,41 +81,6 @@ public class RankingController extends AbstractController {
 				}
 			}
 		}
-	}
-
-	private void appendUsersScores(List<UserInfoAndScore> users,
-			StringBuilder sb) {
-		StringBuilder topScoresMail = new StringBuilder("\"mail\" : [ ");
-		StringBuilder topScoresScores = new StringBuilder("\"scores\" : [ ");
-		StringBuilder topScoresFirstName = new StringBuilder(
-				"\"firstname\" : [ ");
-		StringBuilder topScoresLastname = new StringBuilder("\"lastname\" : [ ");
-		boolean first = true;
-		for (UserInfoAndScore user : users) {
-			if (!first) {
-				topScoresMail.append(",");
-			}
-			topScoresMail.append("\"").append(user.getEmail()).append("\"");
-			if (!first) {
-				topScoresScores.append(",");
-			}
-			topScoresScores.append(user.getScore());
-			if (!first) {
-				topScoresFirstName.append(",");
-			}
-			topScoresFirstName.append("\"").append(user.getFirstname())
-					.append("\"");
-			if (!first) {
-				topScoresLastname.append(",");
-			}
-			topScoresLastname.append("\"").append(user.getLastname())
-					.append("\"");
-			first = false;
-		}
-		sb.append(topScoresMail).append(" ] , ");
-		sb.append(topScoresScores).append(" ] , ");
-		sb.append(topScoresFirstName).append(" ] , ");
-		sb.append(topScoresLastname).append(" ] ");
 	}
 
 }

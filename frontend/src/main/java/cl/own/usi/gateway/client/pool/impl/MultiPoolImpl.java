@@ -55,12 +55,11 @@ public abstract class MultiPoolImpl<K, V> implements MultiPool<K, V> {
 		return object;
 	}
 
-	protected V borrow(K key) throws PoolException {
+	protected V borrow(final K key) throws PoolException {
 		
 		V object = null;
 		
 		try {
-			key = getKey();
 			if (key == null) {
 				throw new PoolException("No keys defined. Please addKey first");
 			}
@@ -79,7 +78,7 @@ public abstract class MultiPoolImpl<K, V> implements MultiPool<K, V> {
 		return object;
 	}
 	
-	public void release(V object) throws PoolException {
+	public void release(final V object) throws PoolException {
 		K key = borrowedClients.remove(object);
 		if (key != null) {
 			Pool<V> pool = pools.get(key);
@@ -87,7 +86,7 @@ public abstract class MultiPoolImpl<K, V> implements MultiPool<K, V> {
 		}
 	}
 
-	public void invalidate(V object) {
+	public void invalidate(final V object) {
 		K key = borrowedClients.remove(object);
 		if (key != null) {
 			Pool<V> pool = pools.get(key);

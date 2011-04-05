@@ -1,12 +1,14 @@
 package cl.own.usi.dao.impl.mongo;
 
-import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.base64.Base64;
 import org.jboss.netty.handler.codec.base64.Base64Dialect;
 import org.jboss.netty.util.CharsetUtil;
 
+import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
 import cl.own.usi.model.User;
 
 import com.mongodb.BasicDBObject;
@@ -28,7 +30,7 @@ public class DaoHelper {
 
 	public static final String usersCollection = "users";
 
-	private static final String USER_ID_SALT = "123456";
+	private static final String USER_ID_SALT = "[B@190d11";
 
 	// Spec : les classements sont ordonnes par lastname/firstname/mail
 	public final static DBObject orderByScoreAndNames = new BasicDBObject()
@@ -60,16 +62,21 @@ public class DaoHelper {
 	}
 
 	public static String generateUserId(final String email) {
-		ChannelBuffer chanBuff = wrappedBuffer((email + USER_ID_SALT)
-				.getBytes(CharsetUtil.UTF_8));
-		return Base64.encode(chanBuff, Base64Dialect.ORDERED).toString(
+		String hash = sha1(email + USER_ID_SALT);
+		ChannelBuffer chanBuff = wrappedBuffer(hash.getBytes(CharsetUtil.UTF_8));
+		return Base64.encode(chanBuff, Base64Dialect.STANDARD).toString(
 				CharsetUtil.UTF_8);
 	}
 
-	/*
-	 * private String sha1(final String email) { MessageDigest md =
-	 * MessageDigest.getInstance("SHA"); md.update(email.getBytes()); byte[]
-	 * digest = md.digest(); return new String(digest); }
-	 */
+	private static String sha1(final String s) {
+		MessageDigest md;
+		try {
+			md = MessageDigest.getInstance("SHA-1");
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		}
+		md.update((s + USER_ID_SALT).getBytes());
+		return new String(md.digest());
+	}
 
 }

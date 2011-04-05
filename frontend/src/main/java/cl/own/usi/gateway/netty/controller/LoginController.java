@@ -5,6 +5,7 @@ import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.SET_COOKIE;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CREATED;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_IMPLEMENTED;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_0;
 
 import org.codehaus.jackson.map.ObjectMapper;
@@ -23,6 +24,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import cl.own.usi.cache.CachedUser;
+import cl.own.usi.gateway.client.UserLogin;
 import cl.own.usi.gateway.client.WorkerClient;
 import cl.own.usi.json.LoginRequest;
 import cl.own.usi.model.User;
@@ -47,7 +50,7 @@ public class LoginController extends AbstractController {
 	private Resource loginTemplate;
 
 	private final ObjectMapper jsonObjectMapper = new ObjectMapper();
-
+	
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 			throws Exception {
@@ -59,21 +62,40 @@ public class LoginController extends AbstractController {
 			final LoginRequest loginRequest = jsonObjectMapper.readValue(
 					request.getContent().toString(CharsetUtil.UTF_8),
 					LoginRequest.class);
-
-			String userId = workerClient.loginUser(loginRequest.getMail(),
+			
+			final UserLogin userLogin = workerClient.loginUser(loginRequest.getMail(),
 					loginRequest.getPassword());
 
-			if (userId != null) {
+			if (userLogin.isAlreadyLogged()) {
+				writeResponse(e, BAD_REQUEST);
+				getLogger().warn(
+						"User already logged for session {}", loginRequest.getMail());
+				return;
+			}
+			
+			if (userLogin.getUserId() != null) {
+				
+				final String userId = userLogin.getUserId();
 
+				CachedUser cachedUser = getCacheManager().getCachedUser(userId);
+				if (cachedUser != null && cachedUser.isLogged()) {
+					writeResponse(e, BAD_REQUEST);
+					getLogger().warn(
+							"User already logged for session {}, userId = {}", loginRequest.getMail(), userLogin.getUserId());
+					return;
+				}
+				
 				gameService.enterGame(userId);
-
+				
+				getCacheManager().insertFreshlyLoggedUser(userId);
+				
 				HttpResponse response = new DefaultHttpResponse(HTTP_1_0,
 						CREATED);
 				setCookie(response, COOKIE_AUTH_NAME, userId);
 				ChannelFuture future = e.getChannel().write(response);
 				future.addListener(ChannelFutureListener.CLOSE);
 			} else {
-				writeResponse(e, BAD_REQUEST);
+				writeResponse(e, UNAUTHORIZED);
 				getLogger().warn(
 						"User not found for session {}", loginRequest.getMail());
 			}

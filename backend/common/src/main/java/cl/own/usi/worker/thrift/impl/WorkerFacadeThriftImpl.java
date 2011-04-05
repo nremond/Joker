@@ -1,5 +1,6 @@
 package cl.own.usi.worker.thrift.impl;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +12,7 @@ import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransportException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -18,12 +20,18 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import cl.own.usi.model.AuditAnswer;
+import cl.own.usi.model.AuditAnswers;
+import cl.own.usi.exception.UserAlreadyLoggedException;
 import cl.own.usi.model.User;
 import cl.own.usi.network.InetAddressHelper;
 import cl.own.usi.service.ScoreService;
 import cl.own.usi.service.UserService;
+import cl.own.usi.thrift.BeforeAndAfterScores;
+import cl.own.usi.thrift.ExtendedUserInfoAndScore;
 import cl.own.usi.thrift.UserAndScore;
 import cl.own.usi.thrift.UserInfoAndScore;
+import cl.own.usi.thrift.UserLogin;
 import cl.own.usi.thrift.WorkerRPC;
 import cl.own.usi.worker.management.NetworkReachable;
 
@@ -46,6 +54,10 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 	private int port = 7911;
 
 	private WorkerFacadeThriftThread thriftThread;
+
+	private final InetAddress localAddress = InetAddressHelper.getCurrentIP();
+
+	private final ObjectMapper mapper = new ObjectMapper();
 
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(WorkerFacadeThriftImpl.class);
@@ -72,8 +84,6 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 	public void setPort(final int port) {
 		this.port = port;
 	}
-
-	InetAddress localAddress = InetAddressHelper.getCurrentIP();
 
 	@Override
 	public UserAndScore validateUserAndInsertQuestionRequest(String userId,
@@ -122,9 +132,19 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 	}
 
 	@Override
-	public String loginUser(String email, String password) throws TException {
+	public UserLogin loginUser(String email, String password) throws TException {
 
-		return userService.login(email, password);
+		final UserLogin userLogin = new UserLogin();
+		try {
+			final String userId = userService.login(email, password);
+			userLogin.alreadyLogged = false;
+			if (userId != null) {
+				userLogin.userId = userId;
+			}
+		} catch (UserAlreadyLoggedException e) {
+			userLogin.alreadyLogged = true;
+		}
+		return userLogin;
 
 	}
 
@@ -193,7 +213,7 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 	}
 
 	private cl.own.usi.thrift.UserInfoAndScore map(User user) {
-		UserInfoAndScore userInfoAndScore = new UserInfoAndScore();
+		final UserInfoAndScore userInfoAndScore = new UserInfoAndScore();
 		userInfoAndScore.email = user.getEmail();
 		userInfoAndScore.firstname = user.getFirstname();
 		userInfoAndScore.lastname = user.getLastname();
@@ -218,23 +238,42 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 	}
 
 	@Override
-	public String getAllAnswersAsJson(final String email) throws TException {
+	public String getAllAnswersAsJson(final String email,
+			final List<Integer> goodAnswers) throws TException {
 
-		LOGGER.debug("Request for all answers for user {} received", email);
+		LOGGER.debug(
+				"Request for all answers for user {} received, good answers are {}",
+				email, goodAnswers);
 
-		// TODO process audit request here
-		return "blop";
+		final AuditAnswers auditAnswers = userService.getAuditAnswers(email,
+				goodAnswers);
+
+		try {
+			return mapper.writeValueAsString(auditAnswers);
+		} catch (IOException e) {
+			LOGGER.error("Cannot convert audit answers to json for user {}",
+					email, e);
+			return "";
+		}
 	}
 
 	@Override
-	public String getAnswerAsJson(final String email, final int questionNumber)
-			throws TException {
+	public String getAnswerAsJson(final String email, final int questionNumber,
+			final String question, final int goodAnswer) throws TException {
 
 		LOGGER.debug("Request for answer to question {} for user {} received",
 				questionNumber, email);
 
-		// TODO process audit request here
-		return "blip";
+		final AuditAnswer auditAnswer = userService.getAuditAnswerFor(email,
+				questionNumber, question, goodAnswer);
+
+		try {
+			return mapper.writeValueAsString(auditAnswer);
+		} catch (IOException e) {
+			LOGGER.error("Cannot convert audit answer to json for user {}",
+					email, e);
+			return "";
+		}
 	}
 
 	@Override
@@ -243,5 +282,56 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 		if (thriftThread != null) {
 			thriftThread.requestShutdown();
 		}
+	}
+	
+	@Override
+	public ExtendedUserInfoAndScore getExtendedUserInfo(String userId) {
+		
+		LOGGER.info("Excplicitely loading user {} ", userId);
+		
+		ExtendedUserInfoAndScore extendedUserInfoAndScore;
+		
+		User user = userService.getUserFromUserId(userId);
+		if (user != null) {
+			
+			extendedUserInfoAndScore = new ExtendedUserInfoAndScore(userId, user.getScore(), user.getEmail(), user.getFirstname(), user.getLastname(), true, 0);
+			
+			
+		} else {
+			extendedUserInfoAndScore = new ExtendedUserInfoAndScore();
+		}
+		return extendedUserInfoAndScore;
+	}
+	
+	@Override
+	public BeforeAndAfterScores get50BeforeAnd50After(String userId) {
+		
+		BeforeAndAfterScores beforeAndAfterScores;
+		
+		User user = userService.getUserFromUserId(userId);
+		if (user != null) {
+			List<User> beforeUsers = scoreService.get50Before(user);
+			
+			List<UserInfoAndScore> retBeforeUsers = new ArrayList<UserInfoAndScore>(
+					beforeUsers.size());
+			for (User beforeUser : beforeUsers) {
+				retBeforeUsers.add(map(beforeUser));
+			}
+			
+			List<User> afterUsers = scoreService.get50After(user);
+			
+			List<UserInfoAndScore> retAfterUsers = new ArrayList<UserInfoAndScore>(
+					afterUsers.size());
+			for (User afterUser : afterUsers) {
+				retAfterUsers.add(map(afterUser));
+			}
+			
+			beforeAndAfterScores = new BeforeAndAfterScores(retBeforeUsers, retAfterUsers);
+			
+		} else {
+			beforeAndAfterScores = new BeforeAndAfterScores();
+		}
+		
+		return beforeAndAfterScores;
 	}
 }

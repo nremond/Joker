@@ -8,6 +8,17 @@ public class Answer {
 	private int questionNumber;
 	private int answerNumber = -1;
 
+	public Answer() {
+		super();
+	}
+
+	public Answer(String userId, int questionNumber, int answerNumber) {
+		this();
+		this.userId = userId;
+		this.questionNumber = questionNumber;
+		this.answerNumber = answerNumber;
+	}
+
 	public String getUserId() {
 		return userId;
 	}

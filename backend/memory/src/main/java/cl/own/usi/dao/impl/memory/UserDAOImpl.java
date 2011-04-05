@@ -33,7 +33,7 @@ public class UserDAOImpl implements UserDAO {
 
 	public boolean insertUser(User user) {
 
-		user.setUserId(generateUserId(user));
+		user.setUserId(generateUserId(user.getEmail()));
 		User oldUser = users.putIfAbsent(user.getEmail(), user);
 
 		return oldUser == null;
@@ -91,7 +91,7 @@ public class UserDAOImpl implements UserDAO {
 
 		User user = users.get(email);
 		if (user != null) {
-			String userId = generateUserId(user);
+			String userId = generateUserId(user.getEmail());
 			if (user.getPassword().equals(password)) {
 				User tmpUser = loggedUsers.putIfAbsent(userId, user);
 				if (tmpUser == null) {
@@ -102,8 +102,8 @@ public class UserDAOImpl implements UserDAO {
 		return null;
 	}
 
-	private String generateUserId(User user) {
-		ChannelBuffer chanBuff = wrappedBuffer((user.getEmail() + USER_ID_SALT)
+	private String generateUserId(final String email) {
+		ChannelBuffer chanBuff = wrappedBuffer((email + USER_ID_SALT)
 				.getBytes(CharsetUtil.UTF_8));
 		return Base64.encode(chanBuff, Base64Dialect.ORDERED).toString(
 				CharsetUtil.UTF_8);
@@ -128,6 +128,24 @@ public class UserDAOImpl implements UserDAO {
 	private static class RequestAndAnswer {
 		int questionNumber;
 		Answer answer;
+	}
+
+	@Override
+	public List<Answer> getAnswersByEmail(final String userEmail) {
+
+		final String userId = generateUserId(userEmail);
+
+		final LinkedList<RequestAndAnswer> requestAndAnswers = userRequestAndAnswers
+				.get(userId);
+
+		final ArrayList<Answer> answers = new ArrayList<Answer>(
+				requestAndAnswers.size());
+
+		for (RequestAndAnswer raa : requestAndAnswers) {
+			answers.add(raa.answer);
+		}
+
+		return answers;
 	}
 
 }

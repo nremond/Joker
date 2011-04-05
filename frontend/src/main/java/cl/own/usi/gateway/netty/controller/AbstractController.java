@@ -8,6 +8,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -17,17 +19,23 @@ import org.jboss.netty.handler.codec.http.CookieDecoder;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+
+import cl.own.usi.cache.CacheManager;
 
 /**
  * Abstract Controller.
- *
+ * 
  * @author bperroud
  * @author nicolas
- *
+ * 
  */
 public abstract class AbstractController {
 
+	@Autowired
+	CacheManager cacheManager;
+	
 	protected static final String COOKIE_AUTH_NAME = "session_key";
 	public static final String URI_API = "/api";
 	public static final int URI_API_LENGTH = URI_API.length();
@@ -56,8 +64,8 @@ public abstract class AbstractController {
 		return null;
 	}
 
-	protected void writeHtml(MessageEvent e, Resource htmlTemplate)
-			throws IOException {
+	protected void writeHtml(final MessageEvent e, final Resource htmlTemplate,
+			final Map<String, String> mapping) throws IOException {
 		BufferedReader in = null;
 		StringBuffer buff = new StringBuffer();
 		try {
@@ -79,7 +87,21 @@ public abstract class AbstractController {
 			}
 		}
 
-		writeStringToReponse(buff.toString(), e, CREATED);
+		String html = buff.toString();
+		for (Map.Entry<String, String> m : mapping.entrySet()) {
+			html = html.replaceAll(m.getKey(), m.getValue());
+		}
+
+		writeStringToReponse(html, e, CREATED);
 	}
 
+	protected void writeHtml(MessageEvent e, Resource htmlTemplate)
+			throws IOException {
+		final Map<String, String> mapping = Collections.emptyMap();
+		writeHtml(e, htmlTemplate, mapping);
+	}
+
+	protected CacheManager getCacheManager() {
+		return cacheManager;
+	}
 }

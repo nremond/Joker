@@ -1,8 +1,8 @@
 package cl.own.usi.gateway.client;
 
 public class UserAndScore {
-	private String userId;
-	private int score;
+	private final String userId;
+	private final int score;
 
 	public UserAndScore(final String userId, final int score) {
 		super();
