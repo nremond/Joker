@@ -677,6 +677,11 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	}
 
 	public List<Answer> getAnswersByEmail(final String userEmail) {
-		return null;
+		
+		final String userId = CassandraHelper.generateUserId(userEmail);
+		
+		List<Answer> answers = getAnswers(userId);
+		
+		return answers;
 	}
 }
