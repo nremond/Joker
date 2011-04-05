@@ -61,9 +61,9 @@ public class BasicInjectorMain {
 	 */
 	private final static boolean FLUSHUSERSTABLE = true;
 	private final static int DEFAULT_NBUSERS = 10;
-	private final static int NBQUESTIONS = 5;
-	private final static int QUESTIONTIMEFRAME = 60;
-	private final static int SYNCHROTIME = 12;
+	private final static int NBQUESTIONS = 17;
+	private final static int QUESTIONTIMEFRAME = 45;
+	private final static int SYNCHROTIME = 30;
 	private final static int LOGINTIMEOUT = 60;
 
 	private static int NBUSERS = DEFAULT_NBUSERS;
@@ -77,7 +77,8 @@ public class BasicInjectorMain {
 	// Executor that will run players' sequences. Thread pool of number of
 	// processors * 2. No need to be bigger.
 	private final static ExecutorService executor = Executors
-			.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 4);
+			.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 8);
+	
 	// List of players' workers
 	private static List<UserGameWorker> workers;
 
@@ -239,6 +240,8 @@ public class BasicInjectorMain {
 						workers.add(new UserGameWorker(QUESTIONTIMEFRAME,
 								SYNCHROTIME, NBQUESTIONS, fields[2], fields[3],
 								executor));
+					} else {
+						LOGGER.warn("Creation of user {} failed with response status {}", fields[2], httpResponseCode);
 					}
 
 				} finally {
