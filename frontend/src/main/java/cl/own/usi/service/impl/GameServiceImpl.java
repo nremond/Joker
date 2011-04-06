@@ -392,7 +392,7 @@ public class GameServiceImpl implements GameService {
 
 			for (Question question : game.getQuestions()) {
 				questionSynchronizations.put(question,
-						new QuestionSynchronization(game.getUsersLimit()));
+						new QuestionSynchronization());
 			}
 
 			enoughUsersLatch = new CountDownLatch(game.getUsersLimit());
@@ -413,7 +413,7 @@ public class GameServiceImpl implements GameService {
 		private final Queue<Runnable> waitingQueue = new LinkedBlockingQueue<Runnable>();
 		private final Lock lock = new ReentrantLock();
 
-		public QuestionSynchronization(int userLimit) {
+		public QuestionSynchronization() {
 			questionReadyLatch = new CountDownLatch(1);
 		}
 
