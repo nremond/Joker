@@ -110,6 +110,14 @@ public class AuditController extends AbstractAuthenticateController {
 		String response = workerClient.getAnswersAsJson(userMail,
 				questionNumber, game);
 
+		if (StringUtils.isEmpty(response)) {
+			getLogger()
+					.error("Audit request for user email {} and question {} returned an empty string",
+							userMail, questionNumber);
+			writeResponse(e, BAD_REQUEST);
+			return;
+		}
+
 		writeStringToReponse(response, e);
 		return;
 	}
