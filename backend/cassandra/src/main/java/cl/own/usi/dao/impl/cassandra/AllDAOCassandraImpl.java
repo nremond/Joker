@@ -177,7 +177,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	}
 
 	private String generateRankedUserKey(User user) {
-		return user.getLastname() + user.getFirstname() + user.getEmail();
+		return user.getLastname() + DEFAULT_FIELDS_SEPARATOR + user.getFirstname() + DEFAULT_FIELDS_SEPARATOR + user.getEmail();
 	}
 
 	@Override
@@ -646,7 +646,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 			sliceQuery.setColumnFamily(ranksColumnFamily);
 			sliceQuery.setKey(score);
-			sliceQuery.setRange(start, DEFAULT_START_KEY, reverseOrder, limit);
+			sliceQuery.setRange(start, DEFAULT_START_KEY, reverseOrder, limit + 1);
 			
 			QueryResult<ColumnSlice<String, String>> sliceResult = sliceQuery
 					.execute();
