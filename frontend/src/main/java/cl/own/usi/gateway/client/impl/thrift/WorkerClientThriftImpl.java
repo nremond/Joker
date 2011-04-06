@@ -38,15 +38,15 @@ import cl.own.usi.thrift.WorkerRPC.Client;
 
 /**
  * Thrift client.
- * 
+ *
  * @author bperroud
- * 
+ *
  */
 @Component
 public class WorkerClientThriftImpl implements WorkerClient {
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
-	
+
 	@Autowired
 	private GameService gameService;
 
@@ -168,7 +168,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 					throws TException {
 				final List<cl.own.usi.thrift.UserInfoAndScore> users = client
 						.getTop100();
-				
+
 				logger.debug("Returned {} users", users.size());
 
 				final List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(
@@ -255,7 +255,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 					}
 
 					if (questionString == null) {
-						// TODO
+						return null;
 					}
 
 					return client.getAnswerAsJson(email,

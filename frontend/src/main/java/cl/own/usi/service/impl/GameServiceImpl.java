@@ -34,9 +34,9 @@ import cl.own.usi.service.GameService;
 
 /**
  * Game service implementation.
- * 
+ *
  * @author bperroud
- * 
+ *
  */
 @Service
 public class GameServiceImpl implements GameService {
@@ -314,8 +314,10 @@ public class GameServiceImpl implements GameService {
 						"Ranking computation and top100 query done in {} ms. Returns {} UserInfoAndScores.",
 						(stoptime - starttime), top100.size());
 
-				long synchrotime = (gameSynchronization.game
-						.getSynchroTimeLimit() * 1000) + starttime - stoptime;
+				long synchrotime = TimeUnit.SECONDS
+						.toMillis(gameSynchronization.game
+								.getSynchroTimeLimit())
+						+ starttime - stoptime;
 				if (synchrotime > 0) {
 					try {
 						// mmmh, weird specs again...
@@ -390,7 +392,7 @@ public class GameServiceImpl implements GameService {
 
 			for (Question question : game.getQuestions()) {
 				questionSynchronizations.put(question,
-						new QuestionSynchronization(game.getUsersLimit()));
+						new QuestionSynchronization());
 			}
 
 			enoughUsersLatch = new CountDownLatch(game.getUsersLimit());
@@ -411,7 +413,7 @@ public class GameServiceImpl implements GameService {
 		private final Queue<Runnable> waitingQueue = new LinkedBlockingQueue<Runnable>();
 		private final Lock lock = new ReentrantLock();
 
-		public QuestionSynchronization(int userLimit) {
+		public QuestionSynchronization() {
 			questionReadyLatch = new CountDownLatch(1);
 		}
 
