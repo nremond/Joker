@@ -15,6 +15,8 @@
 		var waitingMsg = '<p>Waiting for other players.</p>';
 		waitingMsg += '<p>Be ready !</p>';
 		
+		var waitingRankingMsg = '<p>Game is over, waiting for the ranking.</p>';
+		
 		// Display the waiting message
 		$("#info").html(waitingMsg);
 		
@@ -26,7 +28,7 @@
 		
 		// Register a callback function for the question form
 		$("#questionForm").submit(function(event) {
-
+		
 			// stop form from submitting normally
 			event.preventDefault(); 
 			
@@ -68,6 +70,7 @@
 					}
 				});
 			} else {
+			
 				// try to call the ranking until we are allowed to
 				ranking_interval = setInterval("call_ranking()", %RANKING_WAITING_TIME%);
 			}
@@ -77,7 +80,7 @@
 		
 			if(ranking_authorized){
 		
-				ranking_interval(ranking_timeout);
+				clearInterval(ranking_interval);
 		
 				$.ajax({
 					url: '/api/ranking',
@@ -105,11 +108,13 @@
 			ranking += '</p>';
 			
 			ranking += '<p> The 50 users before me are : <br/>';
-			ranking += render_ranking(data['before']);
+			//TODO change to 'before'
+			ranking += render_ranking(data['before_me']);
 			ranking += '</p>';
 			
 			ranking += '<p> The 50 users after me are : <br/>';
-			ranking += render_ranking(data['after']);
+			//TODO change to 'after'
+			ranking += render_ranking(data['after_me']);
 			ranking += '</p>';
 		
 			$("#info").html(ranking);
@@ -118,8 +123,8 @@
 		
 		
 		function render_ranking(users) {
-			var firstnames = users['firstnames'];
-			var lastnames = users['lastnames'];
+			var firstnames = users['firstname'];
+			var lastnames = users['lastname'];
 			var scores = users['scores'];
 			
 			var ranking = '';
@@ -151,12 +156,12 @@
 			
 			$("#info").html("");			
 			$("#questionForm").html(sform);
-			
+				
 			
 			// Set a local timeout (in milliseconds) for the request.
 			answer_timeout = setTimeout("timeout_callback()", %QUESTION_TIMEOUT%);	
 			
-			if(questionNumber = %NB_QUESTIONS%) {
+			if(questionNumber == %NB_QUESTIONS%) {
 				// Last question, launch the timeout to authorize the ranking of the users
 				setTimeout(function() { ranking_authorized = true; }, %RANKING_WAITING_TIME%);
 			}
@@ -165,9 +170,14 @@
 		
 		function timeout_callback() {
 			
-			var msg = "<p>You've been to slow to answer. Going to the next question.</p>";
+			var tooSlowMsg = "<p>You've been to slow to answer.</p>";
+			var nextQuestionMsg = "<p>Going to the next question.</p>";
 			
-			$("#info").html(msg);
+			if(questionNumber == %NB_QUESTIONS%) {
+				$("#info").html(tooSlowMsg + waitingRankingMsg);
+			} else {
+				$("#info").html(tooSlowMsg + nextQuestionMsg);
+			}
 			$("#questionForm").html("");
 			
 			questionNumber++;
@@ -185,7 +195,12 @@
 			var resultMsg = '<p>' + okMsg + ' answer !<br/>';
 			resultMsg += 'Your score : ' + score + ' points</p>';
 			
-			$("#info").html(resultMsg + waitingMsg);
+						
+			if(questionNumber == %NB_QUESTIONS%) {
+				$("#info").html(resultMsg + waitingRankingMsg);
+			} else {
+				$("#info").html(resultMsg + waitingMsg);
+			}
 			$("#questionForm").html("");
 			
 			questionNumber++;
