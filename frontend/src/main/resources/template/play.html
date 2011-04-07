@@ -108,13 +108,11 @@
 			ranking += '</p>';
 			
 			ranking += '<p> The 50 users before me are : <br/>';
-			//TODO change to 'before'
-			ranking += render_ranking(data['before_me']);
+			ranking += render_ranking(data['before']);
 			ranking += '</p>';
 			
 			ranking += '<p> The 50 users after me are : <br/>';
-			//TODO change to 'after'
-			ranking += render_ranking(data['after_me']);
+			ranking += render_ranking(data['after']);
 			ranking += '</p>';
 		
 			$("#info").html(ranking);

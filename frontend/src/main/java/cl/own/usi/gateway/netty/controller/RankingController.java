@@ -67,11 +67,11 @@ public class RankingController extends AbstractController {
 
 					BeforeAndAfterScores beforeAndAfterScores = workerClient.get50BeforeAnd50After(userId);
 					
-					sb.append(" \"before_me\" : { ");
+					sb.append(" \"before\" : { ");
 					ScoresHelper.appendUsersScores(beforeAndAfterScores.getScoresBefore(), sb);
 					sb.append(" }, ");
 
-					sb.append(" \"after_me\" : { ");
+					sb.append(" \"after\" : { ");
 					ScoresHelper.appendUsersScores(beforeAndAfterScores.getScoresAfter(), sb);
 					sb.append(" } ");
 
