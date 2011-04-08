@@ -6,10 +6,10 @@ import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
 
 /**
- * GameDAO 
+ * GameDAO
  * 
  * @author bperroud
- *
+ * 
  */
 public interface GameDAO {
 
@@ -17,8 +17,7 @@ public interface GameDAO {
 	 * @return The freshly created game
 	 */
 	Game insertGame(int usersLimit, int questionTimeLimit,
-			int pollingTimeLimit, int synchroTimeLimit, 
-			int numberOfQuestion, List<Question> questions);
+			int pollingTimeLimit, int synchroTimeLimit, List<Question> questions);
 
 	/**
 	 * When a game is created by a node, a new game is persisted. So all nodes

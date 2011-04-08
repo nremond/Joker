@@ -10,16 +10,16 @@ import cl.own.usi.model.User;
 
 /**
  * Game service.
- *
+ * 
  * @author bperroud
- *
+ * 
  */
 public interface GameService {
 
 	/**
 	 * Create a new {@link Game}. Setup all synchronization stuff, reset
 	 * previous game if existing.
-	 *
+	 * 
 	 * @param usersLimit
 	 * @param questionTimeLimit
 	 * @param pollingTimeLimit
@@ -29,20 +29,20 @@ public interface GameService {
 	 * @return
 	 */
 	boolean insertGame(int usersLimit, int questionTimeLimit,
-			int pollingTimeLimit, int synchroTimeLimit, int numberOfQuestion,
+			int pollingTimeLimit, int synchroTimeLimit,
 			List<Map<String, Map<String, Boolean>>> questions);
 
 	/**
 	 * Return the current {@link Game}. Possibly <code>null</code> if no game
 	 * was previously created.
-	 *
+	 * 
 	 * @return current game, <code>null</code> if none defined.
 	 */
 	Game getGame();
 
 	/**
 	 * Get given question. Return null if questionNumber does not exist.
-	 *
+	 * 
 	 * @param questionNumber
 	 * @return
 	 */
@@ -51,7 +51,7 @@ public interface GameService {
 	/**
 	 * Wait till {@link Game#getUsersLimit()} {@link User} reach the
 	 * {@link Game}
-	 *
+	 * 
 	 * @param questionNumber
 	 * @return
 	 * @throws InterruptedException
@@ -60,34 +60,42 @@ public interface GameService {
 
 	/**
 	 * Stipulate a {@link User} request the {@link Question}
-	 *
+	 * 
 	 * @param questionNumber
 	 * @return
 	 */
 	boolean enterGame(String userId);
 
-	boolean validateQuestionToRequest(int questionNumber);
-
-	boolean validateQuestionToAnswer(int questionNumber);
-
 	/**
-	 * Stipulate a {@link User} answer the {@link Question}
-	 *
+	 * Validate that the user is allowed to request the given question
+	 * 
+	 * @see {@link GameServiceImpl#GameSynchronization#currentQuestionToRequest}
 	 * @param questionNumber
 	 * @return
 	 */
-	boolean userAnswer(int questionNumber);
+	boolean validateQuestionToRequest(int questionNumber);
 
 	/**
-	 * Async sending the question to the user
-	 *
+	 * Validate that the user is allowed to answer the givent question.
+	 * 
+	 * @see {@link GameServiceImpl#GameSynchronization#currentQuestionToAnswer}
+	 * @param questionNumber
+	 * @return
+	 */
+	boolean validateQuestionToAnswer(int questionNumber);
+
+	/**
+	 * Async sending the question to the user. Wait on
+	 * {@link GameServiceImpl#QuestionSynchronization#questionReadyLatch} before
+	 * sending the question
+	 * 
 	 * @param questionWorker
 	 */
 	void scheduleQuestionReply(QuestionWorker questionWorker);
 
 	/**
 	 * Validates the answer and tells if the answer is correct or not
-	 *
+	 * 
 	 * @param questionNumber
 	 * @param answer
 	 * @return
@@ -96,10 +104,15 @@ public interface GameService {
 
 	/**
 	 * Tells if the ranking request is allowed or not.
-	 *
+	 * 
 	 * @return
 	 */
 	boolean isRankingRequestAllowed();
 
+	/**
+	 * Return top 100 users directly as {@link String} to get cached.
+	 * 
+	 * @return
+	 */
 	String getTop100AsString();
 }

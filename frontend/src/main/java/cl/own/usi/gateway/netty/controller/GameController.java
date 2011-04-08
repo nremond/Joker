@@ -6,17 +6,23 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CREATED;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_IMPLEMENTED;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.util.CharsetUtil;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.Namespace;
+import org.jdom.input.SAXBuilder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -70,143 +76,145 @@ public class GameController extends AbstractAuthenticateController {
 				return;
 			}
 
-			JSONObject allParameters = (JSONObject) object.get("parameters");
+			String xmlParametersObject = (String) object.get("parameters");
 
-			if (allParameters == null) {
-				getLogger()
-						.error("No content or bad content for allParameters");
-				writeResponse(e, BAD_REQUEST);
-				return;
-			}
+			Namespace namespace = Namespace.getNamespace("usi",
+					"http://www.usi.com");
 
-			JSONArray jsonQuestions = (JSONArray) allParameters
-					.get("questions");
-			if (jsonQuestions == null) {
-				getLogger().error("No content or bad content for questions");
-				writeResponse(e, BAD_REQUEST);
-				return;
-			}
+			SAXBuilder builder = new SAXBuilder();
+			builder.setValidation(true);
+			builder.setFeature(
+					"http://apache.org/xml/features/validation/schema", true);
+			builder.setProperty(
+					"http://apache.org/xml/properties/schema/external-schemaLocation",
+					"http://www.usi.com /home/bperroud/Projects/others/Joker/frontend/target/classes/gamesession.xsd");
 
-			JSONObject parameters = (JSONObject) allParameters
-					.get("parameters");
-			if (parameters == null) {
-				getLogger().error("No content or bad content for parameters");
-				writeResponse(e, BAD_REQUEST);
-				return;
-			}
+			ByteArrayInputStream in = new ByteArrayInputStream(
+					StringEscapeUtils.unescapeHtml(xmlParametersObject)
+							.getBytes("UTF-8"));
 
 			List<Map<String, Map<String, Boolean>>> questions = new ArrayList<Map<String, Map<String, Boolean>>>();
 
-			for (Object o : jsonQuestions) {
-				Map<String, Map<String, Boolean>> question1 = new HashMap<String, Map<String, Boolean>>();
-				Map<String, Boolean> answer1 = new LinkedHashMap<String, Boolean>();
-				JSONObject jsonObject = (JSONObject) o;
-				if (jsonObject == null) {
-					getLogger().error("No content or bad content on question");
-					writeResponse(e, BAD_REQUEST);
-					return;
-				}
-				Long goodChoiceL = (Long) jsonObject.get("goodchoice");
+			try {
 
-				int goodChoice;
-				if (goodChoiceL == null || goodChoiceL <= 0 || goodChoiceL > 4) {
-					getLogger().error(
-							"No content or bad content for good choice");
-					writeResponse(e, BAD_REQUEST);
-					return;
-				} else {
-					goodChoice = goodChoiceL.intValue();
-				}
+				Document document = (Document) builder.build(in);
 
-				JSONArray choices = (JSONArray) jsonObject.get("choices");
-				if (choices == null) {
-					getLogger().error("No content or bad content for choices");
+				Element rootNode = document.getRootElement();
+				Element xmlQuestions = rootNode
+						.getChild("questions", namespace);
+
+				if (xmlQuestions == null) {
 					writeResponse(e, BAD_REQUEST);
 					return;
 				}
 
-				int i = 1;
-				for (Object o2 : choices) {
-					String choice = (String) o2;
-					answer1.put(choice, i == goodChoice ? Boolean.TRUE
-							: Boolean.FALSE);
-					i++;
+				for (Object child : xmlQuestions.getChildren()) {
+
+					Map<String, Map<String, Boolean>> question1 = new HashMap<String, Map<String, Boolean>>();
+					Map<String, Boolean> answer1 = new LinkedHashMap<String, Boolean>();
+
+					Element question = (Element) child;
+					String goodChoiceStr = question
+							.getAttributeValue("goodchoice");
+					if (goodChoiceStr == null) {
+						writeResponse(e, BAD_REQUEST);
+						return;
+					}
+					int goodChoice = Integer.parseInt(goodChoiceStr);
+
+					Element label = question.getChild("label", namespace);
+					if (label == null) {
+						writeResponse(e, BAD_REQUEST);
+						return;
+					}
+
+					List<Element> choices = question.getChildren("choice",
+							namespace);
+
+					int i = 1;
+					boolean hasGoodchoice = false;
+					for (Element xmlChoice : choices) {
+						String choice = (String) xmlChoice.getValue();
+						boolean isGoodchoice = i == goodChoice;
+						answer1.put(choice, isGoodchoice ? Boolean.TRUE
+								: Boolean.FALSE);
+						if (isGoodchoice) {
+							hasGoodchoice = true;
+						}
+						i++;
+					}
+					if (!hasGoodchoice) {
+						writeResponse(e, BAD_REQUEST);
+						return;
+					}
+
+					question1.put(label.getValue(), answer1);
+					questions.add(question1);
 				}
-				if (i != 5) {
-					getLogger().error("Not the good quantity of choices");
+
+				Element parameters = rootNode.getChild("parameters", namespace);
+				if (parameters == null) {
 					writeResponse(e, BAD_REQUEST);
 					return;
 				}
 
-				question1.put((String) jsonObject.get("label"), answer1);
-				questions.add(question1);
-			}
+				String logintimeoutStr = parameters.getChildText(
+						"logintimeout", namespace);
+				Integer logintimeout = parseIntSafe(logintimeoutStr);
+				if (logintimeout == null) {
+					writeResponse(e, BAD_REQUEST);
+					return;
+				}
 
-			Long usersLimitL = (Long) parameters.get("nbusersthreshold");
-			int usersLimit;
-			if (usersLimitL == null) {
-				getLogger()
-						.error("No content or bad content for attribute nbusersthresholdt");
-				writeResponse(e, BAD_REQUEST);
-				return;
-			} else {
-				usersLimit = usersLimitL.intValue();
-			}
+				String synchrotimeStr = parameters.getChildText("synchrotime",
+						namespace);
+				Integer synchrotime = parseIntSafe(synchrotimeStr);
+				if (synchrotime == null) {
+					writeResponse(e, BAD_REQUEST);
+					return;
+				}
 
-			Long questionTimeLimitL = (Long) parameters
-					.get("questiontimeframe");
-			int questionTimeLimit;
-			if (questionTimeLimitL == null) {
-				getLogger()
-						.error("No content or bad content for attribute questiontimeframe");
-				writeResponse(e, BAD_REQUEST);
-				return;
-			} else {
-				questionTimeLimit = questionTimeLimitL.intValue();
-			}
-			Long pollingTimeLimitL = (Long) parameters.get("logintimeout");
-			int pollingTimeLimit;
-			if (pollingTimeLimitL == null) {
-				getLogger().error(
-						"No content or bad content for attribute logintimeout");
-				writeResponse(e, BAD_REQUEST);
-				return;
-			} else {
-				pollingTimeLimit = pollingTimeLimitL.intValue();
-			}
-			Long synchroTimeLimitL = (Long) parameters.get("synchrotime");
-			int synchroTimeLimit;
-			if (synchroTimeLimitL == null) {
-				getLogger().error(
-						"No content or bad content for attribute synchrotime");
-				writeResponse(e, BAD_REQUEST);
-				return;
-			} else {
-				synchroTimeLimit = synchroTimeLimitL.intValue();
-			}
-			Long numberOfQuestionL = (Long) parameters.get("nbquestions");
-			int numberOfQuestion;
-			if (numberOfQuestionL == null || numberOfQuestionL <= 0L
-					|| numberOfQuestionL > 20L) {
-				getLogger()
-						.error("No content or bad content for attribute numberOfQuestion");
-				writeResponse(e, BAD_REQUEST);
-				return;
-			} else {
-				numberOfQuestion = numberOfQuestionL.intValue();
-			}
+				String nbusersthresholdStr = parameters.getChildText(
+						"nbusersthreshold", namespace);
+				Integer nbusersthreshold = parseIntSafe(nbusersthresholdStr);
+				if (nbusersthreshold == null) {
+					writeResponse(e, BAD_REQUEST);
+					return;
+				}
 
-			gameService.insertGame(usersLimit, questionTimeLimit,
-					pollingTimeLimit, synchroTimeLimit, numberOfQuestion,
-					questions);
+				String questiontimeframeStr = parameters.getChildText(
+						"questiontimeframe", namespace);
+				Integer questiontimeframe = parseIntSafe(questiontimeframeStr);
+				if (questiontimeframe == null) {
+					writeResponse(e, BAD_REQUEST);
+					return;
+				}
 
-			Boolean flushusertable = (Boolean) parameters.get("flushusertable");
-			if (flushusertable != null && flushusertable) {
-				long starttime = System.currentTimeMillis();
-				workerClient.flushUsers();
-				getCacheManager().flush();
-				getLogger().info("Flushed in {} ms",
-						(System.currentTimeMillis() - starttime));
+				String flushusertableStr = parameters.getChildText(
+						"flushusertable", namespace);
+				boolean flushusertable = Boolean
+					.parseBoolean(flushusertableStr);
+
+				if (questions.isEmpty() || questions.size() > 20) {
+					getLogger()
+							.error("No content or bad content for attribute numberOfQuestion");
+					writeResponse(e, BAD_REQUEST);
+					return;
+				}
+
+				gameService.insertGame(nbusersthreshold, questiontimeframe,
+						logintimeout, synchrotime, questions);
+
+				if (flushusertable) {
+					long starttime = System.currentTimeMillis();
+					workerClient.flushUsers();
+					getCacheManager().flush();
+					getLogger().info("Flushed in {} ms",
+							(System.currentTimeMillis() - starttime));
+				}
+
+			} finally {
+				in.close();
 			}
 
 			writeResponse(e, CREATED);
@@ -217,4 +225,15 @@ public class GameController extends AbstractAuthenticateController {
 
 	}
 
+	private static Integer parseIntSafe(String value) {
+		if (value == null) {
+			return null;
+		} else {
+			try {
+				return Integer.parseInt(value);
+			} catch (NumberFormatException e) {
+				return null;
+			}
+		}
+	}
 }

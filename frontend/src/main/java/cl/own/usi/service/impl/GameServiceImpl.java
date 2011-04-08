@@ -67,7 +67,7 @@ public class GameServiceImpl implements GameService {
 
 	private boolean twitt = false;
 
-	private AtomicReference<String> top100AsString = new AtomicReference<String>();
+	private final AtomicReference<String> top100AsString = new AtomicReference<String>();
 
 	private final AtomicBoolean gameRunning = new AtomicBoolean(false);
 
@@ -77,7 +77,7 @@ public class GameServiceImpl implements GameService {
 	}
 
 	public boolean insertGame(int usersLimit, int questionTimeLimit,
-			int pollingTimeLimit, int synchroTimeLimit, int numberOfQuestion,
+			int pollingTimeLimit, int synchroTimeLimit,
 			List<Map<String, Map<String, Boolean>>> questions) {
 
 		if (!gameRunning.compareAndSet(false, true)) {
@@ -87,7 +87,7 @@ public class GameServiceImpl implements GameService {
 		resetPreviousGame();
 
 		Game game = gameDAO.insertGame(usersLimit, questionTimeLimit,
-				pollingTimeLimit, synchroTimeLimit, numberOfQuestion,
+				pollingTimeLimit, synchroTimeLimit,
 				mapToQuestion(questions));
 
 		gameSynchronization = new GameSynchronization(game);
@@ -209,7 +209,7 @@ public class GameServiceImpl implements GameService {
 
 			try {
 				LOGGER.info(
-						"Start game with {} questions, {} users, {} question time frame, {} synchrotime",
+						"Start game with {} questions, {} users, {} seconds of question time frame, {} seconds of synchrotime",
 						new Object[] { gameDAO.getGame().getNumberOfQuestion(),
 								gameDAO.getGame().getUsersLimit(),
 								gameDAO.getGame().getQuestionTimeLimit(),
@@ -462,12 +462,6 @@ public class GameServiceImpl implements GameService {
 			questionReadyLatch = new CountDownLatch(1);
 		}
 
-	}
-
-	@Override
-	public boolean userAnswer(int questionNumber) {
-		// void.
-		return true;
 	}
 
 	public void scheduleQuestionReply(QuestionWorker questionWorker) {
