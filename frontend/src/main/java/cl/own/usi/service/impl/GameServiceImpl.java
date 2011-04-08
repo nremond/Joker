@@ -201,7 +201,12 @@ public class GameServiceImpl implements GameService {
 		public void run() {
 
 			try {
-				LOGGER.debug("Start game");
+				LOGGER.info(
+						"Start game with {} questions, {} users, {} question time frame, {} synchrotime",
+						new Object[] { gameDAO.getGame().getNumberOfQuestion(),
+								gameDAO.getGame().getUsersLimit(),
+								gameDAO.getGame().getQuestionTimeLimit(),
+								gameDAO.getGame().getSynchroTimeLimit() });
 
 				try {
 					LOGGER.debug("Wait for first login");
@@ -218,9 +223,9 @@ public class GameServiceImpl implements GameService {
 							.await(gameSynchronization.game
 									.getPollingTimeLimit(), TimeUnit.SECONDS);
 					if (awaited) {
-						LOGGER.debug("Enough users have joined the game and requested the first question.");
+						LOGGER.info("Enough users have joined the game and requested the first question.");
 					} else {
-						LOGGER.debug("Waiting time is ellapsed, starting anyway.");
+						LOGGER.info("Waiting time is ellapsed, starting anyway.");
 					}
 				} catch (InterruptedException e) {
 					LOGGER.warn("Interrupted", e);
@@ -248,13 +253,14 @@ public class GameServiceImpl implements GameService {
 								"Wait to all users answer, or till the timeout {}",
 								gameSynchronization.game.getQuestionTimeLimit());
 
-						// Wait the quest time limit
+						// Wait the question time limit
 						LOGGER.debug("Question wait time ...");
 						Thread.sleep(TimeUnit.SECONDS
 								.toMillis(gameSynchronization.game
 										.getQuestionTimeLimit()));
 						LOGGER.debug("Question wait time ... done");
 
+						// synchrotime processing, except for the last question
 						if (i < gameSynchronization.game.getNumberOfQuestion()) {
 							LOGGER.debug("Synchrotime ...");
 
@@ -310,7 +316,7 @@ public class GameServiceImpl implements GameService {
 
 				long stoptime = System.currentTimeMillis();
 
-				LOGGER.info(
+				LOGGER.debug(
 						"Ranking computation and top100 query done in {} ms. Returns {} UserInfoAndScores.",
 						(stoptime - starttime), top100.size());
 
@@ -326,6 +332,8 @@ public class GameServiceImpl implements GameService {
 						LOGGER.warn("Interrupted", e);
 						return;
 					}
+				} else {
+					LOGGER.warn("Ranking computation exceeded synchrotime by {} ms", -synchrotime);
 				}
 
 				LOGGER.debug("Latest synchrotime done");
