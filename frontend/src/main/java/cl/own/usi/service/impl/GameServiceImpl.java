@@ -34,9 +34,9 @@ import cl.own.usi.service.GameService;
 
 /**
  * Game service implementation.
- *
+ * 
  * @author bperroud
- *
+ * 
  */
 @Service
 public class GameServiceImpl implements GameService {
@@ -189,6 +189,13 @@ public class GameServiceImpl implements GameService {
 		}
 	}
 
+	/**
+	 * Class managing the game flow. A new instance is started at each new
+	 * {@link Game}.
+	 * 
+	 * @author bperroud
+	 * 
+	 */
 	private class GameFlowWorker implements Runnable {
 
 		private final GameSynchronization gameSynchronization;
@@ -208,6 +215,8 @@ public class GameServiceImpl implements GameService {
 								gameDAO.getGame().getQuestionTimeLimit(),
 								gameDAO.getGame().getSynchroTimeLimit() });
 
+				// Wait for the first login before starting pollingtimelimit
+				// timer.
 				try {
 					LOGGER.debug("Wait for first login");
 					gameSynchronization.waitForFirstLogin.await();
@@ -217,6 +226,8 @@ public class GameServiceImpl implements GameService {
 					return;
 				}
 
+				// First login recorded, wait either to enough users request the
+				// first question, or pollingtimelimit.
 				try {
 					LOGGER.debug("Wait on all users login and requesting the first question.");
 					boolean awaited = gameSynchronization.enoughUsersLatch
@@ -232,6 +243,8 @@ public class GameServiceImpl implements GameService {
 					return;
 				}
 
+				// For each question, allow response and next question request,
+				// wait questionwaittime and do some processing in synchrotime.
 				for (int i = FIRST_QUESTION; i <= gameSynchronization.game
 						.getNumberOfQuestion(); i++) {
 
@@ -240,6 +253,7 @@ public class GameServiceImpl implements GameService {
 					LOGGER.info(
 							"Starting question {}. Response question number {}",
 							i, gameSynchronization.currentQuestionToAnswer);
+
 					QuestionSynchronization questionSynchronization = gameSynchronization
 							.getQuestionSynchronization(i);
 
@@ -255,9 +269,11 @@ public class GameServiceImpl implements GameService {
 
 						// Wait the question time limit
 						LOGGER.debug("Question wait time ...");
+
 						Thread.sleep(TimeUnit.SECONDS
 								.toMillis(gameSynchronization.game
 										.getQuestionTimeLimit()));
+
 						LOGGER.debug("Question wait time ... done");
 
 						// synchrotime processing, except for the last question
@@ -268,6 +284,7 @@ public class GameServiceImpl implements GameService {
 
 							questionSynchronization.lock.lock();
 							gameSynchronization.currentQuestionToAnswer++;
+							gameSynchronization.currentQuestionRunning = false;
 							for (Runnable r : questionSynchronization.waitingQueue) {
 								LOGGER.debug("Inserting a early requester to the working queue");
 								executorUtil.getExecutorService().execute(r);
@@ -306,6 +323,7 @@ public class GameServiceImpl implements GameService {
 				long starttime = System.currentTimeMillis();
 
 				gameSynchronization.currentQuestionToAnswer++;
+				gameSynchronization.currentQuestionRunning = false;
 
 				workerClient.startRankingsComputation();
 
@@ -333,11 +351,16 @@ public class GameServiceImpl implements GameService {
 						return;
 					}
 				} else {
-					LOGGER.warn("Ranking computation exceeded synchrotime by {} ms", -synchrotime);
+					LOGGER.warn(
+							"Ranking computation exceeded synchrotime by {} ms",
+							-synchrotime);
 				}
 
 				LOGGER.debug("Latest synchrotime done");
 
+				// TODO or FIXME : if startRankingsComputation() or getTop100()
+				// take more than synchrotime, we can have /ranking request that
+				// will failed with no reason.
 				gameSynchronization.rankingRequestAllowed = true;
 
 				LOGGER.info("Ranking requests are now allowed, tweet and clean everything");
@@ -376,6 +399,13 @@ public class GameServiceImpl implements GameService {
 		}
 	}
 
+	/**
+	 * Containers of all needed synchronization stuff for the current
+	 * {@link Game}. A new instance is created at each new {@link Game}.
+	 * 
+	 * @author bperroud
+	 * 
+	 */
 	private static class GameSynchronization {
 
 		private final CountDownLatch waitForFirstLogin;
@@ -414,6 +444,13 @@ public class GameServiceImpl implements GameService {
 
 	}
 
+	/**
+	 * Containers of all needed synchronization stuff for the {@link Question}s.
+	 * A new instance is created at each {@link Question} in a new {@link Game}.
+	 * 
+	 * @author bperroud
+	 * 
+	 */
 	private static class QuestionSynchronization {
 
 		private final CountDownLatch questionReadyLatch;
