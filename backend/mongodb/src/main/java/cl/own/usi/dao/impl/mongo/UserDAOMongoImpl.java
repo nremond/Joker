@@ -101,7 +101,7 @@ public class UserDAOMongoImpl implements UserDAO {
 			DBObject dbSetlogin = new BasicDBObject();
 			dbSetlogin.put("$set", dblogin);
 
-			dbUsers.findAndModify(dbId, dbSetlogin);
+			dbUsers.update(dbId, dbSetlogin);
 
 			LOGGER.debug("login sucessful for {}/{}->userId={}", new Object[] {
 					email, password, userId });
@@ -126,7 +126,7 @@ public class UserDAOMongoImpl implements UserDAO {
 		DBObject dbSetlogout = new BasicDBObject();
 		dblogout.put("$set", dblogout);
 
-		dbUsers.findAndModify(dbUser, dbSetlogout);
+		dbUsers.update(dbUser, dbSetlogout);
 	}
 
 	@Override
@@ -152,7 +152,7 @@ public class UserDAOMongoImpl implements UserDAO {
 		DBObject dbPushAnswers = new BasicDBObject();
 		dbPushAnswers.put("$push", dbAnswers);
 
-		dbUsers.findAndModify(dbUserId, dbPushAnswers);
+		dbUsers.update(dbUserId, dbPushAnswers);
 
 		LOGGER.debug("answer inserted, {}", answer);
 
