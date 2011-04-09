@@ -45,8 +45,7 @@ public class GameDAOImpl implements GameDAO, InitializingBean {
 	}
 
 	public Game insertGame(int usersLimit, int questionTimeLimit,
-			int pollingTimeLimit, int synchroTimeLimit, int numberOfQuestion,
-			List<Question> questions) {
+			int pollingTimeLimit, int synchroTimeLimit, List<Question> questions) {
 
 		game = new Game();
 
@@ -54,8 +53,7 @@ public class GameDAOImpl implements GameDAO, InitializingBean {
 		game.setQuestionTimeLimit(questionTimeLimit);
 		game.setPollingTimeLimit(pollingTimeLimit);
 		game.setSynchroTimeLimit(synchroTimeLimit);
-		game.setNumberOfQuestion(numberOfQuestion);
-
+		game.setNumberOfQuestion(questions.size());
 		game.setQuestions(new ArrayList<Question>(questions));
 
 		persistCurrentGame();

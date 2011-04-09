@@ -1,0 +1,38 @@
+# vfabric2:
+$ mongo --port 10001
+> rs.initiate()
+> rs.add("192.168.1.3:10002")
+> rs.add("192.168.1.4:10003")
+
+
+# vfabric3:
+$ mongo --port 10001
+> rs.initiate()
+> rs.add("192.168.1.4:10002")
+> rs.add("192.168.1.2:10003")
+
+
+# vfabric4:
+$ mongo --port 10001
+> rs.initiate()
+> rs.add("192.168.1.2:10002")
+> rs.add("192.168.1.3:10003")
+
+
+
+# on one node:
+$ mongo --port 27017
+> use admin
+> db.runCommand( { addshard : "jokerRepl1/vfabric2:10001" } ) 
+> db.runCommand( { addshard : "jokerRepl2/vfabric3:10001" } ) 
+> db.runCommand( { addshard : "jokerRepl3/vfabric4:10001" } ) 
+
+# Run by the application
+> db.runCommand( { enablesharding : "joker" } )
+
+
+> use config
+> db.settings.find()
+
+{ "_id" : "balancer", "stopped" : false }
+{ "_id" : "chunksize", "value" : 200 }
