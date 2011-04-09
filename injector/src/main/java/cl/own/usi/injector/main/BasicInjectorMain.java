@@ -50,8 +50,8 @@ public class BasicInjectorMain {
 	/*
 	 * Server parameters
 	 */
-	private final static String DEFAULT_HOST = "localhost";
-	private final static int DEFAULT_PORT = 9080;
+	private static final String DEFAULT_HOST = "localhost";
+	private static final int DEFAULT_PORT = 9080;
 
 	private static String HOST = DEFAULT_HOST;
 	private static int PORT = DEFAULT_PORT;
@@ -59,12 +59,12 @@ public class BasicInjectorMain {
 	/*
 	 * Game parameters
 	 */
-	private final static boolean FLUSHUSERSTABLE = true;
-	private final static int DEFAULT_NBUSERS = 10;
-	private final static int NBQUESTIONS = 20; // don't change me...
-	private final static int QUESTIONTIMEFRAME = 45;
-	private final static int SYNCHROTIME = 30;
-	private final static int LOGINTIMEOUT = 60;
+	private static final boolean FLUSHUSERSTABLE = true;
+	private static final int DEFAULT_NBUSERS = 10;
+	private static final int NBQUESTIONS = 20; // don't change me...
+	private static final int QUESTIONTIMEFRAME = 45;
+	private static final int SYNCHROTIME = 30;
+	private static final int LOGINTIMEOUT = 60;
 
 	private static int NBUSERS = DEFAULT_NBUSERS;
 	private static int MAXNOFILES = 395240;
@@ -76,13 +76,13 @@ public class BasicInjectorMain {
 	 */
 	// Executor that will run players' sequences. Thread pool of number of
 	// processors * 2. No need to be bigger.
-	private final static ExecutorService executor = Executors
+	private static final ExecutorService executor = Executors
 			.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 8);
 
 	// List of players' workers
 	private static List<UserGameWorker> workers;
 
-	private final static CountDownLatch gameStartSynchroLatch = new CountDownLatch(
+	private static final CountDownLatch gameStartSynchroLatch = new CountDownLatch(
 			1);
 
 	private static CountDownLatch gamersHaveAnsweredAllQuestions;
@@ -275,101 +275,109 @@ public class BasicInjectorMain {
 		HttpClient httpClient = new HttpClient();
 
 		String postBody = "{ \"authentication_key\" : \"1234\", \"parameters\" "
-				+ ": \"&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;usi:gam" +
-				"esession xmlns:usi=&quot;http://www.usi.com&quot; xmlns:xsi=&quot;http://www.w3.o" +
-				"rg/2001/XMLSchema-instance&quot; xsi:schemaLocation=&quot;http://www.usi.com game" +
-				"session.xsd &quot;&gt;  &lt;usi:questions&gt;    &lt;usi:question goodchoice=&quo" +
-				"t;1&quot;&gt;      &lt;usi:label&gt;This is the question 1.&lt;/usi:label&gt;    " +
-				"  &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;" +
-				"/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:ch" +
-				"oice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question g" +
-				"oodchoice=&quot;1&quot;&gt;      &lt;usi:label&gt;This is the question 2.&lt;/usi" +
-				":label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&" +
-				"gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;  " +
-				"    &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;" +
-				"usi:question goodchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;This is the quest" +
-				"ion 3.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &" +
-				"lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/us" +
-				"i:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:questi" +
-				"on&gt;    &lt;usi:question goodchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;Thi" +
-				"s is the question 4.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:cho" +
-				"ice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;" +
-				"Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;     " +
-				"   &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;3&quot;&gt;      &l" +
-				"t;usi:label&gt;This is the question 5.&lt;/usi:label&gt;      &lt;usi:choice&gt;C" +
-				"hoix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      " +
-				"&lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/u" +
-				"si:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;3&quo" +
-				"t;&gt;      &lt;usi:label&gt;This is the question 6.&lt;/usi:label&gt;      &lt;u" +
-				"si:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:ch" +
-				"oice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt" +
-				";Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoi" +
-				"ce=&quot;4&quot;&gt;      &lt;usi:label&gt;This is the question 7.&lt;/usi:label&" +
-				"gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choi" +
-				"x 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt" +
-				";usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:que" +
-				"stion goodchoice=&quot;4&quot;&gt;      &lt;usi:label&gt;This is the question 8.&" +
-				"lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:" +
-				"choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choic" +
-				"e&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt; " +
-				"   &lt;usi:question goodchoice=&quot;4&quot;&gt;      &lt;usi:label&gt;This is th" +
-				"e question 9.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;" +
-				"      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3" +
-				"&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi" +
-				":question&gt;    &lt;usi:question goodchoice=&quot;4&quot;&gt;      &lt;usi:label" +
-				"&gt;This is the question 10.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;" +
-				"/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:ch" +
-				"oice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&" +
-				"gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;3&quot;&gt;    " +
-				"  &lt;usi:label&gt;This is the question 11.&lt;/usi:label&gt;      &lt;usi:choice" +
-				"&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt; " +
-				"     &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&" +
-				"lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;" +
-				"3&quot;&gt;      &lt;usi:label&gt;This is the question 12.&lt;/usi:label&gt;     " +
-				" &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/" +
-				"usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:cho" +
-				"ice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question go" +
-				"odchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;This is the question 13.&lt;/usi" +
-				":label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&" +
-				"gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;  " +
-				"    &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;" +
-				"usi:question goodchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;This is the quest" +
-				"ion 14.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      " +
-				"&lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/u" +
-				"si:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:quest" +
-				"ion&gt;    &lt;usi:question goodchoice=&quot;1&quot;&gt;      &lt;usi:label&gt;Th" +
-				"is is the question 15.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:c" +
-				"hoice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&g" +
-				"t;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;   " +
-				" &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;1&quot;&gt;      &lt;" +
-				"usi:label&gt;This is the question 16.&lt;/usi:label&gt;      &lt;usi:choice&gt;Ch" +
-				"oix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &" +
-				"lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/us" +
-				"i:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;1&quot" +
-				";&gt;      &lt;usi:label&gt;This is the question 17.&lt;/usi:label&gt;      &lt;u" +
-				"si:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:ch" +
-				"oice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt" +
-				";Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoi" +
-				"ce=&quot;1&quot;&gt;      &lt;usi:label&gt;This is the question 18.&lt;/usi:label" +
-				"&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Cho" +
-				"ix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &l" +
-				"t;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:qu" +
-				"estion goodchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;This is the question 19" +
-				".&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;us" +
-				"i:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:cho" +
-				"ice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt" +
-				";    &lt;usi:question goodchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;This is " +
-				"the question 20.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&" +
-				"gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choi" +
-				"x 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/" +
-				"usi:question&gt;  &lt;/usi:questions&gt;  &lt;usi:parameters&gt;    &lt;usi:login" +
-				"timeout&gt;" + LOGINTIMEOUT + "&lt;/usi:logintimeout&gt;    &lt;usi:synchrotime&g" +
-				"t;" + SYNCHROTIME + "&lt;/usi:synchrotime&gt;    &lt;usi:nbusersthreshold&gt;" +
-				NBUSERS + "&lt;/usi:nbusersthreshold&gt;    &lt;usi:questiontimeframe&gt;" + QUESTIONTIMEFRAME +
-				"&lt;/usi:questiontimeframe&gt;    &lt;usi:nbquestions&gt;20&lt;/usi:nbquestions&g" +
-				"t;    &lt;usi:flushusertable&gt;" + FLUSHUSERSTABLE + "&lt;/usi:flushusertable&gt" +
-				";    &lt;usi:trackeduseridmail&gt;usi:trackeduseridmail&lt;/usi:trackeduseridmail" +
-				"&gt;  &lt;/usi:parameters&gt;&lt;/usi:gamesession&gt;\" }";
+				+ ": \"&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;usi:gam"
+				+ "esession xmlns:usi=&quot;http://www.usi.com&quot; xmlns:xsi=&quot;http://www.w3.o"
+				+ "rg/2001/XMLSchema-instance&quot; xsi:schemaLocation=&quot;http://www.usi.com game"
+				+ "session.xsd &quot;&gt;  &lt;usi:questions&gt;    &lt;usi:question goodchoice=&quo"
+				+ "t;1&quot;&gt;      &lt;usi:label&gt;This is the question 1.&lt;/usi:label&gt;    "
+				+ "  &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;"
+				+ "/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:ch"
+				+ "oice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question g"
+				+ "oodchoice=&quot;1&quot;&gt;      &lt;usi:label&gt;This is the question 2.&lt;/usi"
+				+ ":label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&"
+				+ "gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;  "
+				+ "    &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;"
+				+ "usi:question goodchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;This is the quest"
+				+ "ion 3.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &"
+				+ "lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/us"
+				+ "i:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:questi"
+				+ "on&gt;    &lt;usi:question goodchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;Thi"
+				+ "s is the question 4.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:cho"
+				+ "ice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;"
+				+ "Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;     "
+				+ "   &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;3&quot;&gt;      &l"
+				+ "t;usi:label&gt;This is the question 5.&lt;/usi:label&gt;      &lt;usi:choice&gt;C"
+				+ "hoix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      "
+				+ "&lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/u"
+				+ "si:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;3&quo"
+				+ "t;&gt;      &lt;usi:label&gt;This is the question 6.&lt;/usi:label&gt;      &lt;u"
+				+ "si:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:ch"
+				+ "oice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt"
+				+ ";Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoi"
+				+ "ce=&quot;4&quot;&gt;      &lt;usi:label&gt;This is the question 7.&lt;/usi:label&"
+				+ "gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choi"
+				+ "x 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt"
+				+ ";usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:que"
+				+ "stion goodchoice=&quot;4&quot;&gt;      &lt;usi:label&gt;This is the question 8.&"
+				+ "lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:"
+				+ "choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choic"
+				+ "e&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt; "
+				+ "   &lt;usi:question goodchoice=&quot;4&quot;&gt;      &lt;usi:label&gt;This is th"
+				+ "e question 9.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;"
+				+ "      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3"
+				+ "&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi"
+				+ ":question&gt;    &lt;usi:question goodchoice=&quot;4&quot;&gt;      &lt;usi:label"
+				+ "&gt;This is the question 10.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;"
+				+ "/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:ch"
+				+ "oice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&"
+				+ "gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;3&quot;&gt;    "
+				+ "  &lt;usi:label&gt;This is the question 11.&lt;/usi:label&gt;      &lt;usi:choice"
+				+ "&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt; "
+				+ "     &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&"
+				+ "lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;"
+				+ "3&quot;&gt;      &lt;usi:label&gt;This is the question 12.&lt;/usi:label&gt;     "
+				+ " &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/"
+				+ "usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:cho"
+				+ "ice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question go"
+				+ "odchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;This is the question 13.&lt;/usi"
+				+ ":label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&"
+				+ "gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;  "
+				+ "    &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;"
+				+ "usi:question goodchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;This is the quest"
+				+ "ion 14.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      "
+				+ "&lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/u"
+				+ "si:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:quest"
+				+ "ion&gt;    &lt;usi:question goodchoice=&quot;1&quot;&gt;      &lt;usi:label&gt;Th"
+				+ "is is the question 15.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:c"
+				+ "hoice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&g"
+				+ "t;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;   "
+				+ " &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;1&quot;&gt;      &lt;"
+				+ "usi:label&gt;This is the question 16.&lt;/usi:label&gt;      &lt;usi:choice&gt;Ch"
+				+ "oix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &"
+				+ "lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/us"
+				+ "i:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;1&quot"
+				+ ";&gt;      &lt;usi:label&gt;This is the question 17.&lt;/usi:label&gt;      &lt;u"
+				+ "si:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:ch"
+				+ "oice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt"
+				+ ";Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoi"
+				+ "ce=&quot;1&quot;&gt;      &lt;usi:label&gt;This is the question 18.&lt;/usi:label"
+				+ "&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Cho"
+				+ "ix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &l"
+				+ "t;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:qu"
+				+ "estion goodchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;This is the question 19"
+				+ ".&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;us"
+				+ "i:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:cho"
+				+ "ice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt"
+				+ ";    &lt;usi:question goodchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;This is "
+				+ "the question 20.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&"
+				+ "gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choi"
+				+ "x 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/"
+				+ "usi:question&gt;  &lt;/usi:questions&gt;  &lt;usi:parameters&gt;    &lt;usi:login"
+				+ "timeout&gt;"
+				+ LOGINTIMEOUT
+				+ "&lt;/usi:logintimeout&gt;    &lt;usi:synchrotime&g"
+				+ "t;"
+				+ SYNCHROTIME
+				+ "&lt;/usi:synchrotime&gt;    &lt;usi:nbusersthreshold&gt;"
+				+ NBUSERS
+				+ "&lt;/usi:nbusersthreshold&gt;    &lt;usi:questiontimeframe&gt;"
+				+ QUESTIONTIMEFRAME
+				+ "&lt;/usi:questiontimeframe&gt;    &lt;usi:nbquestions&gt;20&lt;/usi:nbquestions&g"
+				+ "t;    &lt;usi:flushusertable&gt;"
+				+ FLUSHUSERSTABLE
+				+ "&lt;/usi:flushusertable&gt"
+				+ ";    &lt;usi:trackeduseridmail&gt;usi:trackeduseridmail&lt;/usi:trackeduseridmail"
+				+ "&gt;  &lt;/usi:parameters&gt;&lt;/usi:gamesession&gt;\" }";
 
 		String postUrl = "http://" + HOST + ":" + PORT + "/api/game";
 
@@ -587,11 +595,7 @@ public class BasicInjectorMain {
 						int httpResponseCode = httpClient.executeMethod(get);
 
 						if (httpResponseCode == 200) {
-
-							String body = get.getResponseBodyAsString();
-
-							LOGGER.info(
-									"Everything went fine for user {}",
+							LOGGER.info("Everything went fine for user {}",
 									email);
 
 						} else {
@@ -665,8 +669,10 @@ public class BasicInjectorMain {
 			} else {
 				LOGGER.warn(
 						"Question {} request completed, but received wrong response code {} for user {}",
-						new Object[] { questionRequested,
-								response.getStatusCode(), userId });
+						new Object[] {
+								questionRequested,
+								response == null ? "null" : response
+										.getStatusCode(), userId });
 				return -1;
 			}
 		}

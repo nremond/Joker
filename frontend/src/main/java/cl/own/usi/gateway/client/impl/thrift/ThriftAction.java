@@ -29,7 +29,7 @@ abstract class ThriftAction<T> {
 		this.pools = pools;
 	}
 
-	abstract protected T action(final Client client) throws TException;
+	protected abstract T action(final Client client) throws TException;
 
 	public final T doAction() {
 
@@ -39,8 +39,8 @@ abstract class ThriftAction<T> {
 				return action(client);
 			} catch (TException e) {
 				LOGGER.warn(
-						"Exception caught while calling backend through thrift",
-						e);
+						"Exception caught while calling backend through thrift (try={})",
+						i, e);
 				pools.invalidate(client);
 			} finally {
 				if (client != null) {
