@@ -53,11 +53,17 @@ public class UserDAOMongoImpl implements UserDAO {
 		String error = wr.getError();
 
 		// E11000 -> duplicate key
-		if (StringUtils.hasText(error) && error.indexOf("E11000") == 0) {
-			LOGGER.debug(
-					"user {} was already in the collection, insertion aborted",
-					user.getEmail());
-			return false;
+		if (StringUtils.hasText(error)) {
+			if (error.indexOf("E11000") == 0) {
+				LOGGER.info(
+						"user {} was already in the collection, insertion aborted",
+						user.getEmail());
+				return false;
+			} else {
+				LOGGER.info("error when inserting user {}, error code={}",
+						user.getEmail(), error);
+				return false;
+			}
 		} else {
 			LOGGER.debug("user {} was successfully inserted", user.getEmail());
 			return true;
@@ -101,7 +107,7 @@ public class UserDAOMongoImpl implements UserDAO {
 			DBObject dbSetlogin = new BasicDBObject();
 			dbSetlogin.put("$set", dblogin);
 
-			dbUsers.findAndModify(dbId, dbSetlogin);
+			dbUsers.update(dbId, dbSetlogin);
 
 			LOGGER.debug("login sucessful for {}/{}->userId={}", new Object[] {
 					email, password, userId });
@@ -126,7 +132,7 @@ public class UserDAOMongoImpl implements UserDAO {
 		DBObject dbSetlogout = new BasicDBObject();
 		dblogout.put("$set", dblogout);
 
-		dbUsers.findAndModify(dbUser, dbSetlogout);
+		dbUsers.update(dbUser, dbSetlogout);
 	}
 
 	@Override
@@ -152,7 +158,7 @@ public class UserDAOMongoImpl implements UserDAO {
 		DBObject dbPushAnswers = new BasicDBObject();
 		dbPushAnswers.put("$push", dbAnswers);
 
-		dbUsers.findAndModify(dbUserId, dbPushAnswers);
+		dbUsers.update(dbUserId, dbPushAnswers);
 
 		LOGGER.debug("answer inserted, {}", answer);
 
@@ -201,6 +207,8 @@ public class UserDAOMongoImpl implements UserDAO {
 	public void flushUsers() {
 		final DBCollection dbUsers = db.getCollection(usersCollection);
 		dbUsers.drop();
+
+		LOGGER.info("the MongoDB has been flushed");
 
 		// TODO NIRE : all this code must be moved to a "setupWhatever"
 		// function. It is possible to create a game *without* flushing the

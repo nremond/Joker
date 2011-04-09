@@ -158,6 +158,7 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 
 	@Override
 	public void flushUsers() throws TException {
+		LOGGER.info("%%% flushUsers() has called by tokyo thrift%%%");
 		userService.flushUsers();
 	}
 
@@ -283,55 +284,55 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 			thriftThread.requestShutdown();
 		}
 	}
-	
+
 	@Override
 	public ExtendedUserInfoAndScore getExtendedUserInfo(String userId) {
-		
+
 		LOGGER.info("Excplicitely loading user {} ", userId);
-		
+
 		ExtendedUserInfoAndScore extendedUserInfoAndScore;
-		
+
 		User user = userService.getUserFromUserId(userId);
 		if (user != null) {
-			
+
 			extendedUserInfoAndScore = new ExtendedUserInfoAndScore(userId, user.getScore(), user.getEmail(), user.getFirstname(), user.getLastname(), true, 0);
-			
-			
+
+
 		} else {
 			extendedUserInfoAndScore = new ExtendedUserInfoAndScore();
 		}
 		return extendedUserInfoAndScore;
 	}
-	
+
 	@Override
 	public BeforeAndAfterScores get50BeforeAnd50After(String userId) {
-		
+
 		BeforeAndAfterScores beforeAndAfterScores;
-		
+
 		User user = userService.getUserFromUserId(userId);
 		if (user != null) {
 			List<User> beforeUsers = scoreService.get50Before(user);
-			
+
 			List<UserInfoAndScore> retBeforeUsers = new ArrayList<UserInfoAndScore>(
 					beforeUsers.size());
 			for (User beforeUser : beforeUsers) {
 				retBeforeUsers.add(map(beforeUser));
 			}
-			
+
 			List<User> afterUsers = scoreService.get50After(user);
-			
+
 			List<UserInfoAndScore> retAfterUsers = new ArrayList<UserInfoAndScore>(
 					afterUsers.size());
 			for (User afterUser : afterUsers) {
 				retAfterUsers.add(map(afterUser));
 			}
-			
+
 			beforeAndAfterScores = new BeforeAndAfterScores(retBeforeUsers, retAfterUsers);
-			
+
 		} else {
 			beforeAndAfterScores = new BeforeAndAfterScores();
 		}
-		
+
 		return beforeAndAfterScores;
 	}
 }

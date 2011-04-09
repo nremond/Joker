@@ -58,7 +58,7 @@ public class RankingController extends AbstractController {
 
 					StringBuilder sb = new StringBuilder("{");
 
-					sb.append(" \"my_score\" : ")
+					sb.append(" \"score\" : ")
 							.append(userAndScore.getScore()).append(", ");
 
 					sb.append(" \"top_scores\" : { ")
@@ -66,7 +66,7 @@ public class RankingController extends AbstractController {
 					.append(" }, ");
 
 					BeforeAndAfterScores beforeAndAfterScores = workerClient.get50BeforeAnd50After(userId);
-					
+
 					sb.append(" \"before\" : { ");
 					ScoresHelper.appendUsersScores(beforeAndAfterScores.getScoresBefore(), sb);
 					sb.append(" }, ");

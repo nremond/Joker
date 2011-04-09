@@ -57,11 +57,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		DBObject querySubset = new BasicDBObject();
 		querySubset.put("comment", subset);
 
-		List<User> users = getUsers(query, querySubset, limit);
-
-		logger.debug("get the {} top scores : {}", limit, users);
-
-		return users;
+		return getUsers(query, querySubset, limit);
 	}
 
 	@Override
@@ -76,12 +72,8 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		DBObject querySubset = new BasicDBObject();
 		querySubset.put("comment", subset);
 
-		List<User> users = getUsers(query, querySubset, limit);
+		return getUsers(query, querySubset, limit);
 
-		logger.debug("get the {} users before {} : {} ", new Object[] { limit,
-				user.getUserId(), users });
-
-		return users;
 	}
 
 	@Override
@@ -156,7 +148,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		DBObject dbSetScoreAndBonus = new BasicDBObject();
 		dbSetScoreAndBonus.put("$set", dbScoreAndBonus);
 
-		dbUsers.findAndModify(dbId, dbSetScoreAndBonus);
+		dbUsers.update(dbId, dbSetScoreAndBonus);
 
 		logger.debug(
 				"setGoodAnswer for user {} whose previous score was {} and is now {}",
