@@ -19,8 +19,8 @@ USER=user
 JAVA=/usr/bin/java
 PIDFILE=/var/run/joker.pid
 
-FRONTEND_JVM_OPTS="-Xms512m -Xmx3328m -server"
-BACKEND_JVM_OPTS="-Xms512m -Xmx1280m -server"
+FRONTEND_JVM_OPTS="-Xms512m -Xmx3328m -server -Xloggc:$FOLDER/loggc -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+CMSIncrementalPacing -XX:CMSIncrementalDutyCycleMin=0 -XX:CMSIncrementalDutyCycle=10 -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:-TraceClassUnloading"
+BACKEND_JVM_OPTS="-Xms512m -Xmx1280m -server -Xloggc:$FOLDER/loggc -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+CMSIncrementalPacing -XX:CMSIncrementalDutyCycleMin=0 -XX:CMSIncrementalDutyCycle=10 -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:-TraceClassUnloading"
 
 SA1=/usr/lib/sysstat/sa1
 # collect stats every 1 second for 12 hours (60 * 60 * 12)
