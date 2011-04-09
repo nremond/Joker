@@ -15,7 +15,7 @@ public class ScoreServiceImpl implements ScoreService {
 	@Autowired
 	private ScoreDAO scoreDAO;
 
-	private static final int FIFTY = 50;
+	private static final int FIFTY = 5;
 	private static final int HUNDRED = 100;
 
 	public int updateScore(int questionNumber, int questionValue,
