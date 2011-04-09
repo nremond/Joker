@@ -208,6 +208,8 @@ public class UserDAOMongoImpl implements UserDAO {
 		final DBCollection dbUsers = db.getCollection(usersCollection);
 		dbUsers.drop();
 
+		LOGGER.info("the MongoDB has been flushed");
+
 		// TODO NIRE : all this code must be moved to a "setupWhatever"
 		// function. It is possible to create a game *without* flushing the
 		// users
