@@ -3,12 +3,6 @@ package cl.own.usi.dao.impl.mongo;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.handler.codec.base64.Base64;
-import org.jboss.netty.handler.codec.base64.Base64Dialect;
-import org.jboss.netty.util.CharsetUtil;
-
-import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
 import cl.own.usi.model.User;
 
 import com.mongodb.BasicDBObject;
@@ -30,7 +24,7 @@ public class DaoHelper {
 
 	public static final String usersCollection = "users";
 
-	private static final String USER_ID_SALT = "[B@190d11";
+	private static final String USER_ID_SALT = "[B@190d11+";
 
 	// Spec : les classements sont ordonnes par lastname/firstname/mail
 	public final static DBObject orderByScoreAndNames = new BasicDBObject()
@@ -65,14 +59,50 @@ public class DaoHelper {
 		return user;
 	}
 
-	public static String generateUserId(final String email) {
-		String hash = sha1(email + USER_ID_SALT);
-		ChannelBuffer chanBuff = wrappedBuffer(hash.getBytes(CharsetUtil.UTF_8));
-		return Base64.encode(chanBuff, Base64Dialect.STANDARD).toString(
-				CharsetUtil.UTF_8);
+	static final String baseTable = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+	// encode method
+	public static String base64Encode(byte[] bytes) {
+		StringBuilder tmp = new StringBuilder();
+		int i = 0;
+		byte pos;
+		for (i = 0; i < bytes.length - bytes.length % 3; i += 3) {
+			pos = (byte) (bytes[i] >> 2 & 63);
+			tmp.append(baseTable.charAt(pos));
+			pos = (byte) (((bytes[i] & 3) << 4) + (bytes[i + 1] >> 4 & 15));
+			tmp.append(baseTable.charAt(pos));
+			pos = (byte) (((bytes[i + 1] & 15) << 2) + (bytes[i + 2] >> 6 & 3));
+			tmp.append(baseTable.charAt(pos));
+			pos = (byte) (bytes[i + 2] & 63);
+			tmp.append(baseTable.charAt(pos));
+		}
+		if (bytes.length % 3 != 0) {
+			if (bytes.length % 3 == 2) {
+				pos = (byte) (bytes[i] >> 2 & 63);
+				tmp.append(baseTable.charAt(pos));
+				pos = (byte) (((bytes[i] & 3) << 4) + (bytes[i + 1] >> 4 & 15));
+				tmp.append(baseTable.charAt(pos));
+				pos = (byte) ((bytes[i + 1] & 15) << 2);
+				tmp.append(baseTable.charAt(pos));
+				// tmp.append("=");
+			} else if (bytes.length % 3 == 1) {
+				pos = (byte) (bytes[i] >> 2 & 63);
+				tmp.append(baseTable.charAt(pos));
+				pos = (byte) ((bytes[i] & 3) << 4);
+				tmp.append(baseTable.charAt(pos));
+				// tmp.append("==");
+			}
+		}
+		return tmp.toString();
 	}
 
-	private static String sha1(final String s) {
+	public static String generateUserId(final String email) {
+		byte[] hash = sha1(email + USER_ID_SALT);
+		// return Base64.encode(hash);
+		return base64Encode(hash);
+	}
+
+	private static byte[] sha1(final String s) {
 		MessageDigest md;
 		try {
 			md = MessageDigest.getInstance("SHA-1");
@@ -80,7 +110,17 @@ public class DaoHelper {
 			throw new RuntimeException(e);
 		}
 		md.update((s + USER_ID_SALT).getBytes());
-		return new String(md.digest());
+		return md.digest();
 	}
+
+	/* I'm using this to test the userId
+	public static void main(String[] args) {
+		System.out.println(generateUserId("brown.king@hotmail.com"));
+		System.out.println(generateUserId("brown.hartman@yahoo.com"));
+		System.out.println(generateUserId("brown.gardner@gmail.com"));
+		System.out.println(generateUserId("brown.mcfarland@gmail.com"));
+		System.out.println(generateUserId("brown.mckay@gmail.com"));
+		System.out.println(generateUserId("brown.hurst@gmail.com"));
+	}*/
 
 }
