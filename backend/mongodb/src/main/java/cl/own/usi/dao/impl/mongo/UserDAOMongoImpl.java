@@ -53,11 +53,17 @@ public class UserDAOMongoImpl implements UserDAO {
 		String error = wr.getError();
 
 		// E11000 -> duplicate key
-		if (StringUtils.hasText(error) && error.indexOf("E11000") == 0) {
-			LOGGER.debug(
-					"user {} was already in the collection, insertion aborted",
-					user.getEmail());
-			return false;
+		if (StringUtils.hasText(error)) {
+			if (error.indexOf("E11000") == 0) {
+				LOGGER.info(
+						"user {} was already in the collection, insertion aborted",
+						user.getEmail());
+				return false;
+			} else {
+				LOGGER.info("error when inserting user {}, error code={}",
+						user.getEmail(), error);
+				return false;
+			}
 		} else {
 			LOGGER.debug("user {} was successfully inserted", user.getEmail());
 			return true;
