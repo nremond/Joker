@@ -43,7 +43,7 @@ public class GameServiceImpl implements GameService {
 
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(GameServiceImpl.class);
-
+	
 	@Autowired
 	private ExecutorUtil executorUtil;
 
@@ -74,7 +74,7 @@ public class GameServiceImpl implements GameService {
 	@Value(value = "${frontend.twitt:false}")
 	public void setTwitt(boolean twitt) {
 		this.twitt = twitt;
-	}
+	}	
 
 	public boolean insertGame(int usersLimit, int questionTimeLimit,
 			int pollingTimeLimit, int synchroTimeLimit, int numberOfQuestion,
@@ -493,5 +493,5 @@ public class GameServiceImpl implements GameService {
 	public String getTop100AsString() {
 		return top100AsString.get();
 	}
-
+	
 }

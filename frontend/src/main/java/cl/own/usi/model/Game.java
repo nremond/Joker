@@ -1,5 +1,6 @@
 package cl.own.usi.model;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -8,8 +9,10 @@ import java.util.List;
  * @author bperroud
  *
  */
-public class Game {
+public class Game implements Serializable {
 
+	private static final long serialVersionUID = 1L;
+	
 	private int usersLimit;
 	private int questionTimeLimit;
 	private int pollingTimeLimit;
