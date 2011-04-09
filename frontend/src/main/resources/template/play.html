@@ -44,7 +44,11 @@
 				dataType: 'json',
 				success: function(data, textStatus, jqXHR) {
 					answer_callback(data, textStatus, jqXHR);
+				},
+				error: function(data, textStatus, jqXHR) {
+					ask_next_question();
 				}
+
 			});						
 		});
 		
@@ -178,8 +182,7 @@
 			}
 			$("#questionForm").html("");
 			
-			questionNumber++;
-			ask_question();
+			ask_next_question();
 		}
 		
 	
@@ -201,6 +204,10 @@
 			}
 			$("#questionForm").html("");
 			
+			ask_next_question();
+		}
+	
+		function ask_next_question() {
 			questionNumber++;
 			ask_question();
 		}
