@@ -41,19 +41,19 @@ start_db() {
 	local FOLDER=${MONGODB_FOLDER}${REPLSET}
 	create_folder $FOLDER
 	
-	mongod --shardsvr --dbpath ${FOLDER} --replSet $REPLSET --port $PORT --logpath ${LOG_FOLDER}${REPLSET}.log --logappend --fork
+	mongod --shardsvr --dbpath ${FOLDER} --replSet $REPLSET --port $PORT --journal --logpath ${LOG_FOLDER}${REPLSET}.log --logappend --fork
 }
 
 start_config() {
 	local FOLDER=${MONGODB_FOLDER}config
 	create_folder $FOLDER
 
-	mongod --configsvr --dbpath ${FOLDER} --port $CONFIGDB_PORT --logpath ${LOG_FOLDER}config.log --logappend --fork
+	mongod --configsvr --dbpath ${FOLDER} --port $CONFIGDB_PORT --journal --logpath ${LOG_FOLDER}config.log --logappend --fork
 }
 
 start_routing() {
 	sleep 2
-	mongos --configdb 192.168.1.2:$CONFIGDB_PORT,192.168.1.3:$CONFIGDB_PORT,192.168.1.4:$CONFIGDB_PORT --chunkSize 10 --logpath ${LOG_FOLDER}mongos.log --logappend --fork
+	mongos --configdb 192.168.1.2:$CONFIGDB_PORT,192.168.1.3:$CONFIGDB_PORT,192.168.1.4:$CONFIGDB_PORT --chunkSize 2 --logpath ${LOG_FOLDER}mongos.log --logappend --fork
 }
 
 stop_all() {
