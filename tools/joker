@@ -38,6 +38,10 @@ if test -f "$DEFAULTS_FILE"; then
 	. $DEFAULTS_FILE
 fi
 
+# TODO: ensure that we are root or else messy things will happens...
+# TODO
+# TODO
+
 RETVAL=0
 set -e
 
@@ -54,7 +58,7 @@ start_frontend() {
 
 start_backend() {
 	log_daemon_msg "Starting $NAME backend..."
-	if start-stop-daemon --start --quiet --oknodo --pidfile $PIDFILE --chuid $USER --background --chdir $FOLDER --make-pidfile --exec $JAVA -- $BACKEND_JVM_OPTS -Dconfig.location=backend.properties -jar $BACKEND_APP; then
+	if start-stop-daemon --start --quiet --oknodo --pidfile $PIDFILE --chuid $USER --background --chdir $FOLDER --make-pidfile --exec $JAVA -- $BACKEND_JVM_OPTS -Dconfig.location=backend.properties -cp .:$BACKEND_APP cl.own.usi.main.WorkerMain; then
 		log_end_msg 0
 	else
 		log_end_msg 1
@@ -89,34 +93,45 @@ stop_sysstat() {
 	fi	
 }
 
-case "$1" in
-	start)
-		log_begin_msg "Starting $NAME: "
-		case "$MODE" in
-		frontend)
-			start_frontend
-		;;
-		backend)
-			start_backend
-		;;
-		*)
+start() {
+	log_begin_msg "Starting $NAME: "
+	case "$MODE" in
+	frontend)
+		start_frontend
+	;;
+	backend)
+		start_backend	
+	*)
 			echo "Unknown mode $MODE"
 			log_end_msg 1
-		;;
-		esac
+	;;
+	esac
 		
-		if [ "$ENABLE_STATS" = "true" ]; then
-			start_sysstat
-		fi
+	if [ "$ENABLE_STATS" = "true" ]; then
+		start_sysstat
+	fi
+}
+
+stop() {
+	log_begin_msg "Stopping $NAME: "
+	stop_joker
+	
+	stop_sysstat	
+}
+
+case "$1" in
+	start)
+		start
 		;;
 	stop)
-		log_begin_msg "Stopping $NAME: "
-		stop_joker
-		
-		stop_sysstat
+		stop
+		;;
+	restart)
+		stop
+		start
 		;;
 	*)
-		echo "Usage: $0 {start|stop}" >&2
+		echo "Usage: $0 {start|stop|restart}" >&2
 		exit 1
 		;;
 esac
