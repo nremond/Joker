@@ -4,7 +4,7 @@
     
     <xsd:complexType name="questiontype">
     	<xsd:sequence>
-    		<xsd:element name="question" type="usi:question" minOccurs="20" maxOccurs="20"></xsd:element>
+    		<xsd:element name="question" type="usi:question" minOccurs="1" maxOccurs="20"></xsd:element>
     	</xsd:sequence>
     </xsd:complexType>
 
