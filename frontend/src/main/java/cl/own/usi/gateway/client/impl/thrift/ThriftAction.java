@@ -1,6 +1,8 @@
 package cl.own.usi.gateway.client.impl.thrift;
 
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import cl.own.usi.gateway.client.impl.thrift.WorkerClientThriftImpl.WorkerHost;
 import cl.own.usi.gateway.client.pool.MultiPool;
@@ -16,7 +18,10 @@ import cl.own.usi.thrift.WorkerRPC.Client;
  */
 abstract class ThriftAction<T> {
 
-	static final int THRIFT_RETRY = 3;
+	private static final int THRIFT_RETRY = 3;
+
+	private static final Logger LOGGER = LoggerFactory
+			.getLogger(ThriftAction.class);
 
 	private final MultiPool<WorkerHost, Client> pools;
 
@@ -33,6 +38,9 @@ abstract class ThriftAction<T> {
 			try {
 				return action(client);
 			} catch (TException e) {
+				LOGGER.warn(
+						"Exception caught while calling backend through thrift",
+						e);
 				pools.invalidate(client);
 			} finally {
 				if (client != null) {

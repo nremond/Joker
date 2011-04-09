@@ -27,20 +27,20 @@ import com.ning.http.client.AsyncHttpClientConfig;
 import com.ning.http.client.Response;
 
 /**
- * Multithreaded game injector.
- * 
+ * Multi-threaded game injector.
+ *
  * Increase NBUSERS and NBQUESTIONS to add load.
- * 
+ *
  * Game creation, user insertion, question answers are based on
  * {@link HttpClient} (OIO), and question request is based on
- * {@link AsyncHttpClient} (NIO). {@link UserGameWorker#questionRecieved()} is
+ * {@link AsyncHttpClient} (NIO). {@link UserGameWorker#questionReceived()} is
  * called asynchronously when the server has sent the question.
- * 
- * One {@link UserGameWorker} is instanciated for each user, and store the state
+ *
+ * One {@link UserGameWorker} is instantiated for each user, and store the state
  * of this user.
- * 
+ *
  * @author bperroud
- * 
+ *
  */
 public class BasicInjectorMain {
 
@@ -61,7 +61,7 @@ public class BasicInjectorMain {
 	 */
 	private final static boolean FLUSHUSERSTABLE = true;
 	private final static int DEFAULT_NBUSERS = 10;
-	private final static int NBQUESTIONS = 4;
+	private final static int NBQUESTIONS = 20; // don't change me...
 	private final static int QUESTIONTIMEFRAME = 45;
 	private final static int SYNCHROTIME = 30;
 	private final static int LOGINTIMEOUT = 60;
@@ -186,7 +186,7 @@ public class BasicInjectorMain {
 
 	/**
 	 * Insert players. Read players from 1million_users_1.csv file.
-	 * 
+	 *
 	 * @param limit
 	 * @throws IOException
 	 * @throws InterruptedException
@@ -264,7 +264,7 @@ public class BasicInjectorMain {
 
 	/**
 	 * Create game. All game parameters are given as constants.
-	 * 
+	 *
 	 * @throws HttpException
 	 * @throws IOException
 	 */
@@ -365,7 +365,7 @@ public class BasicInjectorMain {
 				"usi:question&gt;  &lt;/usi:questions&gt;  &lt;usi:parameters&gt;    &lt;usi:login" +
 				"timeout&gt;" + LOGINTIMEOUT + "&lt;/usi:logintimeout&gt;    &lt;usi:synchrotime&g" +
 				"t;" + SYNCHROTIME + "&lt;/usi:synchrotime&gt;    &lt;usi:nbusersthreshold&gt;" +
-				NBUSERS + "&lt;/usi:nbusersthreshold&gt;    &lt;usi:questiontimeframe&gt;" + QUESTIONTIMEFRAME + 
+				NBUSERS + "&lt;/usi:nbusersthreshold&gt;    &lt;usi:questiontimeframe&gt;" + QUESTIONTIMEFRAME +
 				"&lt;/usi:questiontimeframe&gt;    &lt;usi:nbquestions&gt;20&lt;/usi:nbquestions&g" +
 				"t;    &lt;usi:flushusertable&gt;" + FLUSHUSERSTABLE + "&lt;/usi:flushusertable&gt" +
 				";    &lt;usi:trackeduseridmail&gt;usi:trackeduseridmail&lt;/usi:trackeduseridmail" +
@@ -391,17 +391,17 @@ public class BasicInjectorMain {
 
 	/**
 	 * Players class that handle.
-	 * 
+	 *
 	 * This class is run by an {@link Executor}. The runnable function do one
 	 * step at a time, rescheduling itself after each step. This permit to
 	 * emulate concurrency with much lower threads.
-	 * 
+	 *
 	 * There is one step to login, one to request the question, one to answer it
 	 * (these two steps are repeated as much as needed by the game), and one
 	 * last step for the ranking.
-	 * 
+	 *
 	 * @author bperroud
-	 * 
+	 *
 	 */
 	private static class UserGameWorker implements Runnable {
 
@@ -622,7 +622,7 @@ public class BasicInjectorMain {
 
 		/**
 		 * Callback function when the question is received.
-		 * 
+		 *
 		 */
 		public void questionReceived(int questionRequested) {
 
@@ -638,10 +638,10 @@ public class BasicInjectorMain {
 
 	/**
 	 * {@link AsyncHttpClient} handler that will call
-	 * {@link UserGameWorker#questionRecieved()} when the request returns.
-	 * 
+	 * {@link UserGameWorker#questionReceived()} when the request returns.
+	 *
 	 * @author bperroud
-	 * 
+	 *
 	 */
 	private static class MyAsyncHandler extends AsyncCompletionHandler<Integer> {
 
@@ -664,7 +664,7 @@ public class BasicInjectorMain {
 				return 200;
 			} else {
 				LOGGER.warn(
-						"Question {} request completed, but recieve wrong response code {} for user {}",
+						"Question {} request completed, but received wrong response code {} for user {}",
 						new Object[] { questionRequested,
 								response.getStatusCode(), userId });
 				return -1;
