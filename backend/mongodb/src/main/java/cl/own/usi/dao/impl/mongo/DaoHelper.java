@@ -37,6 +37,10 @@ public class DaoHelper {
 			.append(scoreField, -1).append(lastnameField, 1)
 			.append(firstnameField, 1).append(emailField, 1);
 
+	public final static DBObject orderByNames = new BasicDBObject()
+			.append(lastnameField, 1).append(firstnameField, 1)
+			.append(emailField, 1);
+
 	public static DBObject toDBObject(final User user) {
 		DBObject dbUser = new BasicDBObject();
 		dbUser.put(userIdField, DaoHelper.generateUserId(user.getEmail()));

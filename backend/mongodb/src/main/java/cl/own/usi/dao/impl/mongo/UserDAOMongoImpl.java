@@ -3,6 +3,7 @@ package cl.own.usi.dao.impl.mongo;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.answerNumberField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.answersField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.isLoggedField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByNames;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScoreAndNames;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.questionNumberField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
@@ -211,6 +212,7 @@ public class UserDAOMongoImpl implements UserDAO {
 		newUsers.ensureIndex(userIdIndex, "userIdIndex", true);
 		newUsers.ensureIndex(orderByScoreAndNames, "orderByScoreAndNames",
 				false);
+		newUsers.ensureIndex(orderByNames, "orderByScoreAndNames", false);
 
 		// Enable sharding for the newly created collection
 		final DB adminDb = db.getSisterDB("admin");
