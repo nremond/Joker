@@ -78,7 +78,7 @@ public class BasicInjectorMain {
 	// processors * 2. No need to be bigger.
 	private final static ExecutorService executor = Executors
 			.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 8);
-	
+
 	// List of players' workers
 	private static List<UserGameWorker> workers;
 
@@ -96,10 +96,12 @@ public class BasicInjectorMain {
 		ASYNC_HTTP_CLIENT_CONFIG_BUILDER
 				.setMaximumConnectionsPerHost(MAXNOFILES);
 		ASYNC_HTTP_CLIENT_CONFIG_BUILDER.setMaximumConnectionsTotal(MAXNOFILES);
-		ASYNC_HTTP_CLIENT_CONFIG_BUILDER.setRequestTimeoutInMs(Math.max(QUESTIONTIMEFRAME + SYNCHROTIME, LOGINTIMEOUT) * 1000 * 2);
-		ASYNC_HTTP_CLIENT_CONFIG_BUILDER.setConnectionTimeoutInMs(Math.min(QUESTIONTIMEFRAME + SYNCHROTIME, LOGINTIMEOUT) * 1000);
+		ASYNC_HTTP_CLIENT_CONFIG_BUILDER.setRequestTimeoutInMs(Math.max(
+				QUESTIONTIMEFRAME + SYNCHROTIME, LOGINTIMEOUT) * 1000 * 2);
+		ASYNC_HTTP_CLIENT_CONFIG_BUILDER.setConnectionTimeoutInMs(Math.min(
+				QUESTIONTIMEFRAME + SYNCHROTIME, LOGINTIMEOUT) * 1000);
 	}
-	
+
 	private static final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
 			ASYNC_HTTP_CLIENT_CONFIG_BUILDER.build());
 
@@ -123,9 +125,9 @@ public class BasicInjectorMain {
 		}
 
 		workers = new ArrayList<BasicInjectorMain.UserGameWorker>(NBUSERS);
-		
+
 		// 1 and not NBUSERS in case we loose players in the way.
-		gamersHaveAnsweredAllQuestions = new CountDownLatch(1); 
+		gamersHaveAnsweredAllQuestions = new CountDownLatch(1);
 		gameFinishedSynchroLatch = new CountDownLatch(1);
 
 		createGame();
@@ -135,7 +137,7 @@ public class BasicInjectorMain {
 		} catch (InterruptedException e) {
 			return;
 		}
-		
+
 		insertUsers(NBUSERS);
 
 		try {
@@ -241,7 +243,9 @@ public class BasicInjectorMain {
 								SYNCHROTIME, NBQUESTIONS, fields[2], fields[3],
 								executor));
 					} else {
-						LOGGER.warn("Creation of user {} failed with response status {}", fields[2], httpResponseCode);
+						LOGGER.warn(
+								"Creation of user {} failed with response status {}",
+								fields[2], httpResponseCode);
 					}
 
 				} finally {
@@ -270,45 +274,102 @@ public class BasicInjectorMain {
 
 		HttpClient httpClient = new HttpClient();
 
-		String postBody = "{ \"authentication_key\" : \"1234\", \"parameters\" : { \"questions\" "
-				+ ": [ { \"goodchoice\" : 1, \"label\" : \"Question1\", \"choices\" : [ \""
-				+ "choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 2, \"label\" : \"Question2\""
-				+ ", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 1, \"label\""
-				+ " : \"Question3\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\""
-				+ " : 4, \"label\" : \"Question4\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] },"
-				+ " { \"goodchoice\" : 1, \"label\" : \"Question5\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\","
-				+ " \"choix4\" ] }, { \"goodchoice\" : 2, \"label\" : \"Question6\", \"choices\" : [ \"choix1\", \"choix2\","
-				+ " \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 3, \"label\" : \"Question7\", \"choices\" : [ \"choix1\","
-				+ " \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 1, \"label\" : \"Question8\", \"choices\" : ["
-				+ " \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 4, \"label\" : \"Question9\", \"ch"
-				+ "oices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 2, \"label\" : \"Question1"
-				+ "0\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 1, \"label\" :"
-				+ " \"Question11\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\""
-				+ " : 3, \"label\" : \"Question12\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, "
-				+ "{ \"goodchoice\" : 4, \"label\" : \"Question13\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", "
-				+ "\"choix4\" ] }, { \"goodchoice\" : 1, \"label\" : \"Question14\", \"choices\" : [ \"choix1\", \"choix"
-				+ "2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 1, \"label\" : \"Question15\", \"choices\" : [ \"ch"
-				+ "oix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 1, \"label\" : \"Question16\", \"choi"
-				+ "ces\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 2, \"label\" : \"Questi"
-				+ "on17\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoice\" : 2, \"lab"
-				+ "el\" : \"Question18\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, { \"goodchoi"
-				+ "ce\" : 1, \"label\" : \"Question19\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"choix4\" ] }, "
-				+ "{ \"goodchoice\" : 3, \"label\" : \"Question20\", \"choices\" : [ \"choix1\", \"choix2\", \"choix3\", \"ch"
-				+ "oix4\" ] } ], \"parameters\" : { \"logintimeout\" : "
-				+ LOGINTIMEOUT
-				+ ", \"synchrotime\" : "
-				+ SYNCHROTIME
-				+ ", \"nbusersthreshold\" : "
-				+ NBUSERS
-				+ ", "
-				+ "\"questiontimeframe\" : "
-				+ QUESTIONTIMEFRAME
-				+ ", \"nbquestions\" : "
-				+ NBQUESTIONS
-				+ ", "
-				+ "\"flushusertable\" : "
-				+ FLUSHUSERSTABLE
-				+ ", \"trackeduseridmail\" : \"unused\" } } }";
+		String postBody = "{ \"authentication_key\" : \"1234\", \"parameters\" "
+				+ ": \"&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;usi:gam" +
+				"esession xmlns:usi=&quot;http://www.usi.com&quot; xmlns:xsi=&quot;http://www.w3.o" +
+				"rg/2001/XMLSchema-instance&quot; xsi:schemaLocation=&quot;http://www.usi.com game" +
+				"session.xsd &quot;&gt;  &lt;usi:questions&gt;    &lt;usi:question goodchoice=&quo" +
+				"t;1&quot;&gt;      &lt;usi:label&gt;This is the question 1.&lt;/usi:label&gt;    " +
+				"  &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;" +
+				"/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:ch" +
+				"oice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question g" +
+				"oodchoice=&quot;1&quot;&gt;      &lt;usi:label&gt;This is the question 2.&lt;/usi" +
+				":label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&" +
+				"gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;  " +
+				"    &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;" +
+				"usi:question goodchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;This is the quest" +
+				"ion 3.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &" +
+				"lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/us" +
+				"i:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:questi" +
+				"on&gt;    &lt;usi:question goodchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;Thi" +
+				"s is the question 4.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:cho" +
+				"ice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;" +
+				"Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;     " +
+				"   &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;3&quot;&gt;      &l" +
+				"t;usi:label&gt;This is the question 5.&lt;/usi:label&gt;      &lt;usi:choice&gt;C" +
+				"hoix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      " +
+				"&lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/u" +
+				"si:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;3&quo" +
+				"t;&gt;      &lt;usi:label&gt;This is the question 6.&lt;/usi:label&gt;      &lt;u" +
+				"si:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:ch" +
+				"oice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt" +
+				";Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoi" +
+				"ce=&quot;4&quot;&gt;      &lt;usi:label&gt;This is the question 7.&lt;/usi:label&" +
+				"gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choi" +
+				"x 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt" +
+				";usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:que" +
+				"stion goodchoice=&quot;4&quot;&gt;      &lt;usi:label&gt;This is the question 8.&" +
+				"lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:" +
+				"choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choic" +
+				"e&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt; " +
+				"   &lt;usi:question goodchoice=&quot;4&quot;&gt;      &lt;usi:label&gt;This is th" +
+				"e question 9.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;" +
+				"      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3" +
+				"&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi" +
+				":question&gt;    &lt;usi:question goodchoice=&quot;4&quot;&gt;      &lt;usi:label" +
+				"&gt;This is the question 10.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;" +
+				"/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:ch" +
+				"oice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&" +
+				"gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;3&quot;&gt;    " +
+				"  &lt;usi:label&gt;This is the question 11.&lt;/usi:label&gt;      &lt;usi:choice" +
+				"&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt; " +
+				"     &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&" +
+				"lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;" +
+				"3&quot;&gt;      &lt;usi:label&gt;This is the question 12.&lt;/usi:label&gt;     " +
+				" &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/" +
+				"usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:cho" +
+				"ice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question go" +
+				"odchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;This is the question 13.&lt;/usi" +
+				":label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&" +
+				"gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;  " +
+				"    &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;" +
+				"usi:question goodchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;This is the quest" +
+				"ion 14.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      " +
+				"&lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/u" +
+				"si:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:quest" +
+				"ion&gt;    &lt;usi:question goodchoice=&quot;1&quot;&gt;      &lt;usi:label&gt;Th" +
+				"is is the question 15.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:c" +
+				"hoice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&g" +
+				"t;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;   " +
+				" &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;1&quot;&gt;      &lt;" +
+				"usi:label&gt;This is the question 16.&lt;/usi:label&gt;      &lt;usi:choice&gt;Ch" +
+				"oix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &" +
+				"lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/us" +
+				"i:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoice=&quot;1&quot" +
+				";&gt;      &lt;usi:label&gt;This is the question 17.&lt;/usi:label&gt;      &lt;u" +
+				"si:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:ch" +
+				"oice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &lt;usi:choice&gt" +
+				";Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:question goodchoi" +
+				"ce=&quot;1&quot;&gt;      &lt;usi:label&gt;This is the question 18.&lt;/usi:label" +
+				"&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;usi:choice&gt;Cho" +
+				"ix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:choice&gt;      &l" +
+				"t;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt;    &lt;usi:qu" +
+				"estion goodchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;This is the question 19" +
+				".&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&gt;      &lt;us" +
+				"i:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 3&lt;/usi:cho" +
+				"ice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/usi:question&gt" +
+				";    &lt;usi:question goodchoice=&quot;2&quot;&gt;      &lt;usi:label&gt;This is " +
+				"the question 20.&lt;/usi:label&gt;      &lt;usi:choice&gt;Choix 1&lt;/usi:choice&" +
+				"gt;      &lt;usi:choice&gt;Choix 2&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choi" +
+				"x 3&lt;/usi:choice&gt;      &lt;usi:choice&gt;Choix 4&lt;/usi:choice&gt;    &lt;/" +
+				"usi:question&gt;  &lt;/usi:questions&gt;  &lt;usi:parameters&gt;    &lt;usi:login" +
+				"timeout&gt;" + LOGINTIMEOUT + "&lt;/usi:logintimeout&gt;    &lt;usi:synchrotime&g" +
+				"t;" + SYNCHROTIME + "&lt;/usi:synchrotime&gt;    &lt;usi:nbusersthreshold&gt;" +
+				NBUSERS + "&lt;/usi:nbusersthreshold&gt;    &lt;usi:questiontimeframe&gt;" + QUESTIONTIMEFRAME + 
+				"&lt;/usi:questiontimeframe&gt;    &lt;usi:nbquestions&gt;20&lt;/usi:nbquestions&g" +
+				"t;    &lt;usi:flushusertable&gt;" + FLUSHUSERSTABLE + "&lt;/usi:flushusertable&gt" +
+				";    &lt;usi:trackeduseridmail&gt;usi:trackeduseridmail&lt;/usi:trackeduseridmail" +
+				"&gt;  &lt;/usi:parameters&gt;&lt;/usi:gamesession&gt;\" }";
 
 		String postUrl = "http://" + HOST + ":" + PORT + "/api/game";
 
@@ -366,7 +427,7 @@ public class BasicInjectorMain {
 		private volatile boolean currentQuestionRequested = false;
 
 		private final HttpClient httpClient = new HttpClient();
-		
+
 		public UserGameWorker(int questiontimeframe, int synchrotime,
 				int numquestions, String email, String password,
 				ExecutorService executor) {
@@ -420,9 +481,9 @@ public class BasicInjectorMain {
 							}
 
 							loginOk = true;
-							
+
 							LOGGER.info("Login ok for {} ", email);
-							
+
 						} else {
 							LOGGER.warn(
 									"Problem at login {} with response code {}",
