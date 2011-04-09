@@ -66,7 +66,12 @@ public class LoginController extends AbstractController {
 			final UserLogin userLogin = workerClient.loginUser(loginRequest.getMail(),
 					loginRequest.getPassword());
 
-			if (userLogin.isAlreadyLogged()) {
+			if (userLogin == null) {
+				writeResponse(e, BAD_REQUEST);
+				getLogger().warn(
+						"Something wrong happens when trying to login the user {}, null is returned...", loginRequest.getMail());
+				return;
+			} else if (userLogin.isAlreadyLogged()) {
 				writeResponse(e, BAD_REQUEST);
 				getLogger().warn(
 						"User already logged for session {}", loginRequest.getMail());
