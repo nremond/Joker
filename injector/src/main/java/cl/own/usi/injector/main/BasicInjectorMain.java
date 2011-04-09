@@ -69,7 +69,7 @@ public class BasicInjectorMain {
 	private static int NBUSERS = DEFAULT_NBUSERS;
 	private static int MAXNOFILES = 395240;
 
-	private static long SLA = 350L;
+	private static final long SLA = 350L;
 
 	/*
 	 * Synchronization and concurrency stuff
@@ -378,7 +378,7 @@ public class BasicInjectorMain {
 
 		try {
 			int httpResponseCode = httpClient.executeMethod(post);
-			LOGGER.debug("Response code : {}", httpResponseCode);
+			LOGGER.info("Response code : {}", httpResponseCode);
 
 		} finally {
 			post.releaseConnection();
@@ -482,11 +482,11 @@ public class BasicInjectorMain {
 
 							loginOk = true;
 
-							LOGGER.info("Login ok for {} ", email);
+							LOGGER.debug("Login ok for {} ", email);
 
 						} else {
 							LOGGER.warn(
-									"Problem at login {} with response code {}",
+									"Problem at login for {} with response code {}",
 									email, httpResponseCode);
 						}
 
@@ -591,8 +591,8 @@ public class BasicInjectorMain {
 							String body = get.getResponseBodyAsString();
 
 							LOGGER.info(
-									"Everything went fine for user {} : {}",
-									email, body);
+									"Everything went fine for user {}",
+									email);
 
 						} else {
 							LOGGER.error(
