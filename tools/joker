@@ -20,7 +20,7 @@ JAVA=/usr/bin/java
 PIDFILE=/var/run/joker.pid
 
 FRONTEND_JVM_OPTS="-Xms512m -Xmx3328m -server -Xloggc:$FOLDER/loggc -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+CMSIncrementalPacing -XX:CMSIncrementalDutyCycleMin=0 -XX:CMSIncrementalDutyCycle=10 -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:-TraceClassUnloading"
-BACKEND_JVM_OPTS="-Xms512m -Xmx1280m -server -Xloggc:$FOLDER/loggc -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+CMSIncrementalPacing -XX:CMSIncrementalDutyCycleMin=0 -XX:CMSIncrementalDutyCycle=10 -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:-TraceClassUnloading"
+BACKEND_JVM_OPTS="-Xms512m -Xmx3096m -server -Xloggc:$FOLDER/loggc -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+CMSIncrementalPacing -XX:CMSIncrementalDutyCycleMin=0 -XX:CMSIncrementalDutyCycle=10 -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:-TraceClassUnloading"
 
 SA1=/usr/lib/sysstat/sa1
 # collect stats every 1 second for 12 hours (60 * 60 * 12)
@@ -38,9 +38,12 @@ if test -f "$DEFAULTS_FILE"; then
 	. $DEFAULTS_FILE
 fi
 
-# TODO: ensure that we are root or else messy things will happens...
-# TODO
-# TODO
+# Ensure that we are root or else we won't be able to save the PID file nor open the 80 port
+if [ ! -w / ]; then
+	echo "This script must be run as root!"
+	exit 1
+fi
+
 
 RETVAL=0
 set -e
@@ -100,7 +103,8 @@ start() {
 		start_frontend
 	;;
 	backend)
-		start_backend	
+		start_backend
+	;;
 	*)
 			echo "Unknown mode $MODE"
 			log_end_msg 1
@@ -128,6 +132,7 @@ case "$1" in
 		;;
 	restart)
 		stop
+		sleep 2
 		start
 		;;
 	*)
