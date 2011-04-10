@@ -27,9 +27,9 @@ import com.mongodb.DBObject;
 public class ScoreDAOMongoImpl implements ScoreDAO {
 
 	@Autowired
-	DB db;
+	private DB db;
 
-	private Logger logger = LoggerFactory.getLogger(this.getClass());
+	private static final Logger LOGGER = LoggerFactory.getLogger(ScoreDAOMongoImpl.class);
 
 	private List<User> getUsers(DBObject query, DBObject querySubset,
 			int expectedSize) {
@@ -90,7 +90,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		List<User> users = getUsers(query, querySubset, limit);
 
-		logger.debug("get the {} users after {} : {} ", new Object[] { limit,
+		LOGGER.debug("get the {} users after {} : {} ", new Object[] { limit,
 				user.getUserId(), users });
 
 		return users;
@@ -112,7 +112,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		DBObject user = dbUsers.findAndModify(dbUser, dbSetBonus);
 		Integer score = (Integer) user.get(scoreField);
 
-		logger.debug("setBadAnswer for user {} whose score is now {}", userId,
+		LOGGER.debug("setBadAnswer for user {} whose score is now {}", userId,
 				score);
 
 		return score.intValue();
@@ -150,7 +150,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		dbUsers.update(dbId, dbSetScoreAndBonus);
 
-		logger.debug(
+		LOGGER.debug(
 				"setGoodAnswer for user {} whose previous score was {} and is now {}",
 				new Object[] { userId, score, newScore });
 

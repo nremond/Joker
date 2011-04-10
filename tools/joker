@@ -20,7 +20,7 @@ JAVA=/usr/bin/java
 PIDFILE=/var/run/joker.pid
 
 FRONTEND_JVM_OPTS="-Xms512m -Xmx3328m -server -Xloggc:$FOLDER/loggc -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+CMSIncrementalPacing -XX:CMSIncrementalDutyCycleMin=0 -XX:CMSIncrementalDutyCycle=10 -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:-TraceClassUnloading"
-BACKEND_JVM_OPTS="-Xms512m -Xmx1280m -server -Xloggc:$FOLDER/loggc -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+CMSIncrementalPacing -XX:CMSIncrementalDutyCycleMin=0 -XX:CMSIncrementalDutyCycle=10 -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:-TraceClassUnloading"
+BACKEND_JVM_OPTS="-Xms512m -Xmx3096m -server -Xloggc:$FOLDER/loggc -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+CMSIncrementalPacing -XX:CMSIncrementalDutyCycleMin=0 -XX:CMSIncrementalDutyCycle=10 -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:-TraceClassUnloading"
 
 SA1=/usr/lib/sysstat/sa1
 # collect stats every 1 second for 12 hours (60 * 60 * 12)
@@ -38,6 +38,13 @@ if test -f "$DEFAULTS_FILE"; then
 	. $DEFAULTS_FILE
 fi
 
+# Ensure that we are root or else we won't be able to save the PID file nor open the 80 port
+if [ ! -w / ]; then
+	echo "This script must be run as root!"
+	exit 1
+fi
+
+
 RETVAL=0
 set -e
 
@@ -54,7 +61,7 @@ start_frontend() {
 
 start_backend() {
 	log_daemon_msg "Starting $NAME backend..."
-	if start-stop-daemon --start --quiet --oknodo --pidfile $PIDFILE --chuid $USER --background --chdir $FOLDER --make-pidfile --exec $JAVA -- $BACKEND_JVM_OPTS -Dconfig.location=backend.properties -jar $BACKEND_APP; then
+	if start-stop-daemon --start --quiet --oknodo --pidfile $PIDFILE --chuid $USER --background --chdir $FOLDER --make-pidfile --exec $JAVA -- $BACKEND_JVM_OPTS -Dconfig.location=backend.properties -cp .:$BACKEND_APP cl.own.usi.main.WorkerMain; then
 		log_end_msg 0
 	else
 		log_end_msg 1
@@ -89,34 +96,47 @@ stop_sysstat() {
 	fi	
 }
 
-case "$1" in
-	start)
-		log_begin_msg "Starting $NAME: "
-		case "$MODE" in
-		frontend)
-			start_frontend
-		;;
-		backend)
-			start_backend
-		;;
-		*)
+start() {
+	log_begin_msg "Starting $NAME: "
+	case "$MODE" in
+	frontend)
+		start_frontend
+	;;
+	backend)
+		start_backend
+	;;
+	*)
 			echo "Unknown mode $MODE"
 			log_end_msg 1
-		;;
-		esac
+	;;
+	esac
 		
-		if [ "$ENABLE_STATS" = "true" ]; then
-			start_sysstat
-		fi
+	if [ "$ENABLE_STATS" = "true" ]; then
+		start_sysstat
+	fi
+}
+
+stop() {
+	log_begin_msg "Stopping $NAME: "
+	stop_joker
+	
+	stop_sysstat	
+}
+
+case "$1" in
+	start)
+		start
 		;;
 	stop)
-		log_begin_msg "Stopping $NAME: "
-		stop_joker
-		
-		stop_sysstat
+		stop
+		;;
+	restart)
+		stop
+		sleep 2
+		start
 		;;
 	*)
-		echo "Usage: $0 {start|stop}" >&2
+		echo "Usage: $0 {start|stop|restart}" >&2
 		exit 1
 		;;
 esac
