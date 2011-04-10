@@ -53,13 +53,14 @@ start_config() {
 
 start_routing() {
 	sleep 2
-	mongos --configdb 192.168.1.2:$CONFIGDB_PORT,192.168.1.3:$CONFIGDB_PORT,192.168.1.4:$CONFIGDB_PORT --chunkSize 2 --logpath ${LOG_FOLDER}mongos.log --logappend --fork
+	mongos --configdb 192.168.1.2:$CONFIGDB_PORT,192.168.1.3:$CONFIGDB_PORT,192.168.1.4:$CONFIGDB_PORT --chunkSize 5 --logpath ${LOG_FOLDER}mongos.log --logappend --fork
 }
 
 stop_all() {
 	# enough for a clean stop
-	killall -q mongod
 	killall -q mongos
+	sleep 2
+	killall -q mongod
 }
 
 case "$1" in

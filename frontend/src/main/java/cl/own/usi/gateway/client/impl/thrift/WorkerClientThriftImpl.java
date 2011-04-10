@@ -61,11 +61,19 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		return new ThriftAction<UserAndScore>(pools) {
 
 			@Override
-			protected UserAndScore action(final Client client) throws TException {
+			protected UserAndScore action(final Client client)
+					throws TException {
 				final cl.own.usi.thrift.UserAndScore userAndScore = client
 						.validateUserAndInsertQuestionRequest(userId,
 								questionNumber);
 				return map(userAndScore);
+			}
+
+			@Override
+			protected String getActionDescription() {
+				return String.format(
+						"validateUserAndInsertQuestionRequest(%s, %d)", userId,
+						questionNumber);
 			}
 		}.doAction();
 	}
@@ -88,6 +96,13 @@ public class WorkerClientThriftImpl implements WorkerClient {
 								answer, answerCorrect);
 				return map(userAndScore, answerCorrect);
 			}
+
+			@Override
+			protected String getActionDescription() {
+				return String
+						.format("validateUserAndInsertQuestionResponseAndUpdateScore(%s, %d, %d)",
+								userId, questionNumber, answer);
+			}
 		}.doAction();
 	}
 
@@ -97,10 +112,16 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		return new ThriftAction<UserAndScore>(pools) {
 
 			@Override
-			protected UserAndScore action(final Client client) throws TException {
+			protected UserAndScore action(final Client client)
+					throws TException {
 				cl.own.usi.thrift.UserAndScore userAndScore = client
 						.validateUserAndGetScore(userId);
 				return map(userAndScore);
+			}
+
+			@Override
+			protected String getActionDescription() {
+				return String.format("validateUserAndGetScore(%s)", userId);
 			}
 		}.doAction();
 
@@ -117,6 +138,11 @@ public class WorkerClientThriftImpl implements WorkerClient {
 						password);
 
 				return map(userLogin);
+			}
+
+			@Override
+			protected String getActionDescription() {
+				return String.format("login(%s, %s)", email, password);
 			}
 		}.doAction();
 
@@ -136,10 +162,18 @@ public class WorkerClientThriftImpl implements WorkerClient {
 						return true;
 					} else {
 						retry--;
-						logger.warn("Insertion failed, for user {}, need to retry", email);
+						logger.warn(
+								"Insertion failed, for user {}, need to retry",
+								email);
 					}
 				} while (retry > 0);
 				return false;
+			}
+
+			@Override
+			protected String getActionDescription() {
+				return String.format("insertUser(%s, %s, %s, %s)", email,
+						password, firstname, lastname);
 			}
 		}.doAction();
 
@@ -156,6 +190,11 @@ public class WorkerClientThriftImpl implements WorkerClient {
 			protected Boolean action(final Client client) throws TException {
 				client.flushUsers(USELESS_INT);
 				return Boolean.TRUE;
+			}
+
+			@Override
+			protected String getActionDescription() {
+				return "flushUsers()";
 			}
 		}.doAction();
 	}
@@ -180,6 +219,11 @@ public class WorkerClientThriftImpl implements WorkerClient {
 				}
 				return retUsers;
 			}
+
+			@Override
+			protected String getActionDescription() {
+				return "getTop100";
+			}
 		}.doAction();
 	}
 
@@ -198,6 +242,11 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 				return retUsers;
 			}
+
+			@Override
+			protected String getActionDescription() {
+				return String.format("get50Before(%s)", userId);
+			}
 		}.doAction();
 	}
 
@@ -215,6 +264,11 @@ public class WorkerClientThriftImpl implements WorkerClient {
 				final List<UserInfoAndScore> retUsers = map(users);
 
 				return retUsers;
+			}
+
+			@Override
+			protected String getActionDescription() {
+				return String.format("get50After(%s)", userId);
 			}
 		}.doAction();
 	}
@@ -265,6 +319,12 @@ public class WorkerClientThriftImpl implements WorkerClient {
 							goodAnswer);
 				}
 			}
+
+			@Override
+			protected String getActionDescription() {
+				return String.format("getAnswersAsJson(%s, %d, %s)", email,
+						questionNumber, game);
+			}
 		}.doAction();
 	}
 
@@ -277,6 +337,11 @@ public class WorkerClientThriftImpl implements WorkerClient {
 			protected Boolean action(Client client) throws TException {
 				client.startRankingsComputation(USELESS_INT);
 				return Boolean.TRUE;
+			}
+
+			@Override
+			protected String getActionDescription() {
+				return "startRankingsComputation()";
 			}
 		}.doAction();
 	}
@@ -495,6 +560,11 @@ public class WorkerClientThriftImpl implements WorkerClient {
 						.get50BeforeAnd50After(userId);
 				return map(beforeAndAfterScores);
 			}
+
+			@Override
+			protected String getActionDescription() {
+				return String.format("get50BeforeAnd50After(%s)", userId);
+			}
 		}.doAction();
 
 	}
@@ -510,6 +580,11 @@ public class WorkerClientThriftImpl implements WorkerClient {
 				final cl.own.usi.thrift.ExtendedUserInfoAndScore beforeAndAfterScores = client
 						.getExtendedUserInfo(userId);
 				return map(beforeAndAfterScores);
+			}
+
+			@Override
+			protected String getActionDescription() {
+				return String.format("getExtendedUserInfo(%s)", userId);
 			}
 		}.doAction();
 

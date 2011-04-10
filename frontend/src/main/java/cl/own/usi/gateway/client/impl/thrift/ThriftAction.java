@@ -29,9 +29,13 @@ abstract class ThriftAction<T> {
 		this.pools = pools;
 	}
 
+	protected abstract String getActionDescription();
+
 	protected abstract T action(final Client client) throws TException;
 
 	public final T doAction() {
+
+		final String description = getActionDescription();
 
 		for (int i = 0; i < THRIFT_RETRY; i++) {
 			final Client client = getClient();
@@ -39,8 +43,8 @@ abstract class ThriftAction<T> {
 				return action(client);
 			} catch (TException e) {
 				LOGGER.warn(
-						"Exception caught while calling backend through thrift (try={})",
-						i, e);
+						"Exception caught while executing action {} through thrift (try={})",
+						new Object[] { i, description }, e);
 				pools.invalidate(client);
 			} finally {
 				if (client != null) {
@@ -48,6 +52,10 @@ abstract class ThriftAction<T> {
 				}
 			}
 		}
+
+		LOGGER.error(
+				"Failure to execute action {} after {} try, returning null instead",
+				description, THRIFT_RETRY);
 		return null;
 	}
 
