@@ -64,7 +64,7 @@ public class BasicInjectorMain {
 	private static final int NBQUESTIONS = 20; // don't change me...
 	private static final int QUESTIONTIMEFRAME = 45;
 	private static final int SYNCHROTIME = 30;
-	private static final int LOGINTIMEOUT = 60;
+	private static final int LOGINTIMEOUT = 300;
 
 	private static int NBUSERS = DEFAULT_NBUSERS;
 	private static int MAXNOFILES = 395240;
