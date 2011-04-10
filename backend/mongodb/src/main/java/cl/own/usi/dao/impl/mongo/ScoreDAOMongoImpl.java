@@ -29,7 +29,8 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 	@Autowired
 	private DB db;
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ScoreDAOMongoImpl.class);
+	private static final Logger LOGGER = LoggerFactory
+			.getLogger(ScoreDAOMongoImpl.class);
 
 	private List<User> getUsers(DBObject query, DBObject querySubset,
 			int expectedSize) {
@@ -72,8 +73,12 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		DBObject querySubset = new BasicDBObject();
 		querySubset.put("comment", subset);
 
-		return getUsers(query, querySubset, limit);
+		final List<User> users = getUsers(query, querySubset, limit);
 
+		LOGGER.debug("get the {} users before {} : got {} results ",
+				new Object[] { limit, user.getUserId(), users.size() });
+
+		return users;
 	}
 
 	@Override
@@ -90,8 +95,8 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		List<User> users = getUsers(query, querySubset, limit);
 
-		LOGGER.debug("get the {} users after {} : {} ", new Object[] { limit,
-				user.getUserId(), users });
+		LOGGER.debug("get the {} users after {} : got {} results ",
+				new Object[] { limit, user.getUserId(), users.size() });
 
 		return users;
 	}
