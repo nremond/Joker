@@ -45,13 +45,13 @@ service WorkerRPC {
 
 	bool insertUser(1: string email, 2: string password, 3: string firstname, 4: string lastname),
 
-	void flushUsers(),
+	void flushUsers(1: i32 useless),
 
-	list<UserInfoAndScore> getTop100(),
+	list<UserInfoAndScore> getTop100(1: i32 useless),
 	list<UserInfoAndScore> get50Before(1: string userId),
 	list<UserInfoAndScore> get50After(1: string userId),
 
-	void startRankingsComputation(),
+	void startRankingsComputation(1: i32 useless),
 
 	string getAllAnswersAsJson(1: string email, 2: list<i32> goodAnswers),
 

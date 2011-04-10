@@ -47,16 +47,16 @@ import cl.own.usi.service.GameService;
 public class GameController extends AbstractAuthenticateController {
 
 	private static final Logger LOGGER = LoggerFactory
-	.getLogger(GameController.class);
-	
+			.getLogger(GameController.class);
+
 	@Autowired
 	private GameService gameService;
 
 	@Autowired
 	private WorkerClient workerClient;
-	
+
 	private String validationFile;
-	
+
 	@Value(value = "${frontend.validationFile:src/main/resources/gamesession.xsd}")
 	public void setXMLValidationFile(String validationFile) {
 		this.validationFile = validationFile;
@@ -206,7 +206,7 @@ public class GameController extends AbstractAuthenticateController {
 				String flushusertableStr = parameters.getChildText(
 						"flushusertable", namespace);
 				boolean flushusertable = Boolean
-					.parseBoolean(flushusertableStr);
+						.parseBoolean(flushusertableStr);
 
 				if (questions.isEmpty() || questions.size() > 20) {
 					getLogger()

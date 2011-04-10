@@ -157,13 +157,13 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 	}
 
 	@Override
-	public void flushUsers() throws TException {
+	public void flushUsers(final int useless) throws TException {
 		LOGGER.info("%%% flushUsers() has called by tokyo thrift%%%");
 		userService.flushUsers();
 	}
 
 	@Override
-	public List<UserInfoAndScore> getTop100() throws TException {
+	public List<UserInfoAndScore> getTop100(final int useless) throws TException {
 
 		List<User> users = scoreService.getTop100();
 
@@ -234,7 +234,7 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 	}
 
 	@Override
-	public void startRankingsComputation() {
+	public void startRankingsComputation(final int useless) {
 		scoreService.computeRankings();
 	}
 

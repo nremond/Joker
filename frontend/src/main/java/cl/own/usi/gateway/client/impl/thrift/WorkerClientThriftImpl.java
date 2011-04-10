@@ -47,6 +47,8 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+	private static final int USELESS_INT = 123456;
+
 	@Autowired
 	private GameService gameService;
 
@@ -152,7 +154,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 			@Override
 			protected Boolean action(final Client client) throws TException {
-				client.flushUsers();
+				client.flushUsers(USELESS_INT);
 				return Boolean.TRUE;
 			}
 		}.doAction();
@@ -167,7 +169,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 			protected List<UserInfoAndScore> action(final Client client)
 					throws TException {
 				final List<cl.own.usi.thrift.UserInfoAndScore> users = client
-						.getTop100();
+						.getTop100(USELESS_INT);
 
 				logger.debug("Returned {} users", users.size());
 
@@ -273,7 +275,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 			@Override
 			protected Boolean action(Client client) throws TException {
-				client.startRankingsComputation();
+				client.startRankingsComputation(USELESS_INT);
 				return Boolean.TRUE;
 			}
 		}.doAction();
