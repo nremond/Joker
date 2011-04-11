@@ -55,7 +55,7 @@ service WorkerRPC {
 
 	string getAllAnswersAsJson(1: string email, 2: list<i32> goodAnswers),
 
-	string getAnswerAsJson(1: string email, 2: i32 questionNumber, string question, i32 goodAnswer)
+	string getAnswerAsJson(1: string email, 2: i32 questionNumber, 3: string question, 4: i32 goodAnswer),
 
 	BeforeAndAfterScores get50BeforeAnd50After(1: string userId),
 	
