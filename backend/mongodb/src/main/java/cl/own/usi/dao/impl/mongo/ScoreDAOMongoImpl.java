@@ -4,6 +4,9 @@ import static cl.own.usi.dao.impl.mongo.DaoHelper.bonusField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScoreAndNames;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.scoreField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.lastnameField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.firstnameField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.emailField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
 
 import java.util.ArrayList;
@@ -58,10 +61,24 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 	@Override
 	public List<User> getBefore(User user, int limit) {
-		DBObject criteria = new BasicDBObject();
-		criteria.put("$gt", user.getScore());
+
 		DBObject query = new BasicDBObject();
-		query.put(scoreField, criteria);
+
+		DBObject criteriaScore = new BasicDBObject();
+		criteriaScore.put("$gte", user.getScore());
+		query.put(scoreField, criteriaScore);
+
+		DBObject criteriaLastname = new BasicDBObject();
+		criteriaLastname.put("$gte", user.getLastname());
+		query.put(lastnameField, criteriaLastname);
+
+		DBObject criteriaFirstname = new BasicDBObject();
+		criteriaFirstname.put("$gte", user.getFirstname());
+		query.put(firstnameField, criteriaFirstname);
+
+		DBObject criteriaEmail = new BasicDBObject();
+		criteriaEmail.put("$gt", user.getEmail());
+		query.put(emailField, criteriaEmail);
 
 		final List<User> users = getUsers(query, limit);
 
@@ -73,10 +90,24 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 	@Override
 	public List<User> getAfter(User user, int limit) {
-		DBObject criteria = new BasicDBObject();
-		criteria.put("$lt", user.getScore());
 		DBObject query = new BasicDBObject();
-		query.put(scoreField, criteria);
+
+		DBObject criteriaScore = new BasicDBObject();
+		criteriaScore.put("$lte", user.getScore());
+		query.put(scoreField, criteriaScore);
+
+		DBObject criteriaLastname = new BasicDBObject();
+		criteriaLastname.put("$lte", user.getLastname());
+		query.put(lastnameField, criteriaLastname);
+
+		DBObject criteriaFirstname = new BasicDBObject();
+		criteriaFirstname.put("$lte", user.getFirstname());
+		query.put(firstnameField, criteriaFirstname);
+
+		DBObject criteriaEmail = new BasicDBObject();
+		criteriaEmail.put("$lt", user.getEmail());
+		query.put(emailField, criteriaEmail);
+
 
 		List<User> users = getUsers(query, limit);
 
