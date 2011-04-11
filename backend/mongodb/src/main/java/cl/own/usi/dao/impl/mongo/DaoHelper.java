@@ -11,44 +11,38 @@ import com.mongodb.DBObject;
 public class DaoHelper {
 
 	public static final String userIdField = "userId";
-	public static final String emailField = "email";
 	public static final String passwordField = "password";
-	public static final String firstnameField = "firstname";
-	public static final String lastnameField = "lastname";
 	public static final String scoreField = "score";
 	public static final String isLoggedField = "isLogged";
 	public static final String answersField = "answers";
 	public static final String questionNumberField = "questionNumber";
 	public static final String answerNumberField = "answerNumber";
 	public static final String bonusField = "bonus";
-	public static final String namesField = "names";
+	public static final String namesEmailField = "namesEmail";
 
 	public static final String usersCollection = "users";
 
-	private static final String namesSeparator = "!!!";
+	private static final String namesEmailSeparator = "!!!";
 
 	public final static DBObject orderByScore = new BasicDBObject().append(
 			scoreField, -1);
 
 	public final static DBObject orderByNames = new BasicDBObject().append(
-			namesField, -1);
+			namesEmailField, -1);
 
 	public final static DBObject orderByScoreNames = new BasicDBObject()
-			.append(scoreField, -1).append(namesField, 1);
+			.append(scoreField, -1).append(namesEmailField, 1);
 
 	public static DBObject toDBObject(final User user) {
 		DBObject dbUser = new BasicDBObject();
 		dbUser.put(userIdField, DaoHelper.generateUserId(user.getEmail()));
-		dbUser.put(emailField, user.getEmail());
 		dbUser.put(passwordField, user.getPassword());
-		dbUser.put(firstnameField, user.getFirstname());
-		dbUser.put(lastnameField, user.getLastname());
 		dbUser.put(scoreField, user.getScore());
 		dbUser.put(isLoggedField, Boolean.FALSE);
 		dbUser.put(bonusField, Integer.valueOf(0));
 
 		// Special field used for ranking
-		dbUser.put(namesField, getNames(user));
+		dbUser.put(namesEmailField, getNames(user));
 
 		return dbUser;
 	}
@@ -58,9 +52,9 @@ public class DaoHelper {
 		// Spec : les classements sont ordonnes par lastname/firstname/mail
 		StringBuilder sb = new StringBuilder();
 		sb.append(user.getLastname());
-		sb.append(namesSeparator);
+		sb.append(namesEmailSeparator);
 		sb.append(user.getFirstname());
-		sb.append(namesSeparator);
+		sb.append(namesEmailSeparator);
 		sb.append(user.getEmail());
 		return sb.toString();
 	}
@@ -68,11 +62,25 @@ public class DaoHelper {
 	public static User fromDBObject(final DBObject dbUser) {
 		User user = new User();
 		user.setUserId((String) dbUser.get(userIdField));
-		user.setEmail((String) dbUser.get(emailField));
 		user.setPassword((String) dbUser.get(passwordField));
-		user.setFirstname((String) dbUser.get(firstnameField));
-		user.setLastname((String) dbUser.get(lastnameField));
 		user.setScore((Integer) dbUser.get(scoreField));
+
+		String namesEmail = (String) dbUser.get(namesEmailField);
+		String[] details = namesEmail.split(namesEmailSeparator);
+
+		if (details.length != 3) {
+			throw new RuntimeException(
+					"Invalid namesEmail field, the DB is in bad shape");
+		}
+
+		String lastname = details[0];
+		String firstname = details[1];
+		String email = details[2];
+
+		user.setEmail((String) email);
+		user.setFirstname((String) firstname);
+		user.setLastname((String) lastname);
+
 		return user;
 	}
 

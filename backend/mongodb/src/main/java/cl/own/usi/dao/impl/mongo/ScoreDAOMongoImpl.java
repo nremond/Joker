@@ -1,7 +1,7 @@
 package cl.own.usi.dao.impl.mongo;
 
 import static cl.own.usi.dao.impl.mongo.DaoHelper.bonusField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.namesField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.namesEmailField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScoreNames;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.scoreField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
@@ -89,7 +89,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		DBObject namesGT = new BasicDBObject();
 		namesGT.put(orderOp.toString(), DaoHelper.getNames(user));
-		criteria2.put(namesField, namesGT);
+		criteria2.put(namesEmailField, namesGT);
 
 		// Full query
 		DBObject query = new BasicDBObject();
