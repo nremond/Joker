@@ -57,6 +57,9 @@ public class UserDAOMongoImpl implements UserDAO {
 	private final static DBObject answerFieldsToFetch = new BasicDBObject()
 			.append(answersField, 1);
 
+	private final static DBObject loginFieldsToFetch = new BasicDBObject()
+			.append(passwordField, 1);
+
 	@Override
 	public boolean insertUser(final User user) {
 		DBCollection dbUsers = db.getCollection(usersCollection);
@@ -107,15 +110,18 @@ public class UserDAOMongoImpl implements UserDAO {
 	public String login(final String email, final String password) {
 
 		final String userId = DaoHelper.generateUserId(email);
-		final User user = getUserById(userId);
 
-		if (user != null && user.getPassword().equals(password)) {
+		final DBCollection dbUsers = db.getCollection(usersCollection);
+
+		// Get the current score and bonus
+		DBObject dbId = new BasicDBObject();
+		dbId.put(userIdField, userId);
+		DBObject dbUser = dbUsers.findOne(dbId, loginFieldsToFetch);
+
+		String dbPassword = (String) dbUser.get(passwordField);
+
+		if (dbPassword != null && dbPassword.equals(password)) {
 			// The user has been correction authenticated
-			DBCollection dbUsers = db.getCollection(usersCollection);
-
-			DBObject dbId = new BasicDBObject();
-			dbId.put(userIdField, userId);
-
 			DBObject dblogin = new BasicDBObject();
 			dblogin.put(isLoggedField, true);
 			DBObject dbSetlogin = new BasicDBObject();
@@ -233,8 +239,8 @@ public class UserDAOMongoImpl implements UserDAO {
 		// the driver keeps a cache of the added index
 		newUsers.ensureIndex(userIdIndex, "userIdIndex", true);
 		newUsers.ensureIndex(orderByScore, "orderByScore", false);
-		newUsers.ensureIndex(orderByScoreNames, "orderByScore", false);
-		newUsers.ensureIndex(orderByNames, "orderByScore", false);
+		newUsers.ensureIndex(orderByScoreNames, "orderByScoreNames", false);
+		newUsers.ensureIndex(orderByNames, "orderByNames", false);
 
 		// Enable sharding for the newly created collection
 		final DB adminDb = db.getSisterDB("admin");
