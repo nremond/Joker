@@ -27,13 +27,25 @@ public class DaoHelper {
 	private static final String USER_ID_SALT = "[B@190d11+";
 
 	// Spec : les classements sont ordonnes par lastname/firstname/mail
-	public final static DBObject orderByScoreAndNames = new BasicDBObject()
+
+	// TODO see if it brings something
+	// public final static DBObject orderByNames = new BasicDBObject()
+	// .append(lastnameField, 1).append(firstnameField, 1)
+	// .append(emailField, 1);
+
+	public final static DBObject orderByScore = new BasicDBObject().append(
+			scoreField, -1);
+
+	public final static DBObject orderByScoreLastname = new BasicDBObject()
+			.append(scoreField, -1).append(lastnameField, 1);
+
+	public final static DBObject orderByScoreLastnameFirstname = new BasicDBObject()
+			.append(scoreField, -1).append(lastnameField, 1)
+			.append(firstnameField, 1);
+
+	public final static DBObject orderByScoreLastnameFirstnameEmail = new BasicDBObject()
 			.append(scoreField, -1).append(lastnameField, 1)
 			.append(firstnameField, 1).append(emailField, 1);
-
-	public final static DBObject orderByNames = new BasicDBObject()
-			.append(lastnameField, 1).append(firstnameField, 1)
-			.append(emailField, 1);
 
 	public static DBObject toDBObject(final User user) {
 		DBObject dbUser = new BasicDBObject();
@@ -113,14 +125,14 @@ public class DaoHelper {
 		return md.digest();
 	}
 
-	/* I'm using this to test the userId
-	public static void main(String[] args) {
-		System.out.println(generateUserId("brown.king@hotmail.com"));
-		System.out.println(generateUserId("brown.hartman@yahoo.com"));
-		System.out.println(generateUserId("brown.gardner@gmail.com"));
-		System.out.println(generateUserId("brown.mcfarland@gmail.com"));
-		System.out.println(generateUserId("brown.mckay@gmail.com"));
-		System.out.println(generateUserId("brown.hurst@gmail.com"));
-	}*/
+	/*
+	 * I'm using this to test the userId public static void main(String[] args)
+	 * { System.out.println(generateUserId("brown.king@hotmail.com"));
+	 * System.out.println(generateUserId("brown.hartman@yahoo.com"));
+	 * System.out.println(generateUserId("brown.gardner@gmail.com"));
+	 * System.out.println(generateUserId("brown.mcfarland@gmail.com"));
+	 * System.out.println(generateUserId("brown.mckay@gmail.com"));
+	 * System.out.println(generateUserId("brown.hurst@gmail.com")); }
+	 */
 
 }
