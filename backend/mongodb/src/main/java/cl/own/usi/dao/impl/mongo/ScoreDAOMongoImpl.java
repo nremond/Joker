@@ -1,12 +1,10 @@
 package cl.own.usi.dao.impl.mongo;
 
 import static cl.own.usi.dao.impl.mongo.DaoHelper.bonusField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScoreLastnameFirstnameEmail;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.namesField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScoreNames;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.scoreField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.lastnameField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.firstnameField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.emailField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
 
 import java.util.ArrayList;
@@ -56,7 +54,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		DBCursor dbCursor = dbUsers.find(query).limit(limit)
-				.sort(orderByScoreLastnameFirstnameEmail);
+				.sort(orderByScoreNames);
 
 		List<User> users = new ArrayList<User>(limit);
 		while (dbCursor.hasNext()) {
@@ -77,11 +75,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 	private DBObject generateOrderQuery(OrderOperator orderOp, User user) {
 		// eg with gt :
 		// (score > current_score)
-		// || (score == current_score && lastname > current_lastname)
-		// || (score == current_score && lastname == current_lastname &&
-		// firstname > current_firstname)
-		// || (score == current_score && lastname == current_lastname &&
-		// firstname == current_firstname && email > current_email)
+		// || (score == current_score && names > current_names)
 
 		// 1st criteria
 		DBObject criteria1 = new BasicDBObject();
@@ -93,33 +87,13 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		DBObject criteria2 = new BasicDBObject();
 		criteria2.put(scoreField, user.getScore());
 
-		DBObject lastnameGT = new BasicDBObject();
-		lastnameGT.put(orderOp.toString(), user.getLastname());
-		criteria2.put(lastnameField, lastnameGT);
-
-		// 3rd criteria
-		DBObject criteria3 = new BasicDBObject();
-		criteria3.put(scoreField, user.getScore());
-		criteria3.put(lastnameField, user.getLastname());
-
-		DBObject criteriaFirstname = new BasicDBObject();
-		criteriaFirstname.put(orderOp.toString(), user.getFirstname());
-		criteria3.put(firstnameField, criteriaFirstname);
-
-		// 4th criteria
-		DBObject criteria4 = new BasicDBObject();
-		criteria4.put(scoreField, user.getScore());
-		criteria4.put(lastnameField, user.getLastname());
-		criteria4.put(firstnameField, user.getFirstname());
-
-		DBObject criteriaEmail = new BasicDBObject();
-		criteriaEmail.put(orderOp.toString(), user.getEmail());
-		criteria4.put(emailField, criteriaEmail);
+		DBObject namesGT = new BasicDBObject();
+		namesGT.put(orderOp.toString(), DaoHelper.getNames(user));
+		criteria2.put(namesField, namesGT);
 
 		// Full query
 		DBObject query = new BasicDBObject();
-		query.put("$or",
-				Arrays.asList(criteria1, criteria2, criteria3, criteria4));
+		query.put("$or", Arrays.asList(criteria1, criteria2));
 
 		return query;
 	}

@@ -21,31 +21,20 @@ public class DaoHelper {
 	public static final String questionNumberField = "questionNumber";
 	public static final String answerNumberField = "answerNumber";
 	public static final String bonusField = "bonus";
+	public static final String namesField = "names";
 
 	public static final String usersCollection = "users";
 
-	private static final String USER_ID_SALT = "[B@190d11+";
-
-	// Spec : les classements sont ordonnes par lastname/firstname/mail
-
-	// TODO see if it brings something
-	// public final static DBObject orderByNames = new BasicDBObject()
-	// .append(lastnameField, 1).append(firstnameField, 1)
-	// .append(emailField, 1);
+	private static final String namesSeparator = "!!!";
 
 	public final static DBObject orderByScore = new BasicDBObject().append(
 			scoreField, -1);
 
-	public final static DBObject orderByScoreLastname = new BasicDBObject()
-			.append(scoreField, -1).append(lastnameField, 1);
+	public final static DBObject orderByNames = new BasicDBObject().append(
+			namesField, -1);
 
-	public final static DBObject orderByScoreLastnameFirstname = new BasicDBObject()
-			.append(scoreField, -1).append(lastnameField, 1)
-			.append(firstnameField, 1);
-
-	public final static DBObject orderByScoreLastnameFirstnameEmail = new BasicDBObject()
-			.append(scoreField, -1).append(lastnameField, 1)
-			.append(firstnameField, 1).append(emailField, 1);
+	public final static DBObject orderByScoreNames = new BasicDBObject()
+			.append(scoreField, -1).append(namesField, 1);
 
 	public static DBObject toDBObject(final User user) {
 		DBObject dbUser = new BasicDBObject();
@@ -57,7 +46,23 @@ public class DaoHelper {
 		dbUser.put(scoreField, user.getScore());
 		dbUser.put(isLoggedField, Boolean.FALSE);
 		dbUser.put(bonusField, Integer.valueOf(0));
+
+		// Special field used for ranking
+		dbUser.put(namesField, getNames(user));
+
 		return dbUser;
+	}
+
+	public static String getNames(User user) {
+
+		// Spec : les classements sont ordonnes par lastname/firstname/mail
+		StringBuilder sb = new StringBuilder();
+		sb.append(user.getLastname());
+		sb.append(namesSeparator);
+		sb.append(user.getFirstname());
+		sb.append(namesSeparator);
+		sb.append(user.getEmail());
+		return sb.toString();
 	}
 
 	public static User fromDBObject(final DBObject dbUser) {
@@ -107,6 +112,8 @@ public class DaoHelper {
 		}
 		return tmp.toString();
 	}
+
+	private static final String USER_ID_SALT = "[B@190d11+";
 
 	public static String generateUserId(final String email) {
 		byte[] hash = sha1(email + USER_ID_SALT);

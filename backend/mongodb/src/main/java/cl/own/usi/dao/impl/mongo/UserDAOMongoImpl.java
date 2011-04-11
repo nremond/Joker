@@ -3,10 +3,9 @@ package cl.own.usi.dao.impl.mongo;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.answerNumberField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.answersField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.isLoggedField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByNames;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScore;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScoreLastname;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScoreLastnameFirstname;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScoreLastnameFirstnameEmail;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScoreNames;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.questionNumberField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
@@ -221,9 +220,8 @@ public class UserDAOMongoImpl implements UserDAO {
 		// the driver keeps a cache of the added index
 		newUsers.ensureIndex(userIdIndex, "userIdIndex", true);
 		newUsers.ensureIndex(orderByScore, "orderByScore", false);
-		newUsers.ensureIndex(orderByScoreLastname, "orderByScoreLastname", false);
-		newUsers.ensureIndex(orderByScoreLastnameFirstname, "orderByScoreLastnameFirstname", false);
-		newUsers.ensureIndex(orderByScoreLastnameFirstnameEmail, "orderByScoreLastnameFirstnameEmail", false);
+		newUsers.ensureIndex(orderByScoreNames, "orderByScore", false);
+		newUsers.ensureIndex(orderByNames, "orderByScore", false);
 
 		// Enable sharding for the newly created collection
 		final DB adminDb = db.getSisterDB("admin");
