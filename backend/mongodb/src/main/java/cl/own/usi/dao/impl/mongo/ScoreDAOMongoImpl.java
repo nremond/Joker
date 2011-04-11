@@ -49,12 +49,22 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		}
 	}
 
+	private final static DBObject rankingFieldsToFetch = new BasicDBObject()
+			.append(userIdField, 1).append(namesEmailField, 1)
+			.append(scoreField, 1);
+
+	private final static DBObject scoreFieldsToFetch = new BasicDBObject()
+			.append(scoreField, 1);
+
+	private final static DBObject scoreBonusFieldsToFetch = new BasicDBObject()
+			.append(scoreField, 1).append(bonusField, 1);
+
 	private List<User> getUsers(DBObject query, int limit) {
 
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
-		DBCursor dbCursor = dbUsers.find(query).limit(limit)
-				.sort(orderByScoreNames);
+		DBCursor dbCursor = dbUsers.find(query, rankingFieldsToFetch)
+				.limit(limit).sort(orderByScoreNames);
 
 		List<User> users = new ArrayList<User>(limit);
 		while (dbCursor.hasNext()) {
@@ -135,7 +145,10 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		DBObject dbSetBonus = new BasicDBObject();
 		dbSetBonus.put("$set", dbBonus);
 
-		DBObject user = dbUsers.findAndModify(dbUser, dbSetBonus);
+		// Only fetch the score and set the bonus to zero
+		DBObject user = dbUsers.findAndModify(dbUser, scoreFieldsToFetch, null,
+				false, dbSetBonus, false, false);
+
 		Integer score = (Integer) user.get(scoreField);
 
 		LOGGER.debug("setBadAnswer for user {} whose score is now {}", userId,
@@ -153,7 +166,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		// Get the current score and bonus
 		DBObject dbId = new BasicDBObject();
 		dbId.put(userIdField, userId);
-		DBObject dbUser = dbUsers.findOne(dbId);
+		DBObject dbUser = dbUsers.findOne(dbId, scoreBonusFieldsToFetch);
 
 		int bonus = (Integer) dbUser.get(bonusField);
 		int score = (Integer) dbUser.get(scoreField);

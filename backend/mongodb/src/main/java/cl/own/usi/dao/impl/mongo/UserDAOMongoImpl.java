@@ -3,12 +3,16 @@ package cl.own.usi.dao.impl.mongo;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.answerNumberField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.answersField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.isLoggedField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.namesEmailField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByNames;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScore;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScoreNames;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.questionNumberField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.scoreField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.passwordField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.bonusField;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,6 +48,15 @@ public class UserDAOMongoImpl implements UserDAO {
 
 	private static DBObject userIdIndex = new BasicDBObject(userIdField, 1);
 
+	private final static DBObject userFieldsToFetch = new BasicDBObject()
+			.append(userIdField, 1).append(namesEmailField, 1)
+			.append(scoreField, 1).append(isLoggedField, 1)
+			.append(passwordField, 1).append(isLoggedField, 1)
+			.append(bonusField, 1);
+
+	private final static DBObject answerFieldsToFetch = new BasicDBObject()
+			.append(answersField, 1);
+
 	@Override
 	public boolean insertUser(final User user) {
 		DBCollection dbUsers = db.getCollection(usersCollection);
@@ -78,7 +91,7 @@ public class UserDAOMongoImpl implements UserDAO {
 		DBObject dbId = new BasicDBObject();
 		dbId.put(userIdField, userId);
 
-		DBObject dbUser = dbUsers.findOne(dbId);
+		DBObject dbUser = dbUsers.findOne(dbId, userFieldsToFetch);
 		if (dbUser != null) {
 			LOGGER.debug("fetching userId={} and isLogged={}", userId,
 					dbUser.get(isLoggedField));
@@ -173,7 +186,7 @@ public class UserDAOMongoImpl implements UserDAO {
 		DBObject dbId = new BasicDBObject();
 		dbId.put(userIdField, userId);
 
-		DBObject dbUser = dbUsers.findOne(dbId);
+		DBObject dbUser = dbUsers.findOne(dbId, answerFieldsToFetch);
 		if (dbUser != null) {
 
 			@SuppressWarnings("unchecked")
