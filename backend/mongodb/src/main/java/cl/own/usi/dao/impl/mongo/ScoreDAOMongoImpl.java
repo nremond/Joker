@@ -32,14 +32,14 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(ScoreDAOMongoImpl.class);
 
-	private List<User> getUsers(DBObject query, DBObject querySubset,
-			int expectedSize) {
+	private List<User> getUsers(DBObject query, int limit) {
+
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
-		DBCursor dbCursor = dbUsers.find(query, querySubset).sort(
-				orderByScoreAndNames);
+		DBCursor dbCursor = dbUsers.find(query).limit(limit)
+				.sort(orderByScoreAndNames);
 
-		List<User> users = new ArrayList<User>(expectedSize);
+		List<User> users = new ArrayList<User>(limit);
 		while (dbCursor.hasNext()) {
 			DBObject dbUser = dbCursor.next();
 			User user = DaoHelper.fromDBObject(dbUser);
@@ -50,15 +50,10 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 	@Override
 	public List<User> getTop(int limit) {
+
 		// TODO set the fields we want, take everything for now
 		DBObject query = new BasicDBObject();
-
-		DBObject subset = new BasicDBObject();
-		subset.put("$slice", limit);
-		DBObject querySubset = new BasicDBObject();
-		querySubset.put("comment", subset);
-
-		return getUsers(query, querySubset, limit);
+		return getUsers(query, limit);
 	}
 
 	@Override
@@ -68,12 +63,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		DBObject query = new BasicDBObject();
 		query.put(scoreField, criteria);
 
-		DBObject subset = new BasicDBObject();
-		subset.put("$slice", -limit);
-		DBObject querySubset = new BasicDBObject();
-		querySubset.put("comment", subset);
-
-		final List<User> users = getUsers(query, querySubset, limit);
+		final List<User> users = getUsers(query, limit);
 
 		LOGGER.debug("get the {} users before {} : got {} results ",
 				new Object[] { limit, user.getUserId(), users.size() });
@@ -88,12 +78,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		DBObject query = new BasicDBObject();
 		query.put(scoreField, criteria);
 
-		DBObject subset = new BasicDBObject();
-		subset.put("$slice", limit);
-		DBObject querySubset = new BasicDBObject();
-		querySubset.put("comment", subset);
-
-		List<User> users = getUsers(query, querySubset, limit);
+		List<User> users = getUsers(query, limit);
 
 		LOGGER.debug("get the {} users after {} : got {} results ",
 				new Object[] { limit, user.getUserId(), users.size() });
