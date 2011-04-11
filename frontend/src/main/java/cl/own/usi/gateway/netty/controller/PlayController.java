@@ -23,7 +23,7 @@ import cl.own.usi.model.Question;
 
 /**
  * Controller that send asynchronously the {@link Question}
- * 
+ *
  * @author nicolas
  */
 @Component
@@ -68,13 +68,13 @@ public class PlayController extends AbstractController {
 					writeHtml(e, playTemplate, mapping);
 				} else {
 					writeResponse(e, BAD_REQUEST);
-					getLogger().info("Wrong method");
+					getLogger().info("No game found.");
 				}
 
 			}
 		} else {
 			writeResponse(e, NOT_IMPLEMENTED);
-			getLogger().info("Wrong method");
+			getLogger().info("Wrong method.");
 		}
 
 	}
