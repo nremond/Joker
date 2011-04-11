@@ -43,8 +43,9 @@ abstract class ThriftAction<T> {
 				return action(client);
 			} catch (TException e) {
 				LOGGER.warn(
-						"Exception caught while executing action {} through thrift (try={})",
-						new Object[] { i, description }, e);
+						String.format(
+								"Exception caught while executing action %s through thrift (try=%d)",
+								description, i), e);
 				pools.invalidate(client);
 			} finally {
 				if (client != null) {
