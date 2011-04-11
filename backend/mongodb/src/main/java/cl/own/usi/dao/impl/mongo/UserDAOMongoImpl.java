@@ -118,6 +118,13 @@ public class UserDAOMongoImpl implements UserDAO {
 		dbId.put(userIdField, userId);
 		DBObject dbUser = dbUsers.findOne(dbId, loginFieldsToFetch);
 
+		if (dbUser == null) {
+			LOGGER.warn(
+					"A user who isn't registered in the DB attempt to log in : {}",
+					email);
+			return null;
+		}
+
 		String dbPassword = (String) dbUser.get(passwordField);
 
 		if (dbPassword != null && dbPassword.equals(password)) {
@@ -134,8 +141,8 @@ public class UserDAOMongoImpl implements UserDAO {
 
 			return userId;
 		} else {
-			LOGGER.debug("login failed for {}/{}", email, password);
 
+			LOGGER.debug("login failed for {}/{}", email, password);
 			return null;
 		}
 	}
