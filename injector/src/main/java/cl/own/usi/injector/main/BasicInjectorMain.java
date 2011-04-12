@@ -550,11 +550,7 @@ public class BasicInjectorMain {
 							int httpResponseCode = httpClient
 									.executeMethod(post);
 
-							if (httpResponseCode == 201) {
-
-								// OK :)
-
-							} else {
+							if (httpResponseCode != 201) {
 								LOGGER.error(
 										"Error answering the question with response code {}",
 										httpResponseCode);
