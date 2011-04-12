@@ -22,6 +22,7 @@ import cl.own.usi.gateway.netty.controller.AddWorkerNodeController;
 import cl.own.usi.gateway.netty.controller.AnswerController;
 import cl.own.usi.gateway.netty.controller.AuditController;
 import cl.own.usi.gateway.netty.controller.GameController;
+import cl.own.usi.gateway.netty.controller.JQueryController;
 import cl.own.usi.gateway.netty.controller.LoginController;
 import cl.own.usi.gateway.netty.controller.LogoutController;
 import cl.own.usi.gateway.netty.controller.PlayController;
@@ -56,6 +57,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 	private static final String URI_ADD_WORKER_NODE = "/join";
 	private static final String URI_AUDIT = "/audit";
 	private static final String URI_PLAY = "/play";
+	private static final String URI_JQUERY = "/lib/jquery.min.js";
 
 	@Autowired
 	private QuestionController questionController;
@@ -85,6 +87,8 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 	@Autowired
 	private PlayController playController;
 
+	@Autowired
+	private JQueryController jQueryController;
 
 	@Autowired
 	private AddWorkerNodeController addWorkerNodeController;
@@ -123,7 +127,8 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 				} else {
 					writeResponse(e, NOT_FOUND);
 				}
-
+			} else if (uri.startsWith(URI_JQUERY)) {
+				jQueryController.messageReceived(ctx, e);
 			} else {
 				writeResponse(e, NOT_FOUND);
 			}
