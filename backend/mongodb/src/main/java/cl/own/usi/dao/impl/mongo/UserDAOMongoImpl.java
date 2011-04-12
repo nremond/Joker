@@ -26,6 +26,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
 import cl.own.usi.dao.UserDAO;
+import cl.own.usi.exception.UserAlreadyLoggedException;
 import cl.own.usi.model.Answer;
 import cl.own.usi.model.User;
 
@@ -58,7 +59,7 @@ public class UserDAOMongoImpl implements UserDAO {
 			.append(answersField, 1);
 
 	private final static DBObject loginFieldsToFetch = new BasicDBObject()
-			.append(passwordField, 1);
+			.append(isLoggedField, 1);
 
 	@Override
 	public boolean insertUser(final User user) {
@@ -107,39 +108,38 @@ public class UserDAOMongoImpl implements UserDAO {
 	}
 
 	@Override
-	public String login(final String email, final String password) {
-
-		final String userId = DaoHelper.generateUserId(email);
+	public String login(final String email, final String password)
+			throws UserAlreadyLoggedException {
 
 		final DBCollection dbUsers = db.getCollection(usersCollection);
+
+		final String userId = DaoHelper.generateUserId(email);
 
 		// Get the current score and bonus
 		DBObject dbId = new BasicDBObject();
 		dbId.put(userIdField, userId);
-		DBObject dbUser = dbUsers.findOne(dbId, loginFieldsToFetch);
+		dbId.put(passwordField, password);
 
-		if (dbUser == null) {
-			LOGGER.warn(
-					"A user who isn't registered in the DB attempt to log in : {}",
-					email);
-			return null;
-		}
+		// The user has been correction authenticated
+		DBObject dblogin = new BasicDBObject();
+		dblogin.put(isLoggedField, true);
+		DBObject dbSetlogin = new BasicDBObject();
+		dbSetlogin.put("$set", dblogin);
 
-		String dbPassword = (String) dbUser.get(passwordField);
+		DBObject dbUser = dbUsers.findAndModify(dbId, loginFieldsToFetch, null,
+				false, dbSetlogin, false, false);
 
-		if (dbPassword != null && dbPassword.equals(password)) {
-			// The user has been correction authenticated
-			DBObject dblogin = new BasicDBObject();
-			dblogin.put(isLoggedField, true);
-			DBObject dbSetlogin = new BasicDBObject();
-			dbSetlogin.put("$set", dblogin);
+		if (dbUser != null) {
 
-			dbUsers.update(dbId, dbSetlogin);
-
-			LOGGER.debug("login sucessful for {}/{}->userId={}", new Object[] {
-					email, password, userId });
-
-			return userId;
+			Boolean isLogged = (Boolean) dbUser.get(isLoggedField);
+			if (isLogged != null && !isLogged.booleanValue()) {
+				LOGGER.debug("login sucessful for {}/{}->userId={}",
+						new Object[] { email, password, userId });
+				return userId;
+			} else {
+				LOGGER.debug("user already logged in {}/{}", email, password);
+				throw new UserAlreadyLoggedException();
+			}
 		} else {
 
 			LOGGER.debug("login failed for {}/{}", email, password);
@@ -189,6 +189,13 @@ public class UserDAOMongoImpl implements UserDAO {
 
 		LOGGER.debug("answer inserted, {}", answer);
 
+	}
+
+	@Override
+	public List<Answer> getAnswersByEmail(final String email) {
+
+		final String userId = DaoHelper.generateUserId(email);
+		return getAnswers(userId);
 	}
 
 	@Override
@@ -279,10 +286,4 @@ public class UserDAOMongoImpl implements UserDAO {
 		}
 	}
 
-	@Override
-	public List<Answer> getAnswersByEmail(final String email) {
-
-		final String userId = DaoHelper.generateUserId(email);
-		return getAnswers(userId);
-	}
 }
