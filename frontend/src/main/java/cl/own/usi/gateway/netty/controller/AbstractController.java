@@ -26,16 +26,16 @@ import cl.own.usi.cache.CacheManager;
 
 /**
  * Abstract Controller.
- * 
+ *
  * @author bperroud
  * @author nicolas
- * 
+ *
  */
 public abstract class AbstractController {
 
 	@Autowired
-	CacheManager cacheManager;
-	
+	private CacheManager cacheManager;
+
 	protected static final String COOKIE_AUTH_NAME = "session_key";
 	public static final String URI_API = "/api";
 	public static final int URI_API_LENGTH = URI_API.length();
