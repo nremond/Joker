@@ -39,8 +39,8 @@ public class JacksonConversionTest {
 				UserRequest.class);
 
 		Assert.assertNotNull(userRequest);
-		Assert.assertEquals("Bob", userRequest.getFirstName());
-		Assert.assertEquals("Morane", userRequest.getLastName());
+		Assert.assertEquals("Bob", userRequest.getFirstname());
+		Assert.assertEquals("Morane", userRequest.getLastname());
 		Assert.assertEquals("bob.morane@gmail.com", userRequest.getMail());
 		Assert.assertEquals("toto", userRequest.getPassword());
 	}

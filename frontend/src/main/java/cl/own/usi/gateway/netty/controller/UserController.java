@@ -45,8 +45,8 @@ public class UserController extends AbstractController {
 
 			boolean inserted = workerClient.insertUser(
 					userRequest.getMail(), userRequest.getPassword(),
-					userRequest.getFirstName(),
-					userRequest.getLastName());
+					userRequest.getFirstname(),
+					userRequest.getLastname());
 
 			if (inserted) {
 				writeResponse(e, CREATED);

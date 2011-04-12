@@ -4,29 +4,29 @@ import org.codehaus.jackson.annotate.JsonProperty;
 
 public class UserRequest {
 
-	private String firstName;
-	private String lastName;
+	private String firstname;
+	private String lastname;
 	private String mail;
 	private String password;
 
 	@JsonProperty(value = "firstname")
-	public String getFirstName() {
-		return firstName;
+	public String getFirstname() {
+		return firstname;
 	}
 
 	@JsonProperty(value = "firstname")
-	public void setFirstName(String firstName) {
-		this.firstName = firstName;
+	public void setFirstname(String firstname) {
+		this.firstname = firstname;
 	}
 
 	@JsonProperty(value = "lastname")
-	public String getLastName() {
-		return lastName;
+	public String getLastname() {
+		return lastname;
 	}
 
 	@JsonProperty(value = "lastname")
-	public void setLastName(String lastName) {
-		this.lastName = lastName;
+	public void setLastname(String lastname) {
+		this.lastname = lastname;
 	}
 
 	public String getMail() {

@@ -38,9 +38,9 @@ import cl.own.usi.thrift.WorkerRPC.Client;
 
 /**
  * Thrift client.
- * 
+ *
  * @author bperroud
- * 
+ *
  */
 @Component
 public class WorkerClientThriftImpl implements WorkerClient {
@@ -210,15 +210,16 @@ public class WorkerClientThriftImpl implements WorkerClient {
 				final List<cl.own.usi.thrift.UserInfoAndScore> users = client
 						.getTop100(USELESS_INT);
 
-				if (logger.isDebugEnabled()) {
-					int size = users == null ? 0 : users.size();
-					logger.debug("Returned {} users", size);
-				}
+				int size = users == null ? 0 : users.size();
+				logger.debug("Returned {} users", size);
 
 				final List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(
-						users.size());
-				for (cl.own.usi.thrift.UserInfoAndScore user : users) {
-					retUsers.add(map(user));
+						size);
+
+				if (size > 0) {
+					for (cl.own.usi.thrift.UserInfoAndScore user : users) {
+						retUsers.add(map(user));
+					}
 				}
 				return retUsers;
 			}
