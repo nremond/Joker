@@ -146,8 +146,11 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		dbSetBonus.put("$set", dbBonus);
 
 		// Only fetch the score and set the bonus to zero
-		DBObject user = dbUsers.findAndModify(dbUser, scoreFieldsToFetch, null,
-				false, dbSetBonus, false, false);
+		final FindAndModifyAction findAndModifyAction = new FindAndModifyAction(
+				dbUsers, dbUser, scoreFieldsToFetch, null, false, dbSetBonus,
+				false, false);
+
+		DBObject user = findAndModifyAction.safeAction();
 
 		Integer score = (Integer) user.get(scoreField);
 
