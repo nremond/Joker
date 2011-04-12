@@ -3,10 +3,10 @@ package cl.own.usi.dao.impl.mongo;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.bonusField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.namesEmailField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScoreNames;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.questionFieldPrefix;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.scoreField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.questionFieldPrefix;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,15 +76,18 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 	@Override
 	public List<User> getTop(int limit) {
-		// TODO NIRE set the fields we want, take everything for now
 		DBObject query = new BasicDBObject();
 		return getUsers(query, limit);
 	}
 
-	private DBObject generateOrderQuery(OrderOperator orderOp, User user) {
+	private DBObject generateOrderQuery(final OrderOperator orderOp,
+			final User user) {
 		// eg with gt :
 		// (score > current_score)
-		// || (score == current_score && names > current_names)
+		// || (score == current_score && names < current_names)
+
+		final OrderOperator oppositeOrder = (orderOp == OrderOperator.GreatherThan) ? OrderOperator.LesserThan
+				: OrderOperator.GreatherThan;
 
 		// 1st criteria
 		DBObject criteria1 = new BasicDBObject();
@@ -97,7 +100,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		criteria2.put(scoreField, user.getScore());
 
 		DBObject namesGT = new BasicDBObject();
-		namesGT.put(orderOp.toString(), DaoHelper.getNames(user));
+		namesGT.put(oppositeOrder.toString(), DaoHelper.getNames(user));
 		criteria2.put(namesEmailField, namesGT);
 
 		// Full query
