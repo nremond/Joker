@@ -42,6 +42,8 @@ public class UserDAOMongoImpl implements UserDAO {
 	@Autowired
 	private DB db;
 
+	private static final int INSERT_USER_RETRY = 3;
+
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(UserDAOMongoImpl.class);
 
@@ -70,25 +72,40 @@ public class UserDAOMongoImpl implements UserDAO {
 			dbUser.put(questionFieldPrefix + i, Integer.valueOf(-1));
 		}
 
-		WriteResult wr = dbUsers.insert(dbUser);
-		String error = wr.getError();
+		for (int i = 0; i < INSERT_USER_RETRY; i++) {
 
-		// E11000 -> duplicate key
-		if (StringUtils.hasText(error)) {
-			if (error.indexOf("E11000") == 0) {
-				LOGGER.info(
-						"user {} was already in the collection, insertion aborted",
-						user.getEmail());
-				return false;
+			WriteResult wr = dbUsers.insert(dbUser);
+			String error = wr.getError();
+
+			// E11000 -> duplicate key
+			if (StringUtils.hasText(error)) {
+				if (error.indexOf("E11000") == 0) {
+					LOGGER.info(
+							"user {} was already in the collection, insertion aborted",
+							user.getEmail());
+					return false;
+
+				} else if (isRetryableError(error)) {
+					LOGGER.info(
+							"retryable error when inserting user {}, error code={}, try={}, will retry",
+							new Object[] { user.getEmail(), error, i });
+
+				} else {
+					LOGGER.info(
+							"error when inserting user {}, error code={}, try={}",
+							new Object[] { user.getEmail(), error, i });
+					return false;
+				}
 			} else {
-				LOGGER.info("error when inserting user {}, error code={}",
-						user.getEmail(), error);
-				return false;
+				LOGGER.debug("user {} was successfully inserted",
+						user.getEmail());
+				return true;
 			}
-		} else {
-			LOGGER.debug("user {} was successfully inserted", user.getEmail());
-			return true;
 		}
+
+		LOGGER.warn("Failure to insert user {} after {} retry!",
+				user.getEmail(), INSERT_USER_RETRY);
+		return false;
 	}
 
 	@Override
@@ -266,5 +283,10 @@ public class UserDAOMongoImpl implements UserDAO {
 		} catch (MongoException e) {
 			LOGGER.warn("Exception while trying to shard 'users' collection", e);
 		}
+	}
+
+	private boolean isRetryableError(final String mongoError) {
+		return (mongoError.indexOf("10429") == 0 || mongoError
+				.indexOf("setShardVersion") == 0);
 	}
 }
