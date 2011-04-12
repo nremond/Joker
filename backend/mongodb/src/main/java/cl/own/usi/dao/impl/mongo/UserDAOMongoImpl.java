@@ -1,18 +1,16 @@
 package cl.own.usi.dao.impl.mongo;
 
-import static cl.own.usi.dao.impl.mongo.DaoHelper.answerNumberField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.answersField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.bonusField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.isLoggedField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.namesEmailField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByNames;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScore;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScoreNames;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.questionNumberField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.passwordField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.scoreField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.passwordField;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.bonusField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.questionFieldPrefix;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,9 +53,6 @@ public class UserDAOMongoImpl implements UserDAO {
 			.append(passwordField, 1).append(isLoggedField, 1)
 			.append(bonusField, 1);
 
-	private final static DBObject answerFieldsToFetch = new BasicDBObject()
-			.append(answersField, 1);
-
 	private final static DBObject loginFieldsToFetch = new BasicDBObject()
 			.append(isLoggedField, 1);
 
@@ -66,6 +61,14 @@ public class UserDAOMongoImpl implements UserDAO {
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		DBObject dbUser = DaoHelper.toDBObject(user);
+
+		// TODO FIXME please
+		final int numberOfQuestions = 20;
+
+		// Insert the questions directly at the beginning
+		for (int i = 1; i <= numberOfQuestions; ++i) {
+			dbUser.put(questionFieldPrefix + i, Integer.valueOf(-1));
+		}
 
 		WriteResult wr = dbUsers.insert(dbUser);
 		String error = wr.getError();
@@ -169,26 +172,7 @@ public class UserDAOMongoImpl implements UserDAO {
 
 	@Override
 	public void insertAnswer(final Answer answer) {
-
-		DBCollection dbUsers = db.getCollection(usersCollection);
-
-		DBObject dbUserId = new BasicDBObject();
-		dbUserId.put(userIdField, answer.getUserId());
-
-		DBObject dbAnswer = new BasicDBObject();
-		dbAnswer.put(answerNumberField, answer.getAnswerNumber());
-		dbAnswer.put(questionNumberField, answer.getQuestionNumber());
-
-		DBObject dbAnswers = new BasicDBObject();
-		dbAnswers.put(answersField, dbAnswer);
-
-		DBObject dbPushAnswers = new BasicDBObject();
-		dbPushAnswers.put("$push", dbAnswers);
-
-		dbUsers.update(dbUserId, dbPushAnswers);
-
-		LOGGER.debug("answer inserted, {}", answer);
-
+		// Nothing to do, all the answers have been pre-inserted
 	}
 
 	@Override
@@ -206,35 +190,33 @@ public class UserDAOMongoImpl implements UserDAO {
 		DBObject dbId = new BasicDBObject();
 		dbId.put(userIdField, userId);
 
-		DBObject dbUser = dbUsers.findOne(dbId, answerFieldsToFetch);
+		DBObject dbUser = dbUsers.findOne(dbId);
 		if (dbUser != null) {
+			List<Answer> answers = new ArrayList<Answer>();
+			for (String key : dbUser.keySet()) {
+				if (key != null && key.startsWith(questionFieldPrefix)) {
 
-			@SuppressWarnings("unchecked")
-			List<DBObject> dbAnswers = (List<DBObject>) dbUser
-					.get(answersField);
+					String keyQuestion = key.substring(questionFieldPrefix
+							.length());
+					Integer questionNumber = Integer.valueOf(keyQuestion);
 
-			if (dbAnswers != null) {
+					final int answerNumber = (Integer) dbUser.get(key);
 
-				List<Answer> answers = new ArrayList<Answer>(dbAnswers.size());
-				for (DBObject dbAnswer : dbAnswers) {
 					Answer answer = new Answer();
-					answer.setAnswerNumber((Integer) dbAnswer
-							.get(answerNumberField));
-					answer.setQuestionNumber((Integer) dbAnswer
-							.get(questionNumberField));
+					answer.setAnswerNumber(answerNumber);
+					answer.setQuestionNumber(questionNumber.intValue());
 					answer.setUserId(userId);
 					answers.add(answer);
-				}
 
-				LOGGER.debug("fetching answers for userId={} {}", userId,
-						answers);
-				return answers;
-			} else {
-				return Collections.emptyList();
+					LOGGER.debug("fetching answers for userId={} {}", userId,
+							answers);
+					return answers;
+				}
 			}
 		} else {
 			return Collections.emptyList();
 		}
+		return null;
 	}
 
 	@Override
@@ -285,5 +267,4 @@ public class UserDAOMongoImpl implements UserDAO {
 			LOGGER.warn("Exception while trying to shard 'users' collection", e);
 		}
 	}
-
 }

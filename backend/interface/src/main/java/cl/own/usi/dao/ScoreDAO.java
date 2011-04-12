@@ -8,7 +8,7 @@ public interface ScoreDAO {
 
 	/**
 	 * Return the Users having the higher score.
-	 * 
+	 *
 	 * @param limit
 	 * @return
 	 */
@@ -16,7 +16,7 @@ public interface ScoreDAO {
 
 	/**
 	 * Return the Users having a score just better than the given User.
-	 * 
+	 *
 	 * @param user
 	 * @param limit
 	 * @return
@@ -25,7 +25,7 @@ public interface ScoreDAO {
 
 	/**
 	 * Return the Users having a score just worst than the given User.
-	 * 
+	 *
 	 * @param user
 	 * @param limit
 	 * @return
@@ -40,18 +40,18 @@ public interface ScoreDAO {
 	 * @param questionValue
 	 * @return current score = score + bonus
 	 */
-	int setGoodAnswer(String userId, int questionNumber, int questionValue);
-	
+	int setGoodAnswer(String userId, int questionNumber, int answer);
+
 	/**
 	 * Reset user bonus and return his current score
 	 * @param userId
 	 * @param questionNumber
 	 * @return current user score
 	 */
-	int setBadAnswer(String userId, int questionNumber, int questionValue);
+	int setBadAnswer(String userId, int questionNumber, int answer);
 
 	void flushUsers();
 
 	void computeRankings();
-	
+
 }

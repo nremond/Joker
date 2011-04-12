@@ -106,11 +106,13 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 			String userId, int questionNumber, int questionValue, int answer,
 			boolean answerCorrect) throws TException {
 
+		//TODO : questionValue, argument to remove ?
+
 		UserAndScore userAndScore = new UserAndScore();
 		userAndScore.userId = userId;
 		userService.insertAnswer(userId, questionNumber, answer);
 		userAndScore.score = scoreService.updateScore(questionNumber,
-				questionValue, userId, answerCorrect);
+				answer, userId, answerCorrect);
 
 		return userAndScore;
 

@@ -6,6 +6,7 @@ import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScoreNames;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.scoreField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.questionFieldPrefix;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +35,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(ScoreDAOMongoImpl.class);
 
+	// Natural order operator
 	private static enum OrderOperator {
 		GreatherThan("$gt"), LesserThan("$lt");
 
@@ -55,9 +57,6 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 	private final static DBObject scoreFieldsToFetch = new BasicDBObject()
 			.append(scoreField, 1);
-
-	private final static DBObject scoreBonusFieldsToFetch = new BasicDBObject()
-			.append(scoreField, 1).append(bonusField, 1);
 
 	private List<User> getUsers(DBObject query, int limit) {
 
@@ -133,21 +132,27 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 	}
 
 	@Override
-	public int setBadAnswer(final String userId, final int questionNumber, final int questionValue) {
+	public int setBadAnswer(final String userId, final int questionNumber,
+			final int answer) {
 
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		DBObject dbUser = new BasicDBObject();
 		dbUser.put(userIdField, userId);
 
-		DBObject dbBonus = new BasicDBObject();
-		dbBonus.put(bonusField, 0);
-		DBObject dbSetBonus = new BasicDBObject();
-		dbSetBonus.put("$set", dbBonus);
+		DBObject dbUpdate = new BasicDBObject();
+		// Reset the bonus
+		dbUpdate.put(bonusField, Integer.valueOf(0));
+		// Save the answer
+		dbUpdate.put(questionFieldPrefix + questionNumber,
+				Integer.valueOf(answer));
+
+		DBObject dbSetUpdate = new BasicDBObject();
+		dbSetUpdate.put("$set", dbUpdate);
 
 		// Only fetch the score and set the bonus to zero
 		final FindAndModifyAction findAndModifyAction = new FindAndModifyAction(
-				dbUsers, dbUser, scoreFieldsToFetch, null, false, dbSetBonus,
+				dbUsers, dbUser, scoreFieldsToFetch, null, false, dbSetUpdate,
 				false, false);
 
 		DBObject user = findAndModifyAction.safeAction();
@@ -162,35 +167,53 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 	@Override
 	public int setGoodAnswer(final String userId, final int questionNumber,
-			final int questionValue) {
+			final int answer) {
 
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
 		// Get the current score and bonus
 		DBObject dbId = new BasicDBObject();
 		dbId.put(userIdField, userId);
+
+		DBObject scoreBonusFieldsToFetch = new BasicDBObject();
+		scoreBonusFieldsToFetch.put(scoreField, 1);
+		scoreBonusFieldsToFetch.put(bonusField, 1);
+
+		String previousQuestion = questionFieldPrefix + (questionNumber - 1);
+		// fetch the previous question
+		if (questionNumber > 1) {
+			scoreBonusFieldsToFetch.put(previousQuestion, 1);
+		}
+
 		DBObject dbUser = dbUsers.findOne(dbId, scoreBonusFieldsToFetch);
 
-		int bonus = (Integer) dbUser.get(bonusField);
-		int score = (Integer) dbUser.get(scoreField);
+		final int bonus = (Integer) dbUser.get(bonusField);
+		final int score = (Integer) dbUser.get(scoreField);
 
-		// TODO Et si un user repond a 3 questions correctes d'affilees,
-		// mais loupe le temps de reponse pour la 4eme, la 5eme reponse
-		// si elle est correct ne doit pas profiter des 3 questions
-		// precedentes enregirstrees.
-
-		int newScore = score + bonus + questionValue;
+		final int newScore = score + bonus + answer;
 		int newBonus = bonus + 1;
 
-		DBObject dbScoreAndBonus = new BasicDBObject();
+		if (questionNumber > 1) {
+			// if the user hasn't answer to the previous question, his bonus is
+			// reset
+			final int previousQuestionValue = (Integer) dbUser
+					.get(previousQuestion);
+			if (previousQuestionValue < 0) {
+				newBonus = 0;
+			}
+		}
 
-		dbScoreAndBonus.put(scoreField, Integer.valueOf(newScore));
-		dbScoreAndBonus.put(bonusField, Integer.valueOf(newBonus));
+		DBObject dbUpdate = new BasicDBObject();
+		dbUpdate.put(scoreField, Integer.valueOf(newScore));
+		dbUpdate.put(bonusField, Integer.valueOf(newBonus));
+		// Save the answer
+		dbUpdate.put(questionFieldPrefix + questionNumber,
+				Integer.valueOf(answer));
 
-		DBObject dbSetScoreAndBonus = new BasicDBObject();
-		dbSetScoreAndBonus.put("$set", dbScoreAndBonus);
+		DBObject dbSetUpdate = new BasicDBObject();
+		dbSetUpdate.put("$set", dbUpdate);
 
-		dbUsers.update(dbId, dbSetScoreAndBonus);
+		dbUsers.update(dbId, dbSetUpdate);
 
 		LOGGER.debug(
 				"setGoodAnswer for user {} whose previous score was {} and is now {}",

@@ -14,11 +14,9 @@ public class DaoHelper {
 	public static final String passwordField = "password";
 	public static final String scoreField = "score";
 	public static final String isLoggedField = "isLogged";
-	public static final String answersField = "answers";
-	public static final String questionNumberField = "questionNumber";
-	public static final String answerNumberField = "answerNumber";
 	public static final String bonusField = "bonus";
 	public static final String namesEmailField = "namesEmail";
+	public static final String questionFieldPrefix = "q_";
 
 	public static final String usersCollection = "users";
 
