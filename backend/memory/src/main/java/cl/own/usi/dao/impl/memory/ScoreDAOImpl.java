@@ -87,7 +87,7 @@ public class ScoreDAOImpl implements ScoreDAO {
 	}
 
 	@Override
-	public int setBadAnswer(String userId, int questionNumber) {
+	public int setBadAnswer(final String userId, final int questionNumber, final int questionValue) {
 		User user = userDAO.getUserById(userId);
 		userBonuses.put(user, 0);
 		return user.getScore();

@@ -25,7 +25,7 @@ public class ScoreServiceImpl implements ScoreService {
 			return scoreDAO
 					.setGoodAnswer(userId, questionNumber, questionValue);
 		} else {
-			return scoreDAO.setBadAnswer(userId, questionNumber);
+			return scoreDAO.setBadAnswer(userId, questionNumber, questionValue);
 		}
 	}
 

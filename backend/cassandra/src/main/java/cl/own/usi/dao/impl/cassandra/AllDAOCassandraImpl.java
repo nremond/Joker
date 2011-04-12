@@ -116,7 +116,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	}
 
 	@Override
-	public int setBadAnswer(final String userId, final int questionNumber) {
+	public int setBadAnswer(final String userId, final int questionNumber, final int questionValue) {
 
 		int score = getScore(userId);
 

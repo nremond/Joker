@@ -48,7 +48,7 @@ public interface ScoreDAO {
 	 * @param questionNumber
 	 * @return current user score
 	 */
-	int setBadAnswer(String userId, int questionNumber);
+	int setBadAnswer(String userId, int questionNumber, int questionValue);
 
 	void flushUsers();
 
