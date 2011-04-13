@@ -12,6 +12,8 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import cl.own.usi.cache.CacheManager;
+import cl.own.usi.cache.CachedUser;
 import cl.own.usi.gateway.client.BeforeAndAfterScores;
 import cl.own.usi.gateway.client.UserAndScore;
 import cl.own.usi.gateway.client.WorkerClient;
@@ -33,6 +35,9 @@ public class RankingController extends AbstractController {
 	@Autowired
 	private GameService gameService;
 
+	@Autowired
+	private CacheManager cacheManager;
+	
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 			throws Exception {
@@ -48,10 +53,10 @@ public class RankingController extends AbstractController {
 			if (!gameService.isRankingRequestAllowed()) {
 				writeResponse(e, BAD_REQUEST);
 			} else {
-				UserAndScore userAndScore = workerClient
-						.validateUserAndGetScore(userId);
+				
+				final CachedUser cachedUser = cacheManager.loadUser(userId);
 
-				if (userAndScore.getUserId() == null) {
+				if (cachedUser == null) {
 					writeResponse(e, UNAUTHORIZED);
 					getLogger().info("Invalid userId {}", userId);
 				} else {
@@ -59,7 +64,7 @@ public class RankingController extends AbstractController {
 					StringBuilder sb = new StringBuilder("{");
 
 					sb.append(" \"score\" : ")
-							.append(userAndScore.getScore()).append(", ");
+							.append(cachedUser.getScore()).append(", ");
 
 					sb.append(" \"top_scores\" : { ")
 					.append(gameService.getTop100AsString())
