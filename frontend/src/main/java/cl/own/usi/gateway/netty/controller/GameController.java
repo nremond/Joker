@@ -225,6 +225,8 @@ public class GameController extends AbstractAuthenticateController {
 					getLogger().info("Flushed in {} ms",
 							(System.currentTimeMillis() - starttime));
 				}
+				
+				workerClient.initialize();
 
 			} catch (JDOMParseException ex) {
 				LOGGER.warn("JDOMexception", ex);

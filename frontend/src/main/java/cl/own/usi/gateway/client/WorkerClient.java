@@ -47,4 +47,6 @@ public interface WorkerClient {
 
 	ExtendedUserInfoAndScore getExtendedUserInfo(String userId);
 
+	void initialize();
+	
 }

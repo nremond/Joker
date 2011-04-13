@@ -338,4 +338,9 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 
 		return beforeAndAfterScores;
 	}
+	
+	@Override
+	public void initialize(final int useless) throws TException {
+		userService.initialize();
+	}
 }

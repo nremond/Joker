@@ -148,4 +148,10 @@ public class UserDAOImpl implements UserDAO {
 		return answers;
 	}
 
+	@Override
+	public void initialize() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
