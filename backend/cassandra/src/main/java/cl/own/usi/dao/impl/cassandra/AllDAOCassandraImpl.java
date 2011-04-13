@@ -719,4 +719,10 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 		return answers;
 	}
+
+	@Override
+	public void initialize() {
+		// TODO Auto-generated method stub
+		
+	}
 }

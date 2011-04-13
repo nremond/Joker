@@ -303,4 +303,10 @@ public class UserDAOMongoImpl implements UserDAO {
 		return (mongoError.indexOf("10429") == 0 || mongoError
 				.indexOf("setShardVersion") == 0);
 	}
+
+	@Override
+	public void initialize() {
+		// TODO Auto-generated method stub
+		
+	}
 }

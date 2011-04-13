@@ -613,4 +613,23 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		}.doAction();
 
 	}
+
+	@Override
+	public void initialize() {
+		
+		new ThriftAction<Integer>(pools) {
+
+			@Override
+			protected Integer action(final Client client)
+					throws TException {
+				client.initialize(USELESS_INT);
+				return USELESS_INT;
+			}
+
+			@Override
+			protected String getActionDescription() {
+				return String.format("initialize()");
+			}
+		}.doAction();
+	}
 }
