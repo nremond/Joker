@@ -38,10 +38,10 @@ import cl.own.usi.service.GameService;
 
 /**
  * Controller that create the {@link Game}
- * 
+ *
  * @author bperroud
  * @author nicolas
- * 
+ *
  */
 @Component
 public class GameController extends AbstractAuthenticateController {
@@ -215,8 +215,16 @@ public class GameController extends AbstractAuthenticateController {
 					return;
 				}
 
-				gameService.insertGame(nbusersthreshold, questiontimeframe,
-						logintimeout, synchrotime, questions);
+				final boolean gameInserted = gameService.insertGame(
+						nbusersthreshold, questiontimeframe, logintimeout,
+						synchrotime, questions);
+
+				if (!gameInserted) {
+					getLogger()
+							.error("Cannot re-create a game as previous one is not ended");
+					writeResponse(e, BAD_REQUEST);
+					return;
+				}
 
 				if (flushusertable) {
 					long starttime = System.currentTimeMillis();
