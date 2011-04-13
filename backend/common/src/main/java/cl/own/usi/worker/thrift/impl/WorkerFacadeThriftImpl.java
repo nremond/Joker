@@ -106,13 +106,11 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 			String userId, int questionNumber, int questionValue, int answer,
 			boolean answerCorrect) throws TException {
 
-		//TODO : questionValue, argument to remove ?
-
 		UserAndScore userAndScore = new UserAndScore();
 		userAndScore.userId = userId;
 		userService.insertAnswer(userId, questionNumber, answer);
 		userAndScore.score = scoreService.updateScore(questionNumber,
-				answer, userId, answerCorrect);
+				questionValue, answer, userId, answerCorrect);
 
 		return userAndScore;
 
@@ -165,7 +163,8 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 	}
 
 	@Override
-	public List<UserInfoAndScore> getTop100(final int useless) throws TException {
+	public List<UserInfoAndScore> getTop100(final int useless)
+			throws TException {
 
 		List<User> users = scoreService.getTop100();
 
@@ -297,8 +296,9 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 		User user = userService.getUserFromUserId(userId);
 		if (user != null) {
 
-			extendedUserInfoAndScore = new ExtendedUserInfoAndScore(userId, user.getScore(), user.getEmail(), user.getFirstname(), user.getLastname(), true, 0);
-
+			extendedUserInfoAndScore = new ExtendedUserInfoAndScore(userId,
+					user.getScore(), user.getEmail(), user.getFirstname(),
+					user.getLastname(), true, 0);
 
 		} else {
 			extendedUserInfoAndScore = new ExtendedUserInfoAndScore();
@@ -329,7 +329,8 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 				retAfterUsers.add(map(afterUser));
 			}
 
-			beforeAndAfterScores = new BeforeAndAfterScores(retBeforeUsers, retAfterUsers);
+			beforeAndAfterScores = new BeforeAndAfterScores(retBeforeUsers,
+					retAfterUsers);
 
 		} else {
 			beforeAndAfterScores = new BeforeAndAfterScores();

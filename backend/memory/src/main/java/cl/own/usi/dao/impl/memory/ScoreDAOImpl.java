@@ -94,7 +94,7 @@ public class ScoreDAOImpl implements ScoreDAO {
 	}
 
 	@Override
-	public int setGoodAnswer(String userId, int questionNumber, int questionValue) {
+	public int setGoodAnswer(String userId, int questionNumber, int questionValue, int answer) {
 		User user = userDAO.getUserById(userId);
 		Integer bonus = userBonuses.get(user);
 		bonus = (bonus == null) ? 0 : bonus;

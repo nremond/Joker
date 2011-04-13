@@ -32,18 +32,21 @@ public interface ScoreDAO {
 	 */
 	List<User> getAfter(User user, int limit);
 
-
 	/**
-	 * add the bonus to the current score, increase the score by one and return the new score
+	 * add the bonus to the current score, increase the score by one and return
+	 * the new score
+	 *
 	 * @param userId
 	 * @param questionNumber
 	 * @param questionValue
 	 * @return current score = score + bonus
 	 */
-	int setGoodAnswer(String userId, int questionNumber, int answer);
+	int setGoodAnswer(String userId, int questionNumber, int questionValue,
+			int answer);
 
 	/**
 	 * Reset user bonus and return his current score
+	 *
 	 * @param userId
 	 * @param questionNumber
 	 * @return current user score

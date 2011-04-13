@@ -170,7 +170,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 	@Override
 	public int setGoodAnswer(final String userId, final int questionNumber,
-			final int answer) {
+			final int questionValue, final int answer) {
 
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
@@ -193,7 +193,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		final int bonus = (Integer) dbUser.get(bonusField);
 		final int score = (Integer) dbUser.get(scoreField);
 
-		final int newScore = score + bonus + answer;
+		final int newScore = score + bonus + questionValue;
 		int newBonus = bonus + 1;
 
 		if (questionNumber > 1) {

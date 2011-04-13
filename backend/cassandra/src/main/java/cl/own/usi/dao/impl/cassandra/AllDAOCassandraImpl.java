@@ -130,7 +130,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 	@Override
 	public int setGoodAnswer(final String userId, final int questionNumber,
-			final int questionValue) {
+			final int questionValue, final int answer) {
 
 		if (userId != null) {
 

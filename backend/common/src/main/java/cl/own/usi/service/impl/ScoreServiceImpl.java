@@ -18,12 +18,12 @@ public class ScoreServiceImpl implements ScoreService {
 	private static final int FIFTY = 5;
 	private static final int HUNDRED = 100;
 
-	public int updateScore(int questionNumber, int answer,
+	public int updateScore(int questionNumber, int questionValue, int answer,
 			String userId, boolean answerCorrect) {
 
 		if (answerCorrect) {
-			return scoreDAO
-					.setGoodAnswer(userId, questionNumber, answer);
+			return scoreDAO.setGoodAnswer(userId, questionNumber,
+					questionValue, answer);
 		} else {
 			return scoreDAO.setBadAnswer(userId, questionNumber, answer);
 		}
