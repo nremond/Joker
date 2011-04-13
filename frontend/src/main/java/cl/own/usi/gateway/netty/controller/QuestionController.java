@@ -54,7 +54,7 @@ public class QuestionController extends AbstractController {
 					if (!gameService.validateQuestionToRequest(questionNumber)) {
 						writeResponse(e, BAD_REQUEST);
 						getLogger().info(
-								"Invalid question number " + questionNumber);
+								"Invalid question number {}", questionNumber);
 					} else {
 
 						final CachedUser cachedUser = getCacheManager().loadUser(userId);

@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
 import cl.own.usi.cache.CacheManager;
 import cl.own.usi.cache.CachedUser;
 import cl.own.usi.gateway.client.BeforeAndAfterScores;
-import cl.own.usi.gateway.client.UserAndScore;
 import cl.own.usi.gateway.client.WorkerClient;
 import cl.own.usi.gateway.utils.ScoresHelper;
 import cl.own.usi.service.GameService;
