@@ -41,26 +41,6 @@ public class AuditController extends AbstractAuthenticateController {
 
 	private static final String USER_MAIL_NAME = "user_mail";
 
-	protected static final Map<String, String> parseQueryString(
-			final String queryString) {
-
-		final String[] params = queryString.split("&amp;");
-		final Map<String, String> result = new HashMap<String, String>(
-				params.length);
-
-		for (String param : params) {
-			final String[] keyValue = param.split("=");
-			assert keyValue.length == 2;
-
-			final String key = keyValue[0];
-			final String value = keyValue[1];
-
-			result.put(key, value);
-		}
-
-		return result;
-	}
-
 	@Override
 	public void messageReceived(final ChannelHandlerContext ctx,
 			final MessageEvent e) throws Exception {

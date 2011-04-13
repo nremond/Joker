@@ -278,6 +278,26 @@ public class WorkerClientThriftImpl implements WorkerClient {
 	}
 
 	@Override
+	public String getScoreAsJson(final String email) {
+		return new ThriftAction<String>(pools) {
+
+			@Override
+			protected String action(Client client) throws TException {
+
+				//TODO
+
+				return "";
+			}
+
+			@Override
+			protected String getActionDescription() {
+				return String.format("getScoreAsJson(%s)", email);
+			}
+		}.doAction();
+
+	}
+
+	@Override
 	public String getAnswersAsJson(final String email,
 			final Integer questionNumber, final Game game) {
 
@@ -593,5 +613,4 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		}.doAction();
 
 	}
-
 }
