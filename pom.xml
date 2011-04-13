@@ -227,6 +227,8 @@
 					<configuration>
 						<source>1.6</source>
 						<target>1.6</target>
+						<debug>false</debug>
+						<optimize>true</optimize>
 					</configuration>
 				</plugin>
 				
@@ -258,4 +260,26 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
+	
+	<profiles>
+		<profile>
+			<id>debug</id>
+			<build>
+				<pluginManagement>
+					<plugins>
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-compiler-plugin</artifactId>
+							<version>2.3.2</version>
+							<configuration>
+								<debug>true</debug>
+								<optimize>false</optimize>
+							</configuration>
+						</plugin>
+					</plugins>
+				</pluginManagement>
+			</build>
+		</profile>
+	</profiles>
+		
 </project>
