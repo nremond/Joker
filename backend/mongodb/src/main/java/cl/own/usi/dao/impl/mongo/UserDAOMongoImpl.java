@@ -47,7 +47,11 @@ public class UserDAOMongoImpl implements UserDAO {
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(UserDAOMongoImpl.class);
 
-	private static DBObject userIdIndex = new BasicDBObject(userIdField, 1);
+	private final static DBObject userIdIndex = new BasicDBObject(userIdField,
+			1);
+
+	private final static DBObject loginIdIndex = new BasicDBObject().append(
+			userIdField, 1).append(passwordField, 1);
 
 	private final static DBObject userFieldsToFetch = new BasicDBObject()
 			.append(userIdField, 1).append(namesEmailField, 1)
@@ -251,6 +255,7 @@ public class UserDAOMongoImpl implements UserDAO {
 
 		// the driver keeps a cache of the added index
 		newUsers.ensureIndex(userIdIndex, "userIdIndex", true);
+		newUsers.ensureIndex(loginIdIndex, "loginIdIndex", false);
 		newUsers.ensureIndex(orderByScore, "orderByScore", false);
 		newUsers.ensureIndex(orderByScoreNames, "orderByScoreNames", false);
 		newUsers.ensureIndex(orderByNames, "orderByNames", false);
