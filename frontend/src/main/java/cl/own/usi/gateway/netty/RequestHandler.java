@@ -57,6 +57,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 	private static final String URI_ADD_WORKER_NODE = "/join";
 	private static final String URI_AUDIT = "/audit";
 	private static final String URI_PLAY = "/play";
+	private static final String URI_SCORE = "/score";
 	private static final String URI_JQUERY = "/lib/jquery.min.js";
 
 	@Autowired
@@ -124,6 +125,8 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 					auditController.messageReceived(ctx, e);
 				} else if (uri.startsWith(URI_PLAY)) {
 					playController.messageReceived(ctx, e);
+				} else if (uri.startsWith(URI_SCORE)) {
+					//TODO playController.messageReceived(ctx, e);
 				} else {
 					writeResponse(e, NOT_FOUND);
 				}

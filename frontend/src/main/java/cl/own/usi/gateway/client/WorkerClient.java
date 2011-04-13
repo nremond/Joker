@@ -34,7 +34,7 @@ public interface WorkerClient {
 
 	@Deprecated
 	List<UserInfoAndScore> get50After(String userId);
-	
+
 	BeforeAndAfterScores get50BeforeAnd50After(String userId);
 
 	boolean addWorkerNode(String host, int port);
@@ -43,6 +43,8 @@ public interface WorkerClient {
 
 	String getAnswersAsJson(String email, Integer questionNumber, Game game);
 
+	String getScoreAsJson(String email);
+
 	ExtendedUserInfoAndScore getExtendedUserInfo(String userId);
-	
+
 }

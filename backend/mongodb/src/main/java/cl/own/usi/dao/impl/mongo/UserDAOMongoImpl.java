@@ -14,6 +14,7 @@ import static cl.own.usi.dao.impl.mongo.DaoHelper.questionFieldPrefix;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -213,7 +214,7 @@ public class UserDAOMongoImpl implements UserDAO {
 
 		DBObject dbUser = dbUsers.findOne(dbId);
 		if (dbUser != null) {
-			List<Answer> answers = new ArrayList<Answer>();
+			List<Answer> answers = new ArrayList<Answer>(100);
 			for (String key : dbUser.keySet()) {
 				if (key != null && key.startsWith(questionFieldPrefix)) {
 
@@ -223,21 +224,29 @@ public class UserDAOMongoImpl implements UserDAO {
 
 					final int answerNumber = (Integer) dbUser.get(key);
 
-					Answer answer = new Answer();
-					answer.setAnswerNumber(answerNumber);
-					answer.setQuestionNumber(questionNumber.intValue());
-					answer.setUserId(userId);
-					answers.add(answer);
-
-					LOGGER.debug("fetching answers for userId={} {}", userId,
-							answers);
-					return answers;
+					if (answerNumber > 0) {
+						Answer answer = new Answer();
+						answer.setAnswerNumber(answerNumber);
+						answer.setQuestionNumber(questionNumber.intValue());
+						answer.setUserId(userId);
+						answers.add(answer);
+					}
 				}
 			}
+
+			Collections.sort(answers, new Comparator<Answer>() {
+				@Override
+				public int compare(Answer lhs, Answer rhs) {
+					return Integer.valueOf(lhs.getAnswerNumber()).compareTo(
+							rhs.getAnswerNumber());
+				}
+			});
+
+			LOGGER.debug("fetching answers for userId={} {}", userId, answers);
+			return answers;
 		} else {
 			return Collections.emptyList();
 		}
-		return null;
 	}
 
 	@Override
