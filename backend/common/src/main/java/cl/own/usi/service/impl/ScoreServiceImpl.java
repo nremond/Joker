@@ -71,7 +71,7 @@ public class ScoreServiceImpl implements ScoreService {
 		UserScores beforeUsers = toUserScores(get50Before(user));
 		UserScores afterUsers = toUserScores(get50After(user));
 
-		return new Scores(topUsers, beforeUsers, afterUsers);
+		return new Scores(user.getScore(), topUsers, beforeUsers, afterUsers);
 	}
 
 }

@@ -8,10 +8,15 @@ import org.codehaus.jackson.annotate.JsonProperty;
  * @author nicolas
  */
 public class Scores {
-
+	private final int score;
 	private final UserScores topScores;
 	private final UserScores beforeScores;
 	private final UserScores afterScores;
+
+	@JsonProperty(value = "score")
+	public int getScore() {
+		return score;
+	}
 
 	@JsonProperty(value = "top_scores")
 	public UserScores getTopScores() {
@@ -28,11 +33,11 @@ public class Scores {
 		return afterScores;
 	}
 
-	public Scores(UserScores topScores, UserScores beforeScores,
+	public Scores(int score, UserScores topScores, UserScores beforeScores,
 			UserScores afterScores) {
+		this.score = score;
 		this.topScores = topScores;
 		this.beforeScores = beforeScores;
 		this.afterScores = afterScores;
 	}
-
 }

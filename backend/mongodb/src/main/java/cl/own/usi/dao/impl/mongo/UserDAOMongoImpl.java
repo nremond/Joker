@@ -264,7 +264,7 @@ public class UserDAOMongoImpl implements UserDAO {
 
 		LOGGER.info("the MongoDB has been flushed");
 
-		//TODO !!!!!!
+		// TODO !!!!!!
 
 		// Enable sharding for the newly created collection
 		final DB adminDb = db.getSisterDB("admin");
@@ -305,11 +305,11 @@ public class UserDAOMongoImpl implements UserDAO {
 	public void gameCreated() {
 		final DBCollection dbUsers = db.getCollection(usersCollection);
 
-		// the driver keeps a cache of the added index
+		// Setup all the appropriate indexes
 		dbUsers.ensureIndex(userIdIndex, "userIdIndex", true);
 		dbUsers.ensureIndex(loginIdIndex, "loginIdIndex", false);
 		dbUsers.ensureIndex(orderByScore, "orderByScore", false);
-		dbUsers.ensureIndex(orderByScoreNames, "orderByScoreNames", false);
 		dbUsers.ensureIndex(orderByNames, "orderByNames", false);
+		dbUsers.ensureIndex(orderByScoreNames, "orderByScoreNames", false);
 	}
 }
