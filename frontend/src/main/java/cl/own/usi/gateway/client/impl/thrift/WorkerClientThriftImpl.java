@@ -3,6 +3,7 @@ package cl.own.usi.gateway.client.impl.thrift;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -512,12 +513,12 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 	static class ThriftMultiPool extends MultiPoolImpl<WorkerHost, Client> {
 
+		private final Random random = new Random();
 		private final static int ZERO = 0;
 		
 		private final ThreadLocal<Integer> counter = new ThreadLocal<Integer>();
 		
 		public ThriftMultiPool() {
-			counter.set(ZERO);
 		}
 
 		@Override
@@ -534,7 +535,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 			} else {
 				Integer value = counter.get();
 				if (value == null) {
-					value = ZERO;
+					value = random.nextInt(keys.size());
 				} else {
 					value += 1;
 				}

@@ -35,6 +35,8 @@ abstract class ThriftAction<T> {
 
 	public final T doAction() {
 
+		long starttime = System.currentTimeMillis();
+		
 		for (int i = 0; i < THRIFT_RETRY; i++) {
 			final Client client = getClient();
 			try {
@@ -48,6 +50,10 @@ abstract class ThriftAction<T> {
 			} finally {
 				if (client != null) {
 					release(client);
+				}
+				long actionTime = System.currentTimeMillis() - starttime;
+				if (actionTime > 200L) {
+					LOGGER.warn("Thrift call to {} took {} ms", getActionDescription(), actionTime);
 				}
 			}
 		}
