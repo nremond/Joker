@@ -25,7 +25,13 @@ public abstract class AbstractAuthenticateController extends AbstractController 
 	protected final Map<String, String> parseQueryString(
 			final String queryString) {
 
-		final String[] params = queryString.split("&");
+		int indexOfQ = queryString.indexOf("?");
+		String parameters = queryString;
+		if (indexOfQ > 0) {
+			parameters = queryString.substring(indexOfQ+1, queryString.length());
+		}
+
+		final String[] params = parameters.split("&");
 		final Map<String, String> result = new HashMap<String, String>(
 				params.length);
 

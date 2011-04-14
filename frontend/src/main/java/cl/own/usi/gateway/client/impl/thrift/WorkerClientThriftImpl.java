@@ -38,9 +38,9 @@ import cl.own.usi.thrift.WorkerRPC.Client;
 
 /**
  * Thrift client.
- * 
+ *
  * @author bperroud
- * 
+ *
  */
 @Component
 public class WorkerClientThriftImpl implements WorkerClient {
@@ -159,8 +159,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 				if (client.insertUser(email, password, firstname, lastname)) {
 					return true;
 				} else {
-					logger.warn("Insertion failed, for user {}.",
-							email);
+					logger.warn("Insertion failed, for user {}.", email);
 					return false;
 				}
 			}
@@ -277,11 +276,8 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		return new ThriftAction<String>(pools) {
 
 			@Override
-			protected String action(Client client) throws TException {
-
-				// TODO
-
-				return "";
+			protected String action(final Client client) throws TException {
+				return client.getScoreAsJson(email);
 			}
 
 			@Override

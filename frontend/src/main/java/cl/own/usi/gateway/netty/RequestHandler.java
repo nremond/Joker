@@ -28,6 +28,7 @@ import cl.own.usi.gateway.netty.controller.LogoutController;
 import cl.own.usi.gateway.netty.controller.PlayController;
 import cl.own.usi.gateway.netty.controller.QuestionController;
 import cl.own.usi.gateway.netty.controller.RankingController;
+import cl.own.usi.gateway.netty.controller.ScoreController;
 import cl.own.usi.gateway.netty.controller.UserController;
 
 /**
@@ -92,6 +93,9 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 	private JQueryController jQueryController;
 
 	@Autowired
+	private ScoreController scoreController;
+
+	@Autowired
 	private AddWorkerNodeController addWorkerNodeController;
 
 	@Override
@@ -126,7 +130,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 				} else if (uri.startsWith(URI_PLAY)) {
 					playController.messageReceived(ctx, e);
 				} else if (uri.startsWith(URI_SCORE)) {
-					//TODO playController.messageReceived(ctx, e);
+					scoreController.messageReceived(ctx, e);
 				} else {
 					writeResponse(e, NOT_FOUND);
 				}
