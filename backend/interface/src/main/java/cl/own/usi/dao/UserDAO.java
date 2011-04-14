@@ -40,6 +40,6 @@ public interface UserDAO {
 
 	void flushUsers();
 
-	void initialize();
+	void gameCreated();
 	
 }

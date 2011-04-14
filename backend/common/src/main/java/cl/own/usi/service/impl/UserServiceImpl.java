@@ -151,7 +151,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public void initialize() {
-		userDAO.initialize();
+	public void gameCreated() {
+		userDAO.gameCreated();
 	}
 }

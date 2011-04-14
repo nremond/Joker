@@ -353,13 +353,13 @@ public class WorkerClientThriftImpl implements WorkerClient {
 	}
 
 	@Override
-	public void startRankingsComputation() {
+	public void gameEnded() {
 
 		new ThriftAction<Boolean>(pools) {
 
 			@Override
 			protected Boolean action(Client client) throws TException {
-				client.startRankingsComputation(USELESS_INT);
+				client.gameEnded(USELESS_INT);
 				return Boolean.TRUE;
 			}
 
@@ -615,14 +615,14 @@ public class WorkerClientThriftImpl implements WorkerClient {
 	}
 
 	@Override
-	public void initialize() {
+	public void gameCreated() {
 		
 		new ThriftAction<Integer>(pools) {
 
 			@Override
 			protected Integer action(final Client client)
 					throws TException {
-				client.initialize(USELESS_INT);
+				client.gameCreated(USELESS_INT);
 				return USELESS_INT;
 			}
 

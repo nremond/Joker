@@ -325,7 +325,7 @@ public class GameServiceImpl implements GameService {
 				gameSynchronization.currentQuestionToAnswer++;
 				gameSynchronization.currentQuestionRunning = false;
 
-				workerClient.startRankingsComputation();
+				workerClient.gameEnded();
 
 				List<UserInfoAndScore> top100 = workerClient.getTop100();
 				StringBuilder sb = new StringBuilder();

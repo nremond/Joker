@@ -305,7 +305,7 @@ public class UserDAOMongoImpl implements UserDAO {
 	}
 
 	@Override
-	public void initialize() {
+	public void gameCreated() {
 		// TODO Auto-generated method stub
 		
 	}
