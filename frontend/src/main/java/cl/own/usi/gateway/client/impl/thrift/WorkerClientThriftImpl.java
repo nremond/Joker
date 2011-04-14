@@ -3,7 +3,6 @@ package cl.own.usi.gateway.client.impl.thrift;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -45,7 +44,7 @@ import cl.own.usi.thrift.WorkerRPC.Client;
 @Component
 public class WorkerClientThriftImpl implements WorkerClient {
 
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+	private static final Logger LOGGER = LoggerFactory.getLogger(WorkerClientThriftImpl.class);
 
 	private static final int USELESS_INT = 123456;
 
@@ -159,7 +158,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 				if (client.insertUser(email, password, firstname, lastname)) {
 					return true;
 				} else {
-					logger.warn("Insertion failed, for user {}.",
+					LOGGER.warn("Insertion failed, for user {}.",
 							email);
 					return false;
 				}
@@ -206,7 +205,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 						.getTop100(USELESS_INT);
 
 				int size = users == null ? 0 : users.size();
-				logger.debug("Returned {} users", size);
+				LOGGER.debug("Returned {} users", size);
 
 				final List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(
 						size);
@@ -469,6 +468,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		@Override
 		public Client create() throws FactoryException {
 
+			long starttime = System.currentTimeMillis();
 			TTransport transport;
 			try {
 				transport = new TSocket(workerHost.getHost(),
@@ -480,6 +480,11 @@ public class WorkerClientThriftImpl implements WorkerClient {
 				return client;
 			} catch (TTransportException e) {
 				throw new FactoryException(e);
+			} finally {
+				long creationtime = System.currentTimeMillis() - starttime;
+//				if (creationtime > 20L) {
+					LOGGER.info("ThriftClientFactory create new connection to {} in {} ms", workerHost.getHost(), creationtime);
+//				}
 			}
 		}
 
@@ -507,7 +512,13 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 	static class ThriftMultiPool extends MultiPoolImpl<WorkerHost, Client> {
 
-		private final Random r = new Random();
+		private final static int ZERO = 0;
+		
+		private final ThreadLocal<Integer> counter = new ThreadLocal<Integer>();
+		
+		public ThriftMultiPool() {
+			counter.set(ZERO);
+		}
 
 		@Override
 		protected Pool<Client> createPool(final WorkerHost key) {
@@ -521,7 +532,23 @@ public class WorkerClientThriftImpl implements WorkerClient {
 			if (keys.isEmpty()) {
 				return null;
 			} else {
-				return keys.get(r.nextInt(keys.size()));
+				Integer value = counter.get();
+				if (value == null) {
+					value = ZERO;
+				} else {
+					value += 1;
+				}
+				if (value >= keys.size()) {
+					value = ZERO;
+				}
+				try {
+					return keys.get(value);
+				} catch (IndexOutOfBoundsException e) {
+					value -= 1;
+					return null;
+				} finally {
+					counter.set(value);
+				}
 			}
 		}
 
