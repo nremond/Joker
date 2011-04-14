@@ -102,7 +102,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 		return users;
 	}
 
- 	@Override
+	@Override
 	public List<User> getAfter(User user, int limit) {
 
 		ensureOrderedScoresLoaded();
@@ -116,14 +116,15 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	}
 
 	@Override
-	public int setBadAnswer(final String userId, final int questionNumber, final int questionValue) {
+	public int setBadAnswer(final String userId, final int questionNumber,
+			final int questionValue) {
 
 		int score = getScore(userId);
 
 		Mutator<String> mutator = HFactory.createMutator(
 				consistencyOneKeyspace, StringSerializer.get());
-		mutator.addInsertion(userId, bonusesColumnFamily, HFactory
-				.createColumn(questionNumber, Boolean.FALSE, is, bs));
+		mutator.addInsertion(userId, bonusesColumnFamily,
+				HFactory.createColumn(questionNumber, Boolean.FALSE, is, bs));
 		mutator.execute();
 		return score;
 	}
@@ -148,7 +149,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 			int newBonus = 0;
 			for (int searchedQuestion = questionNumber - 1; searchedQuestion > 0; searchedQuestion--) {
-				HColumn<Integer, Boolean> previousAnswer = columnSlice.getColumnByName(searchedQuestion);
+				HColumn<Integer, Boolean> previousAnswer = columnSlice
+						.getColumnByName(searchedQuestion);
 				if (previousAnswer != null && previousAnswer.getValue()) {
 					newBonus++;
 				} else {
@@ -177,7 +179,9 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	}
 
 	private String generateRankedUserKey(User user) {
-		return user.getLastname() + DEFAULT_FIELDS_SEPARATOR + user.getFirstname() + DEFAULT_FIELDS_SEPARATOR + user.getEmail();
+		return user.getLastname() + DEFAULT_FIELDS_SEPARATOR
+				+ user.getFirstname() + DEFAULT_FIELDS_SEPARATOR
+				+ user.getEmail();
 	}
 
 	@Override
@@ -212,7 +216,9 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 					new Object[] { user.getEmail(),
 							result.getExecutionTimeMicro(), userId });
 		} catch (HectorException e) {
-			logger.error("An error occured while inserting user " + user.getEmail(), e);
+			logger.error(
+					"An error occured while inserting user " + user.getEmail(),
+					e);
 			return false;
 		}
 		return true;
@@ -275,11 +281,13 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 		return getScore(userId, tillQuestionNumber, false);
 	}
 
-	private int getScore(String userId, Integer tillQuestionNumber, boolean quorum) {
+	private int getScore(String userId, Integer tillQuestionNumber,
+			boolean quorum) {
 
 		// load score
 		SliceQuery<String, Integer, Integer> sliceQuery = HFactory
-				.createSliceQuery(quorum ? consistencyQuorumKeyspace : consistencyOneKeyspace, ss, is, is);
+				.createSliceQuery(quorum ? consistencyQuorumKeyspace
+						: consistencyOneKeyspace, ss, is, is);
 		sliceQuery.setKey(userId);
 		sliceQuery.setColumnFamily(scoresColumnFamily);
 		if (tillQuestionNumber != null) {
@@ -327,7 +335,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 				.getValue()));
 		user.setLastname(ss.fromByteBuffer(cs.getColumnByName(lastnameColumn)
 				.getValue()));
-		HColumn<String, ByteBuffer> passwordColum = cs.getColumnByName(passwordColumn);
+		HColumn<String, ByteBuffer> passwordColum = cs
+				.getColumnByName(passwordColumn);
 		if (passwordColum != null) {
 			user.setPassword(ss.fromByteBuffer(passwordColum.getValue()));
 		}
@@ -428,8 +437,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 				return userId;
 			}
 		}
-		logger.debug("login failed for {}, returned columns = {}, userId={}", new Object[] {email, cs
-				.getColumns().size(), userId});
+		logger.debug("login failed for {}, returned columns = {}, userId={}",
+				new Object[] { email, cs.getColumns().size(), userId });
 		return null;
 	}
 
@@ -462,7 +471,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 		orderedScores = Collections.<Integer> emptyList();
 		reverseOrderedScores = Collections.<Integer> emptyList();
 
-		logger.debug("Keyspace flushed in {} ms.", (System.currentTimeMillis() - starttime));
+		logger.debug("Keyspace flushed in {} ms.",
+				(System.currentTimeMillis() - starttime));
 
 	}
 
@@ -482,7 +492,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 			rangeSliceQuery.setColumnFamily(usersColumnFamily);
 			rangeSliceQuery.setKeys(start, DEFAULT_START_KEY);
 			rangeSliceQuery.setRowCount(limit);
-			rangeSliceQuery.setColumnNames(emailColumn, firstnameColumn, lastnameColumn);
+			rangeSliceQuery.setColumnNames(emailColumn, firstnameColumn,
+					lastnameColumn);
 
 			QueryResult<OrderedRows<String, String, ByteBuffer>> result = rangeSliceQuery
 					.execute();
@@ -520,8 +531,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 			for (User user : users) {
 				String userKey = generateRankedUserKey(user);
 				mutator.addInsertion(user.getScore(), ranksColumnFamily,
-						HFactory.createColumn(userKey, encodeUserToString(user),
-								ss, ss));
+						HFactory.createColumn(userKey,
+								encodeUserToString(user), ss, ss));
 			}
 
 			MutationResult mutationResult = mutator.execute();
@@ -551,7 +562,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 			Row<String, Integer, Integer> row = rows.getByKey(user.getUserId());
 
 			if (row != null) {
-				ColumnSlice<Integer, Integer> columnSlice = row.getColumnSlice();
+				ColumnSlice<Integer, Integer> columnSlice = row
+						.getColumnSlice();
 				if (!columnSlice.getColumns().isEmpty()) {
 					user.setScore(columnSlice.getColumns().get(0).getValue());
 				} else {
@@ -562,7 +574,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 			}
 		}
 
-		logger.debug("Loaded {} scores in {} ms", users.size(), (System.currentTimeMillis() - starttime));
+		logger.debug("Loaded {} scores in {} ms", users.size(),
+				(System.currentTimeMillis() - starttime));
 
 	}
 
@@ -576,7 +589,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 					}
 					scoresComputationLock.unlock();
 				}
-			} catch (InterruptedException e) {}
+			} catch (InterruptedException e) {
+			}
 		}
 	}
 
@@ -646,7 +660,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 			sliceQuery.setColumnFamily(ranksColumnFamily);
 			sliceQuery.setKey(score);
-			sliceQuery.setRange(start, DEFAULT_START_KEY, reverseOrder, limit + 1);
+			sliceQuery.setRange(start, DEFAULT_START_KEY, reverseOrder,
+					limit + 1);
 
 			QueryResult<ColumnSlice<String, String>> sliceResult = sliceQuery
 					.execute();
@@ -662,7 +677,8 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 		}
 
 		if (!scoreFound) {
-			logger.error("Heum, dude, score {} not found for user {}", startScore, startKey);
+			logger.error("Heum, dude, score {} not found for user {}",
+					startScore, startKey);
 		}
 
 		return users;
@@ -680,11 +696,10 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	}
 
 	private static String encodeUserToString(final User user) {
-		return user.getUserId() + DEFAULT_FIELDS_SEPARATOR +
-		user.getFirstname() + DEFAULT_FIELDS_SEPARATOR +
-		user.getLastname() + DEFAULT_FIELDS_SEPARATOR +
-		user.getEmail() + DEFAULT_FIELDS_SEPARATOR +
-		user.getScore();
+		return user.getUserId() + DEFAULT_FIELDS_SEPARATOR
+				+ user.getFirstname() + DEFAULT_FIELDS_SEPARATOR
+				+ user.getLastname() + DEFAULT_FIELDS_SEPARATOR
+				+ user.getEmail() + DEFAULT_FIELDS_SEPARATOR + user.getScore();
 	}
 
 	private static User decodeStringToUser(final String userString) {
@@ -714,15 +729,18 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	public List<Answer> getAnswersByEmail(final String userEmail) {
 
 		final String userId = CassandraHelper.generateUserId(userEmail);
-
-		List<Answer> answers = getAnswers(userId);
-
-		return answers;
+		return getAnswers(userId);
 	}
 
 	@Override
 	public void gameCreated() {
 		// TODO Auto-generated method stub
-		
+
+	}
+
+	@Override
+	public User getUserByEmail(String email) {
+		final String userId = CassandraHelper.generateUserId(email);
+		return getUserById(userId);
 	}
 }

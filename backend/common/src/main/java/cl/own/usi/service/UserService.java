@@ -2,16 +2,16 @@ package cl.own.usi.service;
 
 import java.util.List;
 
+import cl.own.usi.exception.UserAlreadyLoggedException;
 import cl.own.usi.model.AuditAnswer;
 import cl.own.usi.model.AuditAnswers;
-import cl.own.usi.exception.UserAlreadyLoggedException;
 import cl.own.usi.model.User;
 
 public interface UserService {
 
 	/**
 	 * Insert a new {@link User}
-	 * 
+	 *
 	 * @param email
 	 * @param password
 	 * @param firstname
@@ -23,7 +23,7 @@ public interface UserService {
 
 	/**
 	 * Login a {@link User}
-	 * 
+	 *
 	 * @param email
 	 * @param password
 	 * @return userId, null if user not found, throws
@@ -34,7 +34,7 @@ public interface UserService {
 
 	/**
 	 * Request a {@link Question}
-	 * 
+	 *
 	 * @param userId
 	 * @param questionNumber
 	 * @return
@@ -43,7 +43,7 @@ public interface UserService {
 
 	/**
 	 * Answer a {@link Question}
-	 * 
+	 *
 	 * @param userId
 	 * @param questionNumber
 	 * @param answer
@@ -53,7 +53,7 @@ public interface UserService {
 
 	/**
 	 * Logout
-	 * 
+	 *
 	 * @param userId
 	 * @return
 	 */
@@ -80,5 +80,5 @@ public interface UserService {
 			String question, int goodAnswer);
 
 	void gameCreated();
-	
+
 }

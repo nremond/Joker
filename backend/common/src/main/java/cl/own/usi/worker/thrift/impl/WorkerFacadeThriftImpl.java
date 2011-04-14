@@ -20,9 +20,10 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import cl.own.usi.exception.UserAlreadyLoggedException;
 import cl.own.usi.model.AuditAnswer;
 import cl.own.usi.model.AuditAnswers;
-import cl.own.usi.exception.UserAlreadyLoggedException;
+import cl.own.usi.model.Scores;
 import cl.own.usi.model.User;
 import cl.own.usi.network.InetAddressHelper;
 import cl.own.usi.service.ScoreService;
@@ -240,6 +241,21 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 	}
 
 	@Override
+	public String getScoreAsJson(String email) throws TException {
+		LOGGER.debug("Request for all score for user email {} received", email);
+
+		final Scores scores = scoreService.getScore(email);
+
+		try {
+			return mapper.writeValueAsString(scores);
+		} catch (IOException e) {
+			LOGGER.error("Cannot convert scores answers to json for user {}",
+					email, e);
+			return "";
+		}
+	}
+
+	@Override
 	public String getAllAnswersAsJson(final String email,
 			final List<Integer> goodAnswers) throws TException {
 
@@ -338,9 +354,10 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 
 		return beforeAndAfterScores;
 	}
-	
+
 	@Override
 	public void gameCreated(final int useless) throws TException {
 		userService.gameCreated();
 	}
+
 }

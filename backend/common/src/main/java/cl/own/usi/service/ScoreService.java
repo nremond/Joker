@@ -2,6 +2,7 @@ package cl.own.usi.service;
 
 import java.util.List;
 
+import cl.own.usi.model.Scores;
 import cl.own.usi.model.User;
 
 public interface ScoreService {
@@ -44,5 +45,7 @@ public interface ScoreService {
 	 * Compute rankings for all {@link User}s (if needed)
 	 */
 	void gameEnded();
+
+	Scores getScore(String email);
 
 }

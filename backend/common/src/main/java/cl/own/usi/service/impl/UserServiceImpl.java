@@ -42,7 +42,8 @@ public class UserServiceImpl implements UserService {
 		}
 	}
 
-	public String login(String email, String password) throws UserAlreadyLoggedException {
+	public String login(String email, String password)
+			throws UserAlreadyLoggedException {
 
 		if (email == null || password == null) {
 			return null;
@@ -58,19 +59,19 @@ public class UserServiceImpl implements UserService {
 	public void insertAnswer(String userId, int questionNumber,
 			Integer answerNumber) {
 
-//		List<Answer> answers = userDAO.getAnswers(userId);
-//
-//		if (answers.size() >= questionNumber
-//				&& answers.get(questionNumber - 1) != null) {
-//			throw new IllegalArgumentException(
-//					"User has already answered this question.");
-//		} else {
-			Answer answer = new Answer();
-			answer.setQuestionNumber(questionNumber);
-			answer.setUserId(userId);
-			answer.setAnswerNumber(answerNumber);
-			userDAO.insertAnswer(answer);
-//		}
+		// List<Answer> answers = userDAO.getAnswers(userId);
+		//
+		// if (answers.size() >= questionNumber
+		// && answers.get(questionNumber - 1) != null) {
+		// throw new IllegalArgumentException(
+		// "User has already answered this question.");
+		// } else {
+		Answer answer = new Answer();
+		answer.setQuestionNumber(questionNumber);
+		answer.setUserId(userId);
+		answer.setAnswerNumber(answerNumber);
+		userDAO.insertAnswer(answer);
+		// }
 	}
 
 	@Override

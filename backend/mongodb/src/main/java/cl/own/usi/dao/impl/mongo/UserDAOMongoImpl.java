@@ -133,6 +133,12 @@ public class UserDAOMongoImpl implements UserDAO {
 	}
 
 	@Override
+	public User getUserByEmail(String email) {
+		final String userId = DaoHelper.generateUserId(email);
+		return getUserByEmail(userId);
+	}
+
+	@Override
 	public String login(final String email, final String password)
 			throws UserAlreadyLoggedException {
 
@@ -307,6 +313,6 @@ public class UserDAOMongoImpl implements UserDAO {
 	@Override
 	public void gameCreated() {
 		// TODO Auto-generated method stub
-		
+
 	}
 }

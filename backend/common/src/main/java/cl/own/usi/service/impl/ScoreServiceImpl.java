@@ -6,7 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import cl.own.usi.dao.ScoreDAO;
+import cl.own.usi.dao.UserDAO;
+import cl.own.usi.model.Scores;
 import cl.own.usi.model.User;
+import cl.own.usi.model.UserScores;
 import cl.own.usi.service.ScoreService;
 
 @Service
@@ -14,6 +17,9 @@ public class ScoreServiceImpl implements ScoreService {
 
 	@Autowired
 	private ScoreDAO scoreDAO;
+
+	@Autowired
+	private UserDAO userDAO;
 
 	private static final int FIFTY = 5;
 	private static final int HUNDRED = 100;
@@ -44,6 +50,28 @@ public class ScoreServiceImpl implements ScoreService {
 	@Override
 	public void gameEnded() {
 		scoreDAO.gameEnded();
+	}
+
+	private UserScores toUserScores(List<User> users) {
+		UserScores userScores = new UserScores();
+		for (User user : users) {
+			userScores.append(user.getEmail(), user.getScore(),
+					user.getFirstname(), user.getLastname());
+		}
+
+		return userScores;
+	}
+
+	@Override
+	public Scores getScore(String email) {
+
+		User user = userDAO.getUserById(email);
+
+		UserScores topUsers = toUserScores(getTop100());
+		UserScores beforeUsers = toUserScores(get50Before(user));
+		UserScores afterUsers = toUserScores(get50After(user));
+
+		return new Scores(topUsers, beforeUsers, afterUsers);
 	}
 
 }

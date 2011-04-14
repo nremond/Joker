@@ -18,8 +18,9 @@ public interface UserDAO {
 	 */
 	boolean insertUser(User user);
 
-	// TODO Remove this method, absolutly useless !!
 	User getUserById(String userId);
+
+	User getUserByEmail(String email);
 
 	void insertRequest(String userId, int questionNumber);
 
@@ -34,12 +35,13 @@ public interface UserDAO {
 	 *
 	 * @return The userId is the credentials are good, null otherwise
 	 */
-	String login(String email, String password) throws UserAlreadyLoggedException;
+	String login(String email, String password)
+			throws UserAlreadyLoggedException;
 
 	void logout(String userId);
 
 	void flushUsers();
 
 	void gameCreated();
-	
+
 }
