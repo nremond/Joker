@@ -18,8 +18,9 @@ public interface UserDAO {
 	 */
 	boolean insertUser(User user);
 
-	// TODO Remove this method, absolutly useless !!
+
 	User getUserById(String userId);
+	User getUserByEmail(String email);
 
 	void insertRequest(String userId, int questionNumber);
 
@@ -41,5 +42,5 @@ public interface UserDAO {
 	void flushUsers();
 
 	void initialize();
-	
+
 }

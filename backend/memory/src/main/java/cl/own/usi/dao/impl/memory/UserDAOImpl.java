@@ -151,7 +151,13 @@ public class UserDAOImpl implements UserDAO {
 	@Override
 	public void initialize() {
 		// TODO Auto-generated method stub
-		
+
+	}
+
+	@Override
+	public User getUserByEmail(String email) {
+		final String userId = generateUserId(email);
+		return getUserById(userId);
 	}
 
 }
