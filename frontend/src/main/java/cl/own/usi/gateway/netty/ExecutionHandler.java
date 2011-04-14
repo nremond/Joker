@@ -40,6 +40,7 @@ public class ExecutionHandler implements ChannelUpstreamHandler,
 	public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e)
 			throws Exception {
 		if (e instanceof MessageEvent) {
+			ctx.setAttachment(System.currentTimeMillis());
 			executor.execute(new ChannelEventRunnable(ctx, e));
 		}
 	}

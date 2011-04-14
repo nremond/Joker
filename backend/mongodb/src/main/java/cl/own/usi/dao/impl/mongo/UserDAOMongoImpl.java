@@ -135,7 +135,7 @@ public class UserDAOMongoImpl implements UserDAO {
 	@Override
 	public User getUserByEmail(String email) {
 		final String userId = DaoHelper.generateUserId(email);
-		return getUserByEmail(userId);
+		return getUserById(userId);
 	}
 
 	@Override

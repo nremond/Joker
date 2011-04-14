@@ -101,8 +101,20 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 			throws Exception {
-
+		
+		ChannelHandlerContext parentCtx = ctx.getPipeline().getContext("executor1");
+		if (parentCtx != null) {
+			Long enqueuedTime = (Long) parentCtx.getAttachment();
+			if (enqueuedTime != null) {
+				long waitTime = System.currentTimeMillis() - enqueuedTime;
+				if (waitTime > 20L) {
+					logger.warn("Message waited {} ms before being processed.", waitTime);
+				}
+			}
+		}
+		
 		try {
+			
 			HttpRequest request = (HttpRequest) e.getMessage();
 
 			String uri = request.getUri();

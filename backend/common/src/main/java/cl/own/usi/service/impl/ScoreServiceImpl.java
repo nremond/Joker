@@ -65,7 +65,7 @@ public class ScoreServiceImpl implements ScoreService {
 	@Override
 	public Scores getScore(String email) {
 
-		User user = userDAO.getUserById(email);
+		User user = userDAO.getUserByEmail(email);
 
 		UserScores topUsers = toUserScores(getTop100());
 		UserScores beforeUsers = toUserScores(get50Before(user));
