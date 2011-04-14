@@ -11,10 +11,10 @@ import cl.own.usi.thrift.WorkerRPC.Client;
 
 /**
  * Wrapper for executing a thrift action.
- *
+ * 
  * @author bperroud
  * @author nire
- *
+ * 
  */
 abstract class ThriftAction<T> {
 
@@ -35,8 +35,6 @@ abstract class ThriftAction<T> {
 
 	public final T doAction() {
 
-		final String description = getActionDescription();
-
 		for (int i = 0; i < THRIFT_RETRY; i++) {
 			final Client client = getClient();
 			try {
@@ -45,7 +43,7 @@ abstract class ThriftAction<T> {
 				LOGGER.warn(
 						String.format(
 								"Exception caught while executing action %s through thrift (try=%d)",
-								description, i), e);
+								getActionDescription(), i), e);
 				pools.invalidate(client);
 			} finally {
 				if (client != null) {
@@ -56,7 +54,7 @@ abstract class ThriftAction<T> {
 
 		LOGGER.error(
 				"Failure to execute action {} after {} try, returning null instead",
-				description, THRIFT_RETRY);
+				getActionDescription(), THRIFT_RETRY);
 		return null;
 	}
 

@@ -51,9 +51,8 @@ service WorkerRPC {
 	list<UserInfoAndScore> get50Before(1: string userId),
 	list<UserInfoAndScore> get50After(1: string userId),
 
-	void startRankingsComputation(1: i32 useless),
-
 	string getScoreAsJson(1: string email),
+
 	string getAllAnswersAsJson(1: string email, 2: list<i32> goodAnswers),
 	string getAnswerAsJson(1: string email, 2: i32 questionNumber, 3: string question, 4: i32 goodAnswer),
 
@@ -61,6 +60,6 @@ service WorkerRPC {
 
 	ExtendedUserInfoAndScore getExtendedUserInfo(1: string userId),
 
-	void initialize(1: i32 useless)
-
+	void gameEnded(1: i32 useless),
+	void gameCreated(1: i32 useless)
 }

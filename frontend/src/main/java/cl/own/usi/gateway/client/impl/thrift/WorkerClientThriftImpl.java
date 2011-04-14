@@ -38,9 +38,9 @@ import cl.own.usi.thrift.WorkerRPC.Client;
 
 /**
  * Thrift client.
- *
+ * 
  * @author bperroud
- *
+ * 
  */
 @Component
 public class WorkerClientThriftImpl implements WorkerClient {
@@ -156,18 +156,13 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 			@Override
 			protected Boolean action(final Client client) throws TException {
-				int retry = 2;
-				do {
-					if (client.insertUser(email, password, firstname, lastname)) {
-						return true;
-					} else {
-						retry--;
-						logger.warn(
-								"Insertion failed, for user {}, need to retry",
-								email);
-					}
-				} while (retry > 0);
-				return false;
+				if (client.insertUser(email, password, firstname, lastname)) {
+					return true;
+				} else {
+					logger.warn("Insertion failed, for user {}.",
+							email);
+					return false;
+				}
 			}
 
 			@Override
@@ -284,7 +279,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 			@Override
 			protected String action(Client client) throws TException {
 
-				//TODO
+				// TODO
 
 				return "";
 			}
@@ -353,13 +348,13 @@ public class WorkerClientThriftImpl implements WorkerClient {
 	}
 
 	@Override
-	public void startRankingsComputation() {
+	public void gameEnded() {
 
 		new ThriftAction<Boolean>(pools) {
 
 			@Override
 			protected Boolean action(Client client) throws TException {
-				client.startRankingsComputation(USELESS_INT);
+				client.gameEnded(USELESS_INT);
 				return Boolean.TRUE;
 			}
 
@@ -615,14 +610,13 @@ public class WorkerClientThriftImpl implements WorkerClient {
 	}
 
 	@Override
-	public void initialize() {
-		
+	public void gameCreated() {
+
 		new ThriftAction<Integer>(pools) {
 
 			@Override
-			protected Integer action(final Client client)
-					throws TException {
-				client.initialize(USELESS_INT);
+			protected Integer action(final Client client) throws TException {
+				client.gameCreated(USELESS_INT);
 				return USELESS_INT;
 			}
 

@@ -44,7 +44,7 @@ public interface ScoreService {
 	/**
 	 * Compute rankings for all {@link User}s (if needed)
 	 */
-	void computeRankings();
+	void gameEnded();
 
 	Scores getScore(String email);
 

@@ -79,6 +79,6 @@ public interface UserService {
 	AuditAnswer getAuditAnswerFor(String userEmail, int questionNumber,
 			String question, int goodAnswer);
 
-	void initialize();
+	void gameCreated();
 
 }

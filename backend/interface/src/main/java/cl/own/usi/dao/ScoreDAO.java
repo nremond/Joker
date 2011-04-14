@@ -55,6 +55,6 @@ public interface ScoreDAO {
 
 	void flushUsers();
 
-	void computeRankings();
+	void gameEnded();
 
 }

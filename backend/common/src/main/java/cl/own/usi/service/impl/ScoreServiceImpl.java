@@ -48,8 +48,8 @@ public class ScoreServiceImpl implements ScoreService {
 	}
 
 	@Override
-	public void computeRankings() {
-		scoreDAO.computeRankings();
+	public void gameEnded() {
+		scoreDAO.gameEnded();
 	}
 
 	private UserScores toUserScores(List<User> users) {

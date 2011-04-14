@@ -112,7 +112,7 @@ public class ScoreDAOImpl implements ScoreDAO {
 	}
 
 	@Override
-	public void computeRankings() {
+	public void gameEnded() {
 		// not needed in this implementation
 	}
 

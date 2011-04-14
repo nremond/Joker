@@ -477,7 +477,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	}
 
 	@Override
-	public void computeRankings() {
+	public void gameEnded() {
 
 		int limit = 2000;
 		String start = DEFAULT_START_KEY;
@@ -733,7 +733,7 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	}
 
 	@Override
-	public void initialize() {
+	public void gameCreated() {
 		// TODO Auto-generated method stub
 
 	}

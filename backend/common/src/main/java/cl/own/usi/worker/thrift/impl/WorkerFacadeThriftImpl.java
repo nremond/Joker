@@ -236,8 +236,8 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 	}
 
 	@Override
-	public void startRankingsComputation(final int useless) {
-		scoreService.computeRankings();
+	public void gameEnded(final int useless) {
+		scoreService.gameEnded();
 	}
 
 	@Override
@@ -356,8 +356,8 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 	}
 
 	@Override
-	public void initialize(final int useless) throws TException {
-		userService.initialize();
+	public void gameCreated(final int useless) throws TException {
+		userService.gameCreated();
 	}
 
 }

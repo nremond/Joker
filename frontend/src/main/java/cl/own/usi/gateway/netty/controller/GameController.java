@@ -234,7 +234,7 @@ public class GameController extends AbstractAuthenticateController {
 							(System.currentTimeMillis() - starttime));
 				}
 				
-				workerClient.initialize();
+				workerClient.gameCreated();
 
 			} catch (JDOMParseException ex) {
 				LOGGER.warn("JDOMexception", ex);

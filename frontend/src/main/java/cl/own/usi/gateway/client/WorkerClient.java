@@ -39,7 +39,7 @@ public interface WorkerClient {
 
 	boolean addWorkerNode(String host, int port);
 
-	void startRankingsComputation();
+	void gameEnded();
 
 	String getAnswersAsJson(String email, Integer questionNumber, Game game);
 
@@ -47,6 +47,6 @@ public interface WorkerClient {
 
 	ExtendedUserInfoAndScore getExtendedUserInfo(String userId);
 
-	void initialize();
+	void gameCreated();
 	
 }
