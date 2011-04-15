@@ -66,6 +66,8 @@ public class UserDAOMongoImpl implements UserDAO {
 	@Override
 	public boolean insertUser(final User user) {
 		DBCollection dbUsers = db.getCollection(usersCollection);
+		// Ensure that it is strictly impossible to have twice the same user
+		dbUsers.ensureIndex(userIdIndex, "userIdIndex", true);
 
 		DBObject dbUser = DaoHelper.toDBObject(user);
 
@@ -135,7 +137,7 @@ public class UserDAOMongoImpl implements UserDAO {
 	@Override
 	public User getUserByEmail(String email) {
 		final String userId = DaoHelper.generateUserId(email);
-		return getUserByEmail(userId);
+		return getUserById(userId);
 	}
 
 	@Override
@@ -262,18 +264,7 @@ public class UserDAOMongoImpl implements UserDAO {
 
 		LOGGER.info("the MongoDB has been flushed");
 
-		// TODO NIRE : all this code must be moved to a "setupWhatever"
-		// function. It is possible to create a game *without* flushing the
-		// users
-
-		final DBCollection newUsers = db.getCollection(usersCollection);
-
-		// the driver keeps a cache of the added index
-		newUsers.ensureIndex(userIdIndex, "userIdIndex", true);
-		newUsers.ensureIndex(loginIdIndex, "loginIdIndex", false);
-		newUsers.ensureIndex(orderByScore, "orderByScore", false);
-		newUsers.ensureIndex(orderByScoreNames, "orderByScoreNames", false);
-		newUsers.ensureIndex(orderByNames, "orderByNames", false);
+		// TODO !!!!!!
 
 		// Enable sharding for the newly created collection
 		final DB adminDb = db.getSisterDB("admin");
@@ -312,7 +303,13 @@ public class UserDAOMongoImpl implements UserDAO {
 
 	@Override
 	public void gameCreated() {
-		// TODO Auto-generated method stub
+		final DBCollection dbUsers = db.getCollection(usersCollection);
 
+		// Setup all the appropriate indexes
+		dbUsers.ensureIndex(userIdIndex, "userIdIndex", true);
+		dbUsers.ensureIndex(loginIdIndex, "loginIdIndex", false);
+		dbUsers.ensureIndex(orderByScore, "orderByScore", false);
+		dbUsers.ensureIndex(orderByNames, "orderByNames", false);
+		dbUsers.ensureIndex(orderByScoreNames, "orderByScoreNames", false);
 	}
 }

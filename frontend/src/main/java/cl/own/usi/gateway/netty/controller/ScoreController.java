@@ -42,9 +42,13 @@ public class ScoreController extends AbstractAuthenticateController {
 			final Map<String, String> queryParameters = parseQueryString(request
 					.getUri());
 
+
 			final String authenticationKey = queryParameters
 					.get(AUTHENTIFICATION_KEY_NAME);
 			final String userMail = queryParameters.get(USER_MAIL_NAME);
+
+
+			System.out.println("userMail="+userMail+"authenticationKey="+authenticationKey);
 
 			if (StringUtils.isEmpty(authenticationKey)
 					|| StringUtils.isEmpty(userMail)) {

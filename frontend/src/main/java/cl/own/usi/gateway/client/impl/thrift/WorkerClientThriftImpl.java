@@ -39,14 +39,15 @@ import cl.own.usi.thrift.WorkerRPC.Client;
 
 /**
  * Thrift client.
- * 
+ *
  * @author bperroud
- * 
+ *
  */
 @Component
 public class WorkerClientThriftImpl implements WorkerClient {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(WorkerClientThriftImpl.class);
+	private static final Logger LOGGER = LoggerFactory
+			.getLogger(WorkerClientThriftImpl.class);
 
 	private static final int USELESS_INT = 123456;
 
@@ -160,8 +161,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 				if (client.insertUser(email, password, firstname, lastname)) {
 					return true;
 				} else {
-					LOGGER.warn("Insertion failed, for user {}.",
-							email);
+					LOGGER.warn("Insertion failed, for user {}.", email);
 					return false;
 				}
 			}
@@ -278,11 +278,8 @@ public class WorkerClientThriftImpl implements WorkerClient {
 		return new ThriftAction<String>(pools) {
 
 			@Override
-			protected String action(Client client) throws TException {
-
-				// TODO
-
-				return "";
+			protected String action(final Client client) throws TException {
+				return client.getScoreAsJson(email);
 			}
 
 			@Override
@@ -484,9 +481,11 @@ public class WorkerClientThriftImpl implements WorkerClient {
 				throw new FactoryException(e);
 			} finally {
 				long creationtime = System.currentTimeMillis() - starttime;
-//				if (creationtime > 20L) {
-					LOGGER.info("ThriftClientFactory create new connection to {} in {} ms", workerHost.getHost(), creationtime);
-//				}
+				// if (creationtime > 20L) {
+				LOGGER.info(
+						"ThriftClientFactory create new connection to {} in {} ms",
+						workerHost.getHost(), creationtime);
+				// }
 			}
 		}
 
@@ -516,9 +515,9 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 		private final Random random = new Random();
 		private final static int ZERO = 0;
-		
+
 		private final ThreadLocal<Integer> counter = new ThreadLocal<Integer>();
-		
+
 		public ThriftMultiPool() {
 		}
 
