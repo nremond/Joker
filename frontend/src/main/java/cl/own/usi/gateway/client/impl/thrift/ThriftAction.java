@@ -52,7 +52,7 @@ abstract class ThriftAction<T> {
 					release(client);
 				}
 				long actionTime = System.currentTimeMillis() - starttime;
-				if (actionTime > 200L) {
+				if (actionTime > 300L) {
 					LOGGER.warn("Thrift call to {} took {} ms", getActionDescription(), actionTime);
 				}
 			}

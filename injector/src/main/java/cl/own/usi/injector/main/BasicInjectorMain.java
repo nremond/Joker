@@ -62,9 +62,9 @@ public class BasicInjectorMain {
 	private static final boolean FLUSHUSERSTABLE = true;
 	private static final int DEFAULT_NBUSERS = 10;
 	private static final int NBQUESTIONS = 20; // don't change me...
-	private static final int QUESTIONTIMEFRAME = 45;
-	private static final int SYNCHROTIME = 30;
-	private static final int LOGINTIMEOUT = 300;
+	private static final int QUESTIONTIMEFRAME = 15;
+	private static final int SYNCHROTIME = 4;
+	private static final int LOGINTIMEOUT = 120;
 
 	private static int NBUSERS = DEFAULT_NBUSERS;
 	private static int MAXNOFILES = 395240;
@@ -238,15 +238,15 @@ public class BasicInjectorMain {
 
 				try {
 					int httpResponseCode = httpClient.executeMethod(post);
-					if (httpResponseCode == 201) {
+//					if (httpResponseCode == 201) {
 						workers.add(new UserGameWorker(QUESTIONTIMEFRAME,
 								SYNCHROTIME, NBQUESTIONS, fields[2], fields[3],
 								executor));
-					} else {
-						LOGGER.warn(
-								"Creation of user {} failed with response status {}",
-								fields[2], httpResponseCode);
-					}
+//					} else {
+//						LOGGER.warn(
+//								"Creation of user {} failed with response status {}",
+//								fields[2], httpResponseCode);
+//					}
 
 				} finally {
 					post.releaseConnection();
@@ -624,12 +624,16 @@ public class BasicInjectorMain {
 		 * Callback function when the question is received.
 		 *
 		 */
-		public void questionReceived(int questionRequested) {
+		public void questionReceived(int questionRequested, int httpStatus) {
 
-			LOGGER.debug("Question {} received", questionRequested);
-
-			currentQuestionRequested = true;
-
+			if (httpStatus != 200) {
+				LOGGER.warn("Question {} received with http status {}", questionRequested, httpStatus);
+				currentQuestion++;
+				currentQuestionRequested = false;
+			} else {
+				currentQuestionRequested = true;
+			}
+			
 			executor.execute(this);
 
 		}
@@ -659,16 +663,13 @@ public class BasicInjectorMain {
 		@Override
 		public Integer onCompleted(Response response) throws Exception {
 
-			if (response != null && response.getStatusCode() == 200) {
-				worker.questionReceived(questionRequested);
+			if (response != null) {
+				worker.questionReceived(questionRequested, response.getStatusCode());
 				return 200;
 			} else {
-				LOGGER.warn(
-						"Question {} request completed, but received wrong response code {} for user {}",
-						new Object[] {
-								questionRequested,
-								response == null ? "null" : response
-										.getStatusCode(), userId });
+				LOGGER.error(
+						"Question {} request completed, but received a null response for user {}",
+						questionRequested, userId );
 				return -1;
 			}
 		}
@@ -676,7 +677,8 @@ public class BasicInjectorMain {
 		@Override
 		public void onThrowable(Throwable t) {
 			super.onThrowable(t);
-			LOGGER.error("Throwable on getting question", t);
+			LOGGER.error("Throwable on getting question {}", questionRequested);
+			LOGGER.error("Throwable", t);
 		}
 
 	}

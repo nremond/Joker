@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import cl.own.usi.gateway.Constants;
 import cl.own.usi.gateway.client.ExtendedUserInfoAndScore;
 import cl.own.usi.gateway.client.UserAndScore;
 import cl.own.usi.gateway.client.UserAndScoreAndAnswer;
@@ -100,7 +101,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 			@Override
 			protected String getActionDescription() {
 				return String
-						.format("validateUserAndInsertQuestionResponseAndUpdateScore(%s, %d, %d)",
+						.format("validateUserAndResponseAndScore...(%s, %d, %d)",
 								userId, questionNumber, answer);
 			}
 		}.doAction();
@@ -523,7 +524,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 		@Override
 		protected Pool<Client> createPool(final WorkerHost key) {
-			Pool<Client> pool = new PoolImpl<Client>();
+			Pool<Client> pool = new PoolImpl<Client>(Constants.NUMBER_OF_CONNECTIONS_TO_BACKEND);
 			ObjectPoolFactory<Client> factory = new ThriftClientFactory(key);
 			pool.setFactory(factory);
 			return pool;
