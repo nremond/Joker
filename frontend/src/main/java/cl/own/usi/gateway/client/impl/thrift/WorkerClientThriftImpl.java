@@ -16,9 +16,9 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import cl.own.usi.gateway.Constants;
 import cl.own.usi.gateway.client.ExtendedUserInfoAndScore;
 import cl.own.usi.gateway.client.UserAndScore;
 import cl.own.usi.gateway.client.UserAndScoreAndAnswer;
@@ -56,6 +56,9 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 	private final MultiPool<WorkerHost, Client> pools = new ThriftMultiPool();
 
+	@Value(value = "${frontend.backendConnections:10}")
+	private int backendConnections;
+	
 	@Override
 	public UserAndScore validateUserAndInsertQuestionRequest(
 			final String userId, final int questionNumber) {
@@ -511,7 +514,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 	}
 
-	static class ThriftMultiPool extends MultiPoolImpl<WorkerHost, Client> {
+	private class ThriftMultiPool extends MultiPoolImpl<WorkerHost, Client> {
 
 		private final Random random = new Random();
 		private final static int ZERO = 0;
@@ -523,7 +526,7 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 		@Override
 		protected Pool<Client> createPool(final WorkerHost key) {
-			Pool<Client> pool = new PoolImpl<Client>(Constants.NUMBER_OF_CONNECTIONS_TO_BACKEND);
+			Pool<Client> pool = new PoolImpl<Client>(backendConnections);
 			ObjectPoolFactory<Client> factory = new ThriftClientFactory(key);
 			pool.setFactory(factory);
 			return pool;
