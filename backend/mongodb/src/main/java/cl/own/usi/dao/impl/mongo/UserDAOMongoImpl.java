@@ -257,10 +257,32 @@ public class UserDAOMongoImpl implements UserDAO {
 		}
 	}
 
+	private final static DBObject dbFindAll = new BasicDBObject();
+	private final static DBObject dbFlushUpdate = new BasicDBObject();
+
+	static {
+		final DBObject dbUpdate = new BasicDBObject();
+		// Reset the login status
+		dbUpdate.put(isLoggedField, Boolean.FALSE);
+		// Reset the scores
+		dbUpdate.put(scoreField, Integer.valueOf(0));
+		dbUpdate.put(bonusField, Integer.valueOf(0));
+		// TODO
+		final int numberOfQuestions = 20;
+		// Purge the answers
+		for (int i = 1; i <= numberOfQuestions; ++i) {
+			dbUpdate.put(questionFieldPrefix + i, Integer.valueOf(-1));
+		}
+
+		dbFlushUpdate.put("$set", dbUpdate);
+	}
+
 	@Override
 	public void flushUsers() {
 		final DBCollection dbUsers = db.getCollection(usersCollection);
-		dbUsers.drop();
+
+		// Flush all users
+		dbUsers.update(dbFindAll, dbFlushUpdate);
 
 		LOGGER.info("the MongoDB has been flushed");
 
