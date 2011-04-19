@@ -22,13 +22,13 @@ public class DaoHelper {
 
 	private static final String namesEmailSeparator = "!!!";
 
-	public final static DBObject orderByScore = new BasicDBObject().append(
+	public static final DBObject orderByScore = new BasicDBObject().append(
 			scoreField, -1);
 
-	public final static DBObject orderByNames = new BasicDBObject().append(
+	public static final DBObject orderByNames = new BasicDBObject().append(
 			namesEmailField, -1);
 
-	public final static DBObject orderByScoreNames = new BasicDBObject()
+	public static final DBObject orderByScoreNames = new BasicDBObject()
 			.append(scoreField, -1).append(namesEmailField, 1);
 
 	public static DBObject toDBObject(final User user) {

@@ -48,19 +48,19 @@ public class UserDAOMongoImpl implements UserDAO {
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(UserDAOMongoImpl.class);
 
-	private final static DBObject userIdIndex = new BasicDBObject(userIdField,
+	private static final DBObject userIdIndex = new BasicDBObject(userIdField,
 			1);
 
-	private final static DBObject loginIdIndex = new BasicDBObject().append(
+	private static final DBObject loginIdIndex = new BasicDBObject().append(
 			userIdField, 1).append(passwordField, 1);
 
-	private final static DBObject userFieldsToFetch = new BasicDBObject()
+	private static final DBObject userFieldsToFetch = new BasicDBObject()
 			.append(userIdField, 1).append(namesEmailField, 1)
 			.append(scoreField, 1).append(isLoggedField, 1)
 			.append(passwordField, 1).append(isLoggedField, 1)
 			.append(bonusField, 1);
 
-	private final static DBObject loginFieldsToFetch = new BasicDBObject()
+	private static final DBObject loginFieldsToFetch = new BasicDBObject()
 			.append(isLoggedField, 1);
 
 	@Override
@@ -257,8 +257,8 @@ public class UserDAOMongoImpl implements UserDAO {
 		}
 	}
 
-	private final static DBObject dbFindAll = new BasicDBObject();
-	private final static DBObject dbFlushUpdate = new BasicDBObject();
+	private static final DBObject dbFindAll = new BasicDBObject();
+	private static final DBObject dbFlushUpdate = new BasicDBObject();
 
 	static {
 		final DBObject dbUpdate = new BasicDBObject();
