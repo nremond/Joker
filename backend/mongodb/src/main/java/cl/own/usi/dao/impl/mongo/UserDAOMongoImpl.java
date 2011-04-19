@@ -20,6 +20,7 @@ import java.util.List;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
@@ -38,7 +39,7 @@ import com.mongodb.MongoException;
 import com.mongodb.WriteResult;
 
 @Repository
-public class UserDAOMongoImpl implements UserDAO {
+public class UserDAOMongoImpl implements UserDAO, InitializingBean {
 
 	@Autowired
 	private DB db;
@@ -48,19 +49,19 @@ public class UserDAOMongoImpl implements UserDAO {
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(UserDAOMongoImpl.class);
 
-	private final static DBObject userIdIndex = new BasicDBObject(userIdField,
+	private static final DBObject userIdIndex = new BasicDBObject(userIdField,
 			1);
 
-	private final static DBObject loginIdIndex = new BasicDBObject().append(
+	private static final DBObject loginIdIndex = new BasicDBObject().append(
 			userIdField, 1).append(passwordField, 1);
 
-	private final static DBObject userFieldsToFetch = new BasicDBObject()
+	private static final DBObject userFieldsToFetch = new BasicDBObject()
 			.append(userIdField, 1).append(namesEmailField, 1)
 			.append(scoreField, 1).append(isLoggedField, 1)
 			.append(passwordField, 1).append(isLoggedField, 1)
 			.append(bonusField, 1);
 
-	private final static DBObject loginFieldsToFetch = new BasicDBObject()
+	private static final DBObject loginFieldsToFetch = new BasicDBObject()
 			.append(isLoggedField, 1);
 
 	@Override
@@ -257,8 +258,8 @@ public class UserDAOMongoImpl implements UserDAO {
 		}
 	}
 
-	private final static DBObject dbFindAll = new BasicDBObject();
-	private final static DBObject dbFlushUpdate = new BasicDBObject();
+	private static final DBObject dbFindAll = new BasicDBObject();
+	private static final DBObject dbFlushUpdate = new BasicDBObject();
 
 	static {
 		final DBObject dbUpdate = new BasicDBObject();
@@ -285,8 +286,39 @@ public class UserDAOMongoImpl implements UserDAO {
 		dbUsers.update(dbFindAll, dbFlushUpdate);
 
 		LOGGER.info("the MongoDB has been flushed");
+	}
 
-		// TODO !!!!!!
+	private boolean isRetryableError(final String mongoError) {
+		return (mongoError.indexOf("10429") == 0 || mongoError
+				.indexOf("setShardVersion") == 0);
+	}
+
+	@Override
+	public void gameCreated() {
+		initializeSharding();
+		ensureIndexes();
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		initializeSharding();
+		ensureIndexes();
+	}
+
+	private void ensureIndexes() {
+		final DBCollection dbUsers = db.getCollection(usersCollection);
+
+		// Setup all the appropriate indexes
+		dbUsers.ensureIndex(userIdIndex, "userIdIndex", true);
+		dbUsers.ensureIndex(loginIdIndex, "loginIdIndex", false);
+		dbUsers.ensureIndex(orderByScore, "orderByScore", false);
+		dbUsers.ensureIndex(orderByNames, "orderByNames", false);
+		dbUsers.ensureIndex(orderByScoreNames, "orderByScoreNames", false);
+	}
+
+	private void initializeSharding() {
+
+		LOGGER.info("MongoDB : enable sharding settings");
 
 		// Enable sharding for the newly created collection
 		final DB adminDb = db.getSisterDB("admin");
@@ -318,20 +350,4 @@ public class UserDAOMongoImpl implements UserDAO {
 		}
 	}
 
-	private boolean isRetryableError(final String mongoError) {
-		return (mongoError.indexOf("10429") == 0 || mongoError
-				.indexOf("setShardVersion") == 0);
-	}
-
-	@Override
-	public void gameCreated() {
-		final DBCollection dbUsers = db.getCollection(usersCollection);
-
-		// Setup all the appropriate indexes
-		dbUsers.ensureIndex(userIdIndex, "userIdIndex", true);
-		dbUsers.ensureIndex(loginIdIndex, "loginIdIndex", false);
-		dbUsers.ensureIndex(orderByScore, "orderByScore", false);
-		dbUsers.ensureIndex(orderByNames, "orderByNames", false);
-		dbUsers.ensureIndex(orderByScoreNames, "orderByScoreNames", false);
-	}
 }
