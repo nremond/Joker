@@ -9,7 +9,8 @@ public class CachedUser {
 	private final AtomicBoolean isLogged = new AtomicBoolean(false);
 	private final AtomicInteger lastAnsweredQuestion = new AtomicInteger(0);
 	private final AtomicInteger score = new AtomicInteger(0);
-
+	private final AtomicBoolean rankingRequested = new AtomicBoolean(false);
+	
 	public CachedUser(final String userId) {
 		this.userId = userId;
 	}
@@ -73,4 +74,7 @@ public class CachedUser {
 		return true;
 	}
 
+	public boolean setRankingRequested() {
+		return rankingRequested.compareAndSet(false, true);
+	}
 }

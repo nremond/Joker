@@ -189,6 +189,11 @@ public class GameServiceImpl implements GameService {
 		}
 	}
 
+	@Override
+	public void requestRanking(String userId) {
+		gameSynchronization.allUsersRankingLatch.countDown();
+	}
+	
 	/**
 	 * Class managing the game flow. A new instance is started at each new
 	 * {@link Game}.
@@ -363,12 +368,21 @@ public class GameServiceImpl implements GameService {
 				// will failed with no reason.
 				gameSynchronization.rankingRequestAllowed = true;
 
-				LOGGER.info("Ranking requests are now allowed, tweet and clean everything");
+				LOGGER.info("Ranking requests are now allowed, waiting all users have requested ranking");
 
-				if (twitt) {
-					twitter.twitt(String.format(TWITTER_MESSAGE,
-							gameSynchronization.game.getUsersLimit()));
+				try {
+					gameSynchronization.allUsersRankingLatch.await();
+					
+					if (twitt) {
+						twitter.twitt(String.format(TWITTER_MESSAGE,
+								gameSynchronization.game.getUsersLimit()));
+					}
+					
+				} catch (InterruptedException e) {
+					LOGGER.warn("Interrupted", e);
+					return;
 				}
+				
 			} finally {
 				gameRunning.set(false);
 			}
@@ -411,6 +425,8 @@ public class GameServiceImpl implements GameService {
 		private final CountDownLatch waitForFirstLogin;
 
 		private final CountDownLatch enoughUsersLatch;
+		
+		private final CountDownLatch allUsersRankingLatch;
 
 		private final Map<Question, QuestionSynchronization> questionSynchronizations;
 
@@ -435,6 +451,7 @@ public class GameServiceImpl implements GameService {
 
 			enoughUsersLatch = new CountDownLatch(game.getUsersLimit());
 			waitForFirstLogin = new CountDownLatch(1);
+			allUsersRankingLatch = new CountDownLatch(game.getUsersLimit());
 		}
 
 		QuestionSynchronization getQuestionSynchronization(int questionNumber) {

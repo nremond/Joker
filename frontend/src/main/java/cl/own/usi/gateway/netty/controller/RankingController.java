@@ -60,6 +60,10 @@ public class RankingController extends AbstractController {
 					getLogger().info("Invalid userId {}", userId);
 				} else {
 
+					if (cachedUser.setRankingRequested()) {
+						gameService.enterGame(userId);
+					}
+					
 					StringBuilder sb = new StringBuilder("{");
 
 					sb.append(" \"score\" : ")

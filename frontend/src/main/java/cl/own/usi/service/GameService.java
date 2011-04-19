@@ -67,6 +67,14 @@ public interface GameService {
 	boolean enterGame(String userId);
 
 	/**
+	 * Stipulate a {@link User} request the ranking
+	 * 
+	 * @param userId
+	 * @return
+	 */
+	void requestRanking(String userId);
+	
+	/**
 	 * Validate that the user is allowed to request the given question
 	 * 
 	 * @see {@link GameServiceImpl#GameSynchronization#currentQuestionToRequest}
