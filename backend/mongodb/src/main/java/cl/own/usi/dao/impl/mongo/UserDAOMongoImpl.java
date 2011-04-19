@@ -20,6 +20,7 @@ import java.util.List;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
@@ -38,7 +39,7 @@ import com.mongodb.MongoException;
 import com.mongodb.WriteResult;
 
 @Repository
-public class UserDAOMongoImpl implements UserDAO {
+public class UserDAOMongoImpl implements UserDAO, InitializingBean {
 
 	@Autowired
 	private DB db;
@@ -288,6 +289,40 @@ public class UserDAOMongoImpl implements UserDAO {
 
 		// TODO !!!!!!
 
+	}
+
+	private boolean isRetryableError(final String mongoError) {
+		return (mongoError.indexOf("10429") == 0 || mongoError
+				.indexOf("setShardVersion") == 0);
+	}
+
+	@Override
+	public void gameCreated() {
+		initializeSharding();
+		ensureIndexes();
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		initializeSharding();
+		ensureIndexes();
+	}
+
+	private void ensureIndexes() {
+		final DBCollection dbUsers = db.getCollection(usersCollection);
+
+		// Setup all the appropriate indexes
+		dbUsers.ensureIndex(userIdIndex, "userIdIndex", true);
+		dbUsers.ensureIndex(loginIdIndex, "loginIdIndex", false);
+		dbUsers.ensureIndex(orderByScore, "orderByScore", false);
+		dbUsers.ensureIndex(orderByNames, "orderByNames", false);
+		dbUsers.ensureIndex(orderByScoreNames, "orderByScoreNames", false);
+	}
+
+	private void initializeSharding() {
+
+		LOGGER.info("MongoDB : enable sharding settings");
+
 		// Enable sharding for the newly created collection
 		final DB adminDb = db.getSisterDB("admin");
 		try {
@@ -318,20 +353,4 @@ public class UserDAOMongoImpl implements UserDAO {
 		}
 	}
 
-	private boolean isRetryableError(final String mongoError) {
-		return (mongoError.indexOf("10429") == 0 || mongoError
-				.indexOf("setShardVersion") == 0);
-	}
-
-	@Override
-	public void gameCreated() {
-		final DBCollection dbUsers = db.getCollection(usersCollection);
-
-		// Setup all the appropriate indexes
-		dbUsers.ensureIndex(userIdIndex, "userIdIndex", true);
-		dbUsers.ensureIndex(loginIdIndex, "loginIdIndex", false);
-		dbUsers.ensureIndex(orderByScore, "orderByScore", false);
-		dbUsers.ensureIndex(orderByNames, "orderByNames", false);
-		dbUsers.ensureIndex(orderByScoreNames, "orderByScoreNames", false);
-	}
 }
