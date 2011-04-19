@@ -286,9 +286,6 @@ public class UserDAOMongoImpl implements UserDAO, InitializingBean {
 		dbUsers.update(dbFindAll, dbFlushUpdate);
 
 		LOGGER.info("the MongoDB has been flushed");
-
-		// TODO !!!!!!
-
 	}
 
 	private boolean isRetryableError(final String mongoError) {
