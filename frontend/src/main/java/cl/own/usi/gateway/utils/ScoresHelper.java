@@ -9,10 +9,10 @@ public class ScoresHelper {
 	public static void appendUsersScores(List<UserInfoAndScore> users,
 			StringBuilder sb) {
 		StringBuilder scoresMails = new StringBuilder("\"mail\":[");
-		StringBuilder scoresScores = new StringBuilder("\"scores\":[ ");
+		StringBuilder scoresScores = new StringBuilder("\"scores\":[");
 		StringBuilder scoresFirstName = new StringBuilder(
 				"\"firstname\":[");
-		StringBuilder scoresLastname = new StringBuilder("\"lastname\":[ ");
+		StringBuilder scoresLastname = new StringBuilder("\"lastname\":[");
 		boolean first = true;
 		for (UserInfoAndScore user : users) {
 			if (!first) {

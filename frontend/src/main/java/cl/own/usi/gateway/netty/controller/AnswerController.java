@@ -113,7 +113,7 @@ public class AnswerController extends AbstractController {
 						cachedUser.setScore(userAndScoreAndAnswer.getScore());
 						
 						final StringBuilder sb = new StringBuilder(
-								"{\"are_u_ok\":\"");
+								"{\"are_u_right\":\"");
 						if (userAndScoreAndAnswer.isAnswer()) {
 							sb.append("true");
 						} else {

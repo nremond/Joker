@@ -66,8 +66,8 @@ public class RankingController extends AbstractController {
 					
 					StringBuilder sb = new StringBuilder("{");
 
-					sb.append("\"score\":")
-							.append(cachedUser.getScore()).append(",");
+					sb.append("\"score\":\"")
+							.append(cachedUser.getScore()).append("\",");
 
 					sb.append("\"top_scores\":{")
 					.append(gameService.getTop100AsString())
