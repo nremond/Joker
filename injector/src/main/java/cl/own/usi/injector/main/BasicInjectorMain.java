@@ -89,6 +89,8 @@ public class BasicInjectorMain {
 
 	private static CountDownLatch gameFinishedSynchroLatch;
 
+	private static boolean gameCreate = true;
+	
 	// Shared async http client, because it run internal workers and lot of
 	// heavy stuff.
 	private static final AsyncHttpClientConfig.Builder ASYNC_HTTP_CLIENT_CONFIG_BUILDER = new AsyncHttpClientConfig.Builder();
@@ -124,21 +126,29 @@ public class BasicInjectorMain {
 			NBUSERS = Integer.valueOf(args[2]);
 		}
 
+		String playOnlyStr = System.getProperty("game.create", "true");
+		
+		gameCreate = Boolean.parseBoolean(playOnlyStr);
+		
+		String filepath = System.getProperty("file", "../tools/1million_users_1.csv");
+		
 		workers = new ArrayList<BasicInjectorMain.UserGameWorker>(NBUSERS);
 
 		// 1 and not NBUSERS in case we loose players in the way.
 		gamersHaveAnsweredAllQuestions = new CountDownLatch(1);
 		gameFinishedSynchroLatch = new CountDownLatch(1);
 
-		createGame();
-
-		try {
-			Thread.sleep(5);
-		} catch (InterruptedException e) {
-			return;
+		if (gameCreate) {
+			createGame();
+	
+			try {
+				Thread.sleep(5);
+			} catch (InterruptedException e) {
+				return;
+			}
 		}
-
-		insertUsers(NBUSERS);
+		
+		insertUsers(NBUSERS, filepath);
 
 		try {
 			Thread.sleep(5);
@@ -149,7 +159,7 @@ public class BasicInjectorMain {
 		for (UserGameWorker worker : workers) {
 			executor.execute(worker);
 		}
-
+		
 		LOGGER.info("Let's start");
 
 		// Let all workers start login
@@ -192,12 +202,12 @@ public class BasicInjectorMain {
 	 * @throws InterruptedException
 	 * @throws ExecutionException
 	 */
-	private static void insertUsers(Integer limit) throws IOException,
+	private static void insertUsers(Integer limit, String filepath) throws IOException,
 			InterruptedException, ExecutionException {
 
 		long starttime = System.currentTimeMillis();
 
-		File file = new File("../tools/1million_users_1.csv");
+		File file = new File(filepath);
 		HttpClient httpClient = new HttpClient();
 
 		BufferedReader reader = new BufferedReader(new FileReader(file));

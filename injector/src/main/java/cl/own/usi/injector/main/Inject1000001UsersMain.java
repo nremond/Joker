@@ -68,7 +68,9 @@ public class Inject1000001UsersMain {
 
 		LOGGER.info("Starting up Injector for at max {} users ... ", nbusers);
 
-		File userFile = new File("../tools/1million_users_1.csv");
+		String filepath = System.getProperty("file", "../tools/1million_users_1.csv");
+		
+		File userFile = new File(filepath);
 		BufferedReader reader = new BufferedReader(new FileReader(userFile));
 
 		for (int i = 0; i < CONCURRENT_WORKERS; i++) {
