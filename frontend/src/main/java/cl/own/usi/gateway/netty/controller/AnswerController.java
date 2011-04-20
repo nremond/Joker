@@ -113,19 +113,19 @@ public class AnswerController extends AbstractController {
 						cachedUser.setScore(userAndScoreAndAnswer.getScore());
 						
 						final StringBuilder sb = new StringBuilder(
-								"{ \"are_u_ok\" : ");
+								"{\"are_u_ok\":\"");
 						if (userAndScoreAndAnswer.isAnswer()) {
 							sb.append("true");
 						} else {
 							sb.append("false");
 						}
 
-						sb.append(", \"good_answer\" : \"");
+						sb.append("\",\"good_answer\":\"");
 						sb.append(question.getChoices().get(
 								question.getCorrectChoice() - 1));
-						sb.append("\", \"score\" : ");
+						sb.append("\",\"score\":\"");
 						sb.append(userAndScoreAndAnswer.getScore());
-						sb.append("}");
+						sb.append("\"}");
 
 						writeStringToReponse(sb.toString(), e, CREATED);
 					}

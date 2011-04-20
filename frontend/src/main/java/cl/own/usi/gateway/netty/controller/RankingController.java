@@ -66,24 +66,24 @@ public class RankingController extends AbstractController {
 					
 					StringBuilder sb = new StringBuilder("{");
 
-					sb.append(" \"score\" : ")
-							.append(cachedUser.getScore()).append(", ");
+					sb.append("\"score\":")
+							.append(cachedUser.getScore()).append(",");
 
-					sb.append(" \"top_scores\" : { ")
+					sb.append("\"top_scores\":{")
 					.append(gameService.getTop100AsString())
-					.append(" }, ");
+					.append("},");
 
 					BeforeAndAfterScores beforeAndAfterScores = workerClient.get50BeforeAnd50After(userId);
 
-					sb.append(" \"before\" : { ");
+					sb.append("\"before\":{");
 					ScoresHelper.appendUsersScores(beforeAndAfterScores.getScoresBefore(), sb);
-					sb.append(" }, ");
+					sb.append("},");
 
-					sb.append(" \"after\" : { ");
+					sb.append("\"after\":{");
 					ScoresHelper.appendUsersScores(beforeAndAfterScores.getScoresAfter(), sb);
-					sb.append(" } ");
+					sb.append("}");
 
-					sb.append(" } ");
+					sb.append("}");
 
 					writeStringToReponse(sb.toString(), e, OK);
 				}

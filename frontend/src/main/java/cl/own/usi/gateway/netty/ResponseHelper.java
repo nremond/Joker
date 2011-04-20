@@ -41,18 +41,26 @@ public class ResponseHelper {
 	}
 
 	public static void writeStringToReponse(final String s,
-			final MessageEvent e, final HttpResponseStatus status) {
+			final MessageEvent e, final HttpResponse response) {
 
 		final ChannelBuffer buf = ChannelBuffers.copiedBuffer(s,
 				CharsetUtil.UTF_8);
 
-		final HttpResponse response = new DefaultHttpResponse(HTTP_1_1, status);
 		response.setHeader(HEADER_SERVER_LABEL, HEADER_SERVER_VALUE);
 		response.setHeader(HEADER_CONNECTION_LABEL, HEADER_CONNECTION_VALUE);
 		response.setContent(buf);
 
 		final ChannelFuture future = e.getChannel().write(response);
 		future.addListener(ChannelFutureListener.CLOSE);
+	}
+	
+	public static void writeStringToReponse(final String s,
+			final MessageEvent e, final HttpResponseStatus status) {
+
+		final HttpResponse response = new DefaultHttpResponse(HTTP_1_1, status);
+		
+		writeStringToReponse(s, e, response);
+		
 	}
 
 }

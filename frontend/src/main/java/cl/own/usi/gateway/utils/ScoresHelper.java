@@ -8,11 +8,11 @@ public class ScoresHelper {
 
 	public static void appendUsersScores(List<UserInfoAndScore> users,
 			StringBuilder sb) {
-		StringBuilder scoresMails = new StringBuilder("\"mail\" : [ ");
-		StringBuilder scoresScores = new StringBuilder("\"scores\" : [ ");
+		StringBuilder scoresMails = new StringBuilder("\"mail\":[");
+		StringBuilder scoresScores = new StringBuilder("\"scores\":[ ");
 		StringBuilder scoresFirstName = new StringBuilder(
-				"\"firstname\" : [ ");
-		StringBuilder scoresLastname = new StringBuilder("\"lastname\" : [ ");
+				"\"firstname\":[");
+		StringBuilder scoresLastname = new StringBuilder("\"lastname\":[ ");
 		boolean first = true;
 		for (UserInfoAndScore user : users) {
 			if (!first) {
@@ -22,7 +22,7 @@ public class ScoresHelper {
 			if (!first) {
 				scoresScores.append(",");
 			}
-			scoresScores.append(user.getScore());
+			scoresScores.append("\"").append(user.getScore()).append("\"");
 			if (!first) {
 				scoresFirstName.append(",");
 			}
@@ -35,10 +35,10 @@ public class ScoresHelper {
 					.append("\"");
 			first = false;
 		}
-		sb.append(scoresMails).append(" ] , ");
-		sb.append(scoresScores).append(" ] , ");
-		sb.append(scoresFirstName).append(" ] , ");
-		sb.append(scoresLastname).append(" ] ");
+		sb.append(scoresMails).append("],");
+		sb.append(scoresScores).append("],");
+		sb.append(scoresFirstName).append("],");
+		sb.append(scoresLastname).append("]");
 	}
 	
 }

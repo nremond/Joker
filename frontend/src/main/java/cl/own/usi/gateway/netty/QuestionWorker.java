@@ -46,8 +46,8 @@ public class QuestionWorker implements Runnable {
 
 			if (gameService.waitOtherUsers(questionNumber)) {
 
-				sb.append(",\"score\":").append(score);
-				sb.append("}");
+				sb.append(",\"score\":\"").append(score);
+				sb.append("\"}");
 
 				writeStringToReponse(sb.toString(), e, OK);
 
