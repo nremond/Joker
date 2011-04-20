@@ -6,7 +6,7 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CREATED;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_IMPLEMENTED;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
-import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_0;
+import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.jboss.netty.channel.ChannelFuture;
@@ -96,7 +96,7 @@ public class LoginController extends AbstractController {
 				
 				getCacheManager().insertFreshlyLoggedUser(userId);
 				
-				HttpResponse response = new DefaultHttpResponse(HTTP_1_0,
+				HttpResponse response = new DefaultHttpResponse(HTTP_1_1,
 						CREATED);
 				setCookie(response, COOKIE_AUTH_NAME, userId);
 				ChannelFuture future = e.getChannel().write(response);

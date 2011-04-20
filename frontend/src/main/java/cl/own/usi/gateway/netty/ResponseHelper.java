@@ -1,6 +1,6 @@
 package cl.own.usi.gateway.netty;
 
-import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_0;
+import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -31,7 +31,7 @@ public class ResponseHelper {
 
 	public static void writeResponse(final MessageEvent e,
 			final HttpResponseStatus status) {
-		final HttpResponse response = new DefaultHttpResponse(HTTP_1_0, status);
+		final HttpResponse response = new DefaultHttpResponse(HTTP_1_1, status);
 		final ChannelFuture future = e.getChannel().write(response);
 		future.addListener(ChannelFutureListener.CLOSE);
 	}
@@ -46,7 +46,7 @@ public class ResponseHelper {
 		final ChannelBuffer buf = ChannelBuffers.copiedBuffer(s,
 				CharsetUtil.UTF_8);
 
-		final HttpResponse response = new DefaultHttpResponse(HTTP_1_0, status);
+		final HttpResponse response = new DefaultHttpResponse(HTTP_1_1, status);
 		response.setHeader(HEADER_SERVER_LABEL, HEADER_SERVER_VALUE);
 		response.setHeader(HEADER_CONNECTION_LABEL, HEADER_CONNECTION_VALUE);
 		response.setContent(buf);
