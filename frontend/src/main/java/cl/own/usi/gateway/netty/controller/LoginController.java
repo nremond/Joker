@@ -13,7 +13,9 @@ import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.handler.codec.http.Cookie;
 import org.jboss.netty.handler.codec.http.CookieEncoder;
+import org.jboss.netty.handler.codec.http.DefaultCookie;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -118,8 +120,14 @@ public class LoginController extends AbstractController {
 
 	private void setCookie(HttpResponse response, String name, String value) {
 		CookieEncoder cookieEncoder = new CookieEncoder(true);
-		cookieEncoder.addCookie(name, value);
+		Cookie cookie = new DefaultCookie(name, value);
+		cookie.setMaxAge(COOKIE_MAX_AGE);
+		cookie.setPath(COOKIE_PATH);
+		cookieEncoder.addCookie(cookie);
 		response.addHeader(SET_COOKIE, cookieEncoder.encode());
 	}
 
+	private static final int COOKIE_MAX_AGE = 60*60*24;
+	private static final String COOKIE_PATH = "/";
+	
 }
