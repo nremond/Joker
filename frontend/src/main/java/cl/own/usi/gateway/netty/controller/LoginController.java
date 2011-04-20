@@ -1,19 +1,20 @@
 package cl.own.usi.gateway.netty.controller;
 
 import static cl.own.usi.gateway.netty.ResponseHelper.writeResponse;
+import static cl.own.usi.gateway.netty.ResponseHelper.writeStringToReponse;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.SET_COOKIE;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CREATED;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_IMPLEMENTED;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
-import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_0;
+import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import org.codehaus.jackson.map.ObjectMapper;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.handler.codec.http.Cookie;
 import org.jboss.netty.handler.codec.http.CookieEncoder;
+import org.jboss.netty.handler.codec.http.DefaultCookie;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -94,11 +95,12 @@ public class LoginController extends AbstractController {
 				
 				getCacheManager().insertFreshlyLoggedUser(userId);
 				
-				HttpResponse response = new DefaultHttpResponse(HTTP_1_0,
+				HttpResponse response = new DefaultHttpResponse(HTTP_1_1,
 						CREATED);
 				setCookie(response, COOKIE_AUTH_NAME, userId);
-				ChannelFuture future = e.getChannel().write(response);
-				future.addListener(ChannelFutureListener.CLOSE);
+				
+				writeStringToReponse("{\"logged\"=true}", e, response);
+				
 			} else {
 				writeResponse(e, UNAUTHORIZED);
 				getLogger().warn(
@@ -118,8 +120,14 @@ public class LoginController extends AbstractController {
 
 	private void setCookie(HttpResponse response, String name, String value) {
 		CookieEncoder cookieEncoder = new CookieEncoder(true);
-		cookieEncoder.addCookie(name, value);
+		Cookie cookie = new DefaultCookie(name, value);
+		cookie.setMaxAge(COOKIE_MAX_AGE);
+		cookie.setPath(COOKIE_PATH);
+		cookieEncoder.addCookie(cookie);
 		response.addHeader(SET_COOKIE, cookieEncoder.encode());
 	}
 
+	private static final int COOKIE_MAX_AGE = 60*60*24;
+	private static final String COOKIE_PATH = "/";
+	
 }

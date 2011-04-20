@@ -282,10 +282,20 @@ public class UserDAOMongoImpl implements UserDAO, InitializingBean {
 	public void flushUsers() {
 		final DBCollection dbUsers = db.getCollection(usersCollection);
 
-		// Flush all users
-		dbUsers.update(dbFindAll, dbFlushUpdate);
+		final boolean upsert = false;
+		final boolean multi = true;
 
-		LOGGER.info("the MongoDB has been flushed");
+		// Flush all users
+		WriteResult wr = dbUsers
+				.update(dbFindAll, dbFlushUpdate, upsert, multi);
+
+		String error = wr.getError();
+		if (StringUtils.hasText(error)) {
+			LOGGER.info("the users collection has been flushed but encountered an error : "
+					+ error);
+		} else {
+			LOGGER.info("the users collection has been successfully flushed");
+		}
 	}
 
 	private boolean isRetryableError(final String mongoError) {
