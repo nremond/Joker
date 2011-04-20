@@ -89,7 +89,9 @@ public class BasicInjectorMain {
 
 	private static CountDownLatch gameFinishedSynchroLatch;
 
-	private static boolean gameCreate = true;
+	private static boolean createGame = true;
+	private static boolean insertUsers = true;
+
 	
 	// Shared async http client, because it run internal workers and lot of
 	// heavy stuff.
@@ -128,7 +130,11 @@ public class BasicInjectorMain {
 
 		String playOnlyStr = System.getProperty("game.create", "true");
 		
-		gameCreate = Boolean.parseBoolean(playOnlyStr);
+		createGame = Boolean.parseBoolean(playOnlyStr);
+		
+		String insertUsersStr = System.getProperty("users.insert", "true");
+		
+		insertUsers = Boolean.parseBoolean(insertUsersStr);
 		
 		String filepath = System.getProperty("file", "../tools/1million_users_1.csv");
 		
@@ -138,7 +144,7 @@ public class BasicInjectorMain {
 		gamersHaveAnsweredAllQuestions = new CountDownLatch(1);
 		gameFinishedSynchroLatch = new CountDownLatch(1);
 
-		if (gameCreate) {
+		if (createGame) {
 			createGame();
 	
 			try {
@@ -236,31 +242,27 @@ public class BasicInjectorMain {
 					continue;
 				}
 
-				String postUrl = "http://" + HOST + ":" + PORT + "/api/user";
-
-				String postBody = "{ \"firstname\" : \"" + fields[0]
-						+ "\", \"lastname\" : \"" + fields[1]
-						+ "\", \"mail\" : \"" + fields[2]
-						+ "\", \"password\" : \"" + fields[3] + "\" }";
-
-				PostMethod post = new PostMethod(postUrl);
-				post.setRequestBody(postBody);
-
-				try {
-					int httpResponseCode = httpClient.executeMethod(post);
-//					if (httpResponseCode == 201) {
-						workers.add(new UserGameWorker(QUESTIONTIMEFRAME,
-								SYNCHROTIME, NBQUESTIONS, fields[2], fields[3],
-								executor));
-//					} else {
-//						LOGGER.warn(
-//								"Creation of user {} failed with response status {}",
-//								fields[2], httpResponseCode);
-//					}
-
-				} finally {
-					post.releaseConnection();
+				if (insertUsers) {
+					String postUrl = "http://" + HOST + ":" + PORT + "/api/user";
+	
+					String postBody = "{ \"firstname\" : \"" + fields[0]
+							+ "\", \"lastname\" : \"" + fields[1]
+							+ "\", \"mail\" : \"" + fields[2]
+							+ "\", \"password\" : \"" + fields[3] + "\" }";
+	
+					PostMethod post = new PostMethod(postUrl);
+					post.setRequestBody(postBody);
+	
+					try {
+						int httpResponseCode = httpClient.executeMethod(post);
+					} finally {
+						post.releaseConnection();
+					}
 				}
+				
+				workers.add(new UserGameWorker(QUESTIONTIMEFRAME,
+						SYNCHROTIME, NBQUESTIONS, fields[2], fields[3],
+						executor));
 
 			}
 		} finally {
