@@ -2,9 +2,9 @@ package cl.own.usi.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.NavigableSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.slf4j.Logger;
@@ -20,7 +20,7 @@ public class CachedScoreServiceImpl implements CachedScoreService {
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(CachedScoreServiceImpl.class);
 
-	private final Map<String, SortedCachedUser> usersMap = new ConcurrentHashMap<String, SortedCachedUser>();
+	private final ConcurrentMap<String, SortedCachedUser> usersMap = new ConcurrentHashMap<String, SortedCachedUser>();
 	private final ConcurrentSkipListSet<SortedCachedUser> rankedUsers = new ConcurrentSkipListSet<SortedCachedUser>();
 
 	private final static StringBuilder EMPTY_SB = new StringBuilder();
@@ -28,22 +28,20 @@ public class CachedScoreServiceImpl implements CachedScoreService {
 	@Override
 	public StringBuilder getBefore(final String userId, final int limit) {
 
-		SortedCachedUser user = usersMap.get(userId);
+		final SortedCachedUser user = usersMap.get(userId);
 
 		if (user != null) {
-			List<SortedCachedUser> users = new ArrayList<SortedCachedUser>(
+			final List<SortedCachedUser> users = new ArrayList<SortedCachedUser>(
 					limit);
 
-			NavigableSet<SortedCachedUser> usersBefore = rankedUsers.headSet(
+			final NavigableSet<SortedCachedUser> usersBefore = rankedUsers.headSet(
 					user, false);
 			int i = 0;
-			for (SortedCachedUser userBefore : usersBefore) {
-				if (userBefore.getScore() > user.getScore()) {
-					if (i < limit) {
-						users.add(userBefore);
-					} else {
-						break;
-					}
+			for (final SortedCachedUser userBefore : usersBefore) {
+				if (i < limit) {
+					users.add(userBefore);
+				} else {
+					break;
 				}
 			}
 			return appendUsersScores(users);
@@ -54,22 +52,21 @@ public class CachedScoreServiceImpl implements CachedScoreService {
 
 	@Override
 	public StringBuilder getAfter(final String userId, final int limit) {
-		SortedCachedUser user = usersMap.get(userId);
+		
+		final SortedCachedUser user = usersMap.get(userId);
 
 		if (user != null) {
-			List<SortedCachedUser> users = new ArrayList<SortedCachedUser>(
+			final List<SortedCachedUser> users = new ArrayList<SortedCachedUser>(
 					limit);
 
-			NavigableSet<SortedCachedUser> usersAfter= rankedUsers.tailSet(
+			final NavigableSet<SortedCachedUser> usersAfter= rankedUsers.tailSet(
 					user, false);
 			int i = 0;
-			for (SortedCachedUser userAfter : usersAfter) {
-				if (userAfter.getScore() > user.getScore()) {
-					if (i < limit) {
-						users.add(userAfter);
-					} else {
-						break;
-					}
+			for (final SortedCachedUser userAfter : usersAfter) {
+				if (i < limit) {
+					users.add(userAfter);
+				} else {
+					break;
 				}
 			}
 			return appendUsersScores(users);
@@ -83,8 +80,10 @@ public class CachedScoreServiceImpl implements CachedScoreService {
 			final String firstname, final String email, final int score) {
 		SortedCachedUser user = new SortedCachedUser(lastname, firstname,
 				email, score);
-		usersMap.put(userId, user);
-		rankedUsers.add(user);
+		SortedCachedUser tmpUser = usersMap.putIfAbsent(userId, user);
+		if (tmpUser == null) {
+			rankedUsers.add(user);
+		}
 	}
 
 	@Override

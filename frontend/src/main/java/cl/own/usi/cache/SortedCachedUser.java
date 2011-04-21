@@ -9,6 +9,7 @@ public class SortedCachedUser implements Comparable<SortedCachedUser> {
 	private final String firstname;
 	private final String email;
 	private final int score;
+	private final boolean shortened;
 		
 	public SortedCachedUser(final String lastname, final String firstname, final String email, final int score) {
 		this.lastname = lastname;
@@ -16,8 +17,10 @@ public class SortedCachedUser implements Comparable<SortedCachedUser> {
 		final int indexOfAt = email.indexOf(AT);
 		if (indexOfAt > -1) {
 			this.email = email.substring(indexOfAt + 1);
+			shortened = true;
 		} else {
 			this.email = email;
+			shortened = false;
 		}
 		this.score = score;
 	}
@@ -31,7 +34,11 @@ public class SortedCachedUser implements Comparable<SortedCachedUser> {
 	}
 
 	public String getFullEmail() {
-		return getFirstname() + DOT + getLastname() + AT + getEmail();
+		if (shortened) {
+			return getFirstname() + DOT + getLastname() + AT + getEmail();
+		} else {
+			return getEmail();
+		}
 	}
 	
 	protected String getEmail() {

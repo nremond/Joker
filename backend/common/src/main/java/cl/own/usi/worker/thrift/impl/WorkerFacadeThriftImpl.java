@@ -369,7 +369,9 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 		final List<UserInfoAndScore> users = new ArrayList<UserInfoAndScore>(limit);
 		final List<User> gotUsers = userService.getUsers(from, limit);
 		for (final User user : gotUsers) {
-			users.add(map(user));
+			final UserInfoAndScore mappedUser = map(user);
+			mappedUser.setUserId(user.getUserId());
+			users.add(mappedUser);
 		}
 		return users;
 	}
