@@ -193,11 +193,8 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		DBObject dbUser = dbUsers.findOne(dbId, scoreBonusFieldsToFetch);
 
-		final int bonus = (Integer) dbUser.get(bonusField);
+		int bonus = (Integer) dbUser.get(bonusField);
 		final int score = (Integer) dbUser.get(scoreField);
-
-		final int newScore = score + bonus + questionValue;
-		int newBonus = bonus + 1;
 
 		if (questionNumber > 1) {
 			// if the user hasn't answer to the previous question, his bonus is
@@ -205,9 +202,12 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 			final int previousQuestionValue = (Integer) dbUser
 					.get(previousQuestion);
 			if (previousQuestionValue < 0) {
-				newBonus = 0;
+				bonus = 0;
 			}
 		}
+
+		final int newScore = score + bonus + questionValue;
+		final int newBonus = bonus + 1;
 
 		DBObject dbUpdate = new BasicDBObject();
 		dbUpdate.put(scoreField, Integer.valueOf(newScore));
