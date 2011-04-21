@@ -1,6 +1,7 @@
 package cl.own.usi.dao.impl.mongo;
 
 import static cl.own.usi.dao.impl.mongo.DaoHelper.bonusField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.isLoggedField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.namesEmailField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScoreNames;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.questionFieldPrefix;
@@ -77,6 +78,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 	@Override
 	public List<User> getTop(int limit) {
 		DBObject query = new BasicDBObject();
+		query.put(isLoggedField, Boolean.TRUE);
 		return getUsers(query, limit);
 	}
 
@@ -106,6 +108,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		// Full query
 		DBObject query = new BasicDBObject();
 		query.put("$or", Arrays.asList(criteria1, criteria2));
+		query.put(isLoggedField, Boolean.TRUE);
 
 		return query;
 	}

@@ -55,6 +55,9 @@ public class UserDAOMongoImpl implements UserDAO, InitializingBean {
 	private static final DBObject loginIdIndex = new BasicDBObject().append(
 			userIdField, 1).append(passwordField, 1);
 
+	private static final DBObject isLoggedIndex = new BasicDBObject().append(
+			isLoggedField, 1);
+
 	private static final DBObject userFieldsToFetch = new BasicDBObject()
 			.append(userIdField, 1).append(namesEmailField, 1)
 			.append(scoreField, 1).append(isLoggedField, 1)
@@ -321,6 +324,7 @@ public class UserDAOMongoImpl implements UserDAO, InitializingBean {
 		// Setup all the appropriate indexes
 		dbUsers.ensureIndex(userIdIndex, "userIdIndex", true);
 		dbUsers.ensureIndex(loginIdIndex, "loginIdIndex", false);
+		dbUsers.ensureIndex(isLoggedIndex, "isLoggedIndex", false);
 		dbUsers.ensureIndex(orderByScore, "orderByScore", false);
 		dbUsers.ensureIndex(orderByNames, "orderByNames", false);
 		dbUsers.ensureIndex(orderByScoreNames, "orderByScoreNames", false);

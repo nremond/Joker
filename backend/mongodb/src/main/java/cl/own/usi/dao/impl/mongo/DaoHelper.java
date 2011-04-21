@@ -29,7 +29,7 @@ public class DaoHelper {
 			namesEmailField, -1);
 
 	public static final DBObject orderByScoreNames = new BasicDBObject()
-			.append(scoreField, -1).append(namesEmailField, 1);
+			.append(scoreField, -1).append(namesEmailField, 1).append(isLoggedField, 1);
 
 	public static DBObject toDBObject(final User user) {
 		DBObject dbUser = new BasicDBObject();
