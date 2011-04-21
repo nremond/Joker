@@ -30,6 +30,7 @@ import cl.own.usi.gateway.utils.ScoresHelper;
 import cl.own.usi.gateway.utils.Twitter;
 import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
+import cl.own.usi.service.CachedScoreService;
 import cl.own.usi.service.GameService;
 
 /**
@@ -55,6 +56,9 @@ public class GameServiceImpl implements GameService {
 
 	@Autowired
 	private WorkerClient workerClient;
+	
+	@Autowired
+	private CachedScoreService scoreService;
 
 	private final ExecutorService executorService = Executors
 			.newSingleThreadExecutor();
@@ -354,6 +358,12 @@ public class GameServiceImpl implements GameService {
 					ScoresHelper.appendUsersScores(top100, sb);
 					top100AsString.set(sb.toString());
 
+					int concurrentWorkers = executorUtil.getPoolSize();
+					int slicePortion = (gameSynchronization.game.getUsersLimit() / concurrentWorkers) + 1;
+					for (int i = 0; i < concurrentWorkers; i++) {
+						executorUtil.getExecutorService().execute(new ScoreLoadingWorker(i * slicePortion, slicePortion));
+					}
+					
 					long stoptime = System.currentTimeMillis();
 
 					LOGGER.debug(
@@ -573,4 +583,41 @@ public class GameServiceImpl implements GameService {
 		return top100AsString.get();
 	}
 
+	private class ScoreLoadingWorker implements Runnable {
+
+		private static final int BATCH_SIZE = 2000;
+		
+		private final int from;
+		private final int limit;
+		
+		public ScoreLoadingWorker(final int from, final int limit) {
+			this.from = from;
+			this.limit = limit;
+		}
+		
+		@Override
+		public void run() {
+			
+			int currentFrom = from;
+			int currentLimit;
+			boolean nextIteration = true;
+			do {
+				currentLimit = Math.min(limit - currentFrom + from, BATCH_SIZE);
+				LOGGER.debug("Loading users from {} limit {}", currentFrom, currentLimit);
+				List<UserInfoAndScore> users = workerClient.getUsers(currentFrom, currentLimit);
+				
+				for (UserInfoAndScore user : users) {
+					scoreService.addUser(user.getUserId(), user.getLastname(), user.getFirstname(), user.getEmail(), user.getScore());
+				}
+				
+				if (users.size() < currentLimit || currentFrom >= from + limit) {
+					nextIteration = false;
+				} else {
+					currentFrom += currentLimit;
+				}
+					
+			} while (nextIteration);
+		}
+		
+	}
 }

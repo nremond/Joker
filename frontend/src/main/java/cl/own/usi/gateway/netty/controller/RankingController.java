@@ -17,6 +17,7 @@ import cl.own.usi.cache.CachedUser;
 import cl.own.usi.gateway.client.BeforeAndAfterScores;
 import cl.own.usi.gateway.client.WorkerClient;
 import cl.own.usi.gateway.utils.ScoresHelper;
+import cl.own.usi.service.CachedScoreService;
 import cl.own.usi.service.GameService;
 
 /**
@@ -28,6 +29,8 @@ import cl.own.usi.service.GameService;
 @Component
 public class RankingController extends AbstractController {
 
+	private static final int NUMBER_BEFORE_AFTER = 5;
+	
 	@Autowired
 	private WorkerClient workerClient;
 
@@ -36,6 +39,9 @@ public class RankingController extends AbstractController {
 
 	@Autowired
 	private CacheManager cacheManager;
+	
+	@Autowired
+	private CachedScoreService cachedScoreService;
 	
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
@@ -73,14 +79,16 @@ public class RankingController extends AbstractController {
 					.append(gameService.getTop100AsString())
 					.append("},");
 
-					BeforeAndAfterScores beforeAndAfterScores = workerClient.get50BeforeAnd50After(userId);
+//					BeforeAndAfterScores beforeAndAfterScores = workerClient.get50BeforeAnd50After(userId);
 
 					sb.append("\"before\":{");
-					ScoresHelper.appendUsersScores(beforeAndAfterScores.getScoresBefore(), sb);
+					sb.append(cachedScoreService.getBefore(userId, NUMBER_BEFORE_AFTER));
+//					ScoresHelper.appendUsersScores(beforeAndAfterScores.getScoresBefore(), sb);
 					sb.append("},");
 
 					sb.append("\"after\":{");
-					ScoresHelper.appendUsersScores(beforeAndAfterScores.getScoresAfter(), sb);
+					sb.append(cachedScoreService.getAfter(userId, NUMBER_BEFORE_AFTER));
+//					ScoresHelper.appendUsersScores(beforeAndAfterScores.getScoresAfter(), sb);
 					sb.append("}");
 
 					sb.append("}");
