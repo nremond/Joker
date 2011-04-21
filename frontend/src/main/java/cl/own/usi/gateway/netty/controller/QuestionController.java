@@ -53,7 +53,7 @@ public class QuestionController extends AbstractController {
 
 					if (!gameService.validateQuestionToRequest(questionNumber)) {
 						writeResponse(e, BAD_REQUEST);
-						getLogger().info(
+						getLogger().debug(
 								"Invalid question number {} requested", questionNumber);
 					} else {
 

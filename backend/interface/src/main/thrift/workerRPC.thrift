@@ -61,5 +61,7 @@ service WorkerRPC {
 	ExtendedUserInfoAndScore getExtendedUserInfo(1: string userId),
 
 	void gameEnded(1: i32 useless),
-	void gameCreated(1: i32 useless)
+	void gameCreated(1: i32 useless),
+	
+	void ping(1: i32 useless)
 }

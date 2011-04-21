@@ -64,6 +64,9 @@ public abstract class MultiPoolImpl<K, V> implements MultiPool<K, V> {
 				throw new PoolException("No keys defined. Please addKey first");
 			}
 			Pool<V> pool = getPools().get(key);
+			if (pool == null) {
+				return null;
+			}
 			object = pool.borrow();
 			if (object != null) {
 				borrowedClients.put(object, key);
@@ -128,11 +131,9 @@ public abstract class MultiPoolImpl<K, V> implements MultiPool<K, V> {
 
 	public synchronized void removeKey(K key) {
 		if (keys.remove(key)) {
-			
 			errors.remove(key);
 			Pool<V> pool = pools.remove(key);
 			pool.shutdown();
-			
 		}
 	}
 	

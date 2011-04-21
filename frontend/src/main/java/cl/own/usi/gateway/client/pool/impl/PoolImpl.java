@@ -76,11 +76,22 @@ public class PoolImpl<V> implements Pool<V> {
 			}
 		}
 		
-		if (objectValidationPolicy.validateOnBorrow() && !factory.validate(object)) {
-			invalidate0(object);
-			object = recursif ? borrow0(false) : null;
-		} else {
-			borrowedObjects.add(object);
+		if (object != null) {
+			if (objectValidationPolicy.validateOnBorrow()) {
+				boolean validated = false;
+				try {
+					validated = !factory.validate(object);
+				} finally {
+					if (!validated) {
+						invalidate0(object);
+						object = recursif ? borrow0(false) : null;
+					} else {
+						borrowedObjects.add(object);
+					}
+				}
+			} else {
+				borrowedObjects.add(object);
+			}
 		}
 		
 		return object;

@@ -49,4 +49,5 @@ public interface WorkerClient {
 
 	void gameCreated();
 	
+	void ping();
 }
