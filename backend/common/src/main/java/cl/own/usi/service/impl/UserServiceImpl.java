@@ -106,8 +106,11 @@ public class UserServiceImpl implements UserService {
 
 		final AuditAnswers auditAnswers = new AuditAnswers(goodAnswers);
 
+		int nbQuestions = goodAnswers.size();
 		for (Answer answer : answers) {
-			auditAnswers.getUserAnswers().add(answer.getAnswerNumber());
+			if (answer.getQuestionNumber() <= nbQuestions) {
+				auditAnswers.getUserAnswers().add(answer.getAnswerNumber());
+			}
 		}
 
 		return auditAnswers;
@@ -138,8 +141,8 @@ public class UserServiceImpl implements UserService {
 		public int compare(final Answer answer1, final Answer answer2) {
 			// TODO: handle null correctly
 
-			final int a1 = answer1.getAnswerNumber();
-			final int a2 = answer2.getAnswerNumber();
+			final int a1 = answer1.getQuestionNumber();
+			final int a2 = answer2.getQuestionNumber();
 
 			if (a1 < a2) {
 				return -1;

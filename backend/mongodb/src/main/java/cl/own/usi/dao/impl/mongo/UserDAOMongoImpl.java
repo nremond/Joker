@@ -230,9 +230,6 @@ public class UserDAOMongoImpl implements UserDAO, InitializingBean {
 			for (String key : dbUser.keySet()) {
 				if (key != null && key.startsWith(questionFieldPrefix)) {
 
-					// TODO we should only loop for questionNumber <=
-					// gameQuestionNumbers
-
 					String keyQuestion = key.substring(questionFieldPrefix
 							.length());
 					Integer questionNumber = Integer.valueOf(keyQuestion);
