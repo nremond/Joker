@@ -11,6 +11,7 @@ import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -36,6 +37,19 @@ public class ServerPipelineFactory implements ChannelPipelineFactory,
 
 	private ExecutionHandler executionHandler;
 
+	private int threadsNumber;
+	private boolean fixedThreadPool;
+	
+	@Value(value = "${frontend.fixedThreadsNumber:10}")
+	public void setFixedThreadsNumber(int threadsNumber) {
+		this.threadsNumber = threadsNumber;
+	}
+	
+	@Value(value = "${frontend.fixedThreadPool:false}")
+	public void setFixedThreadPool(boolean fixedThreadPool) {
+		this.fixedThreadPool = fixedThreadPool;
+	}
+	
 	public ExecutorService getExecutor() {
 		return executor;
 	}
@@ -73,7 +87,11 @@ public class ServerPipelineFactory implements ChannelPipelineFactory,
 
 	public void afterPropertiesSet() throws Exception {
 		if (getExecutor() == null) {
-			setExecutor(Executors.newCachedThreadPool());
+			if (fixedThreadPool) {
+				setExecutor(Executors.newFixedThreadPool(threadsNumber));
+			} else {
+				setExecutor(Executors.newCachedThreadPool());
+			}
 		}
 
 		Assert.notNull(upstreamHandler,
