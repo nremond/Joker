@@ -43,7 +43,7 @@ public class GameServiceImpl implements GameService {
 
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(GameServiceImpl.class);
-	
+
 	@Autowired
 	private ExecutorUtil executorUtil;
 
@@ -74,7 +74,7 @@ public class GameServiceImpl implements GameService {
 	@Value(value = "${frontend.twitt:false}")
 	public void setTwitt(boolean twitt) {
 		this.twitt = twitt;
-	}	
+	}
 
 	public boolean insertGame(int usersLimit, int questionTimeLimit,
 			int pollingTimeLimit, int synchroTimeLimit,
@@ -87,8 +87,7 @@ public class GameServiceImpl implements GameService {
 		resetPreviousGame();
 
 		Game game = gameDAO.insertGame(usersLimit, questionTimeLimit,
-				pollingTimeLimit, synchroTimeLimit,
-				mapToQuestion(questions));
+				pollingTimeLimit, synchroTimeLimit, mapToQuestion(questions));
 
 		gameSynchronization = new GameSynchronization(game);
 
@@ -106,11 +105,16 @@ public class GameServiceImpl implements GameService {
 		GameSynchronization oldGameSynchronization = gameSynchronization;
 		if (oldGameSynchronization != null) {
 			oldGameSynchronization.currentQuestionToAnswer = 0;
+			oldGameSynchronization.reseted = true;
 			for (Map.Entry<Question, QuestionSynchronization> entry : oldGameSynchronization.questionSynchronizations
 					.entrySet()) {
 				QuestionSynchronization questionSynchronization = entry
 						.getValue();
 				questionSynchronization.questionReadyLatch.countDown();
+			}
+
+			for (int i = 0; i < oldGameSynchronization.game.getUsersLimit(); i++) {
+				oldGameSynchronization.allUsersRankingLatch.countDown();
 			}
 		}
 	}
@@ -193,7 +197,7 @@ public class GameServiceImpl implements GameService {
 	public void requestRanking(String userId) {
 		gameSynchronization.allUsersRankingLatch.countDown();
 	}
-	
+
 	/**
 	 * Class managing the game flow. A new instance is started at each new
 	 * {@link Game}.
@@ -296,6 +300,14 @@ public class GameServiceImpl implements GameService {
 							}
 							questionSynchronization.lock.unlock();
 
+							for (int oldQuestionNumber = FIRST_QUESTION; oldQuestionNumber < i; oldQuestionNumber++) {
+								QuestionSynchronization oldQuestionSynchronization = gameSynchronization
+										.getQuestionSynchronization(oldQuestionNumber);
+								for (Runnable r : oldQuestionSynchronization.waitingQueue) {
+									executorUtil.getExecutorService()
+											.execute(r);
+								}
+							}
 							long stoptime = System.currentTimeMillis();
 
 							long synchrotime = TimeUnit.SECONDS
@@ -319,6 +331,10 @@ public class GameServiceImpl implements GameService {
 							"Question {} finished, going to the next question",
 							i);
 
+					if (gameSynchronization.reseted) {
+						break;
+					}
+
 				}
 
 				LOGGER.info("All questions finished. Doing some processing, latest synchrotime, and request for ranking will be allowed");
@@ -330,59 +346,65 @@ public class GameServiceImpl implements GameService {
 				gameSynchronization.currentQuestionToAnswer++;
 				gameSynchronization.currentQuestionRunning = false;
 
-				workerClient.gameEnded();
+				if (!gameSynchronization.reseted) {
+					workerClient.gameEnded();
 
-				List<UserInfoAndScore> top100 = workerClient.getTop100();
-				StringBuilder sb = new StringBuilder();
-				ScoresHelper.appendUsersScores(top100, sb);
-				top100AsString.set(sb.toString());
+					List<UserInfoAndScore> top100 = workerClient.getTop100();
+					StringBuilder sb = new StringBuilder();
+					ScoresHelper.appendUsersScores(top100, sb);
+					top100AsString.set(sb.toString());
 
-				long stoptime = System.currentTimeMillis();
+					long stoptime = System.currentTimeMillis();
 
-				LOGGER.debug(
-						"Ranking computation and top100 query done in {} ms. Returns {} UserInfoAndScores.",
-						(stoptime - starttime), top100.size());
+					LOGGER.debug(
+							"Ranking computation and top100 query done in {} ms. Returns {} UserInfoAndScores.",
+							(stoptime - starttime), top100.size());
 
-				long synchrotime = TimeUnit.SECONDS
-						.toMillis(gameSynchronization.game
-								.getSynchroTimeLimit())
-						+ starttime - stoptime;
-				if (synchrotime > 0) {
+					long synchrotime = TimeUnit.SECONDS
+							.toMillis(gameSynchronization.game
+									.getSynchroTimeLimit())
+							+ starttime - stoptime;
+					if (synchrotime > 0) {
+						try {
+							// mmmh, weird specs again...
+							Thread.sleep(synchrotime);
+						} catch (InterruptedException e) {
+							LOGGER.warn("Interrupted", e);
+							return;
+						}
+					} else {
+						LOGGER.warn(
+								"Ranking computation exceeded synchrotime by {} ms",
+								-synchrotime);
+					}
+
+					LOGGER.debug("Latest synchrotime done");
+
+					// TODO or FIXME : if startRankingsComputation() or
+					// getTop100()
+					// take more than synchrotime, we can have /ranking request
+					// that
+					// will failed with no reason.
+					gameSynchronization.rankingRequestAllowed = true;
+
+					LOGGER.info("Ranking requests are now allowed, waiting all users have requested ranking");
+
+					gameRunning.set(false);
+
 					try {
-						// mmmh, weird specs again...
-						Thread.sleep(synchrotime);
+						gameSynchronization.allUsersRankingLatch.await();
+
+						if (twitt && !gameSynchronization.reseted) {
+							twitter.twitt(String.format(TWITTER_MESSAGE,
+									gameSynchronization.game.getUsersLimit()));
+						}
+
 					} catch (InterruptedException e) {
 						LOGGER.warn("Interrupted", e);
 						return;
 					}
-				} else {
-					LOGGER.warn(
-							"Ranking computation exceeded synchrotime by {} ms",
-							-synchrotime);
 				}
 
-				LOGGER.debug("Latest synchrotime done");
-
-				// TODO or FIXME : if startRankingsComputation() or getTop100()
-				// take more than synchrotime, we can have /ranking request that
-				// will failed with no reason.
-				gameSynchronization.rankingRequestAllowed = true;
-
-				LOGGER.info("Ranking requests are now allowed, waiting all users have requested ranking");
-
-				try {
-					gameSynchronization.allUsersRankingLatch.await();
-					
-					if (twitt) {
-						twitter.twitt(String.format(TWITTER_MESSAGE,
-								gameSynchronization.game.getUsersLimit()));
-					}
-					
-				} catch (InterruptedException e) {
-					LOGGER.warn("Interrupted", e);
-					return;
-				}
-				
 			} finally {
 				gameRunning.set(false);
 			}
@@ -425,7 +447,7 @@ public class GameServiceImpl implements GameService {
 		private final CountDownLatch waitForFirstLogin;
 
 		private final CountDownLatch enoughUsersLatch;
-		
+
 		private final CountDownLatch allUsersRankingLatch;
 
 		private final Map<Question, QuestionSynchronization> questionSynchronizations;
@@ -436,6 +458,7 @@ public class GameServiceImpl implements GameService {
 		private volatile boolean rankingRequestAllowed = false;
 
 		private final Game game;
+		private volatile boolean reseted = false;
 
 		public GameSynchronization(Game game) {
 
@@ -549,5 +572,5 @@ public class GameServiceImpl implements GameService {
 	public String getTop100AsString() {
 		return top100AsString.get();
 	}
-	
+
 }

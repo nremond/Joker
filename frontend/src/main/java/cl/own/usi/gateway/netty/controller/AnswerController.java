@@ -61,7 +61,7 @@ public class AnswerController extends AbstractController {
 				if (!gameService.validateQuestionToAnswer(questionNumber)) {
 					writeResponse(e, BAD_REQUEST);
 					getLogger()
-							.info("Invalid question number {} answered", questionNumber);
+							.debug("Invalid question number {} answered", questionNumber);
 				} else {
 
 					final CachedUser cachedUser = getCacheManager().loadUser(userId);

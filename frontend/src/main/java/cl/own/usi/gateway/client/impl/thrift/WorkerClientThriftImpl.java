@@ -1,11 +1,15 @@
 package cl.own.usi.gateway.client.impl.thrift;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -15,6 +19,8 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -44,7 +50,7 @@ import cl.own.usi.thrift.WorkerRPC.Client;
  *
  */
 @Component
-public class WorkerClientThriftImpl implements WorkerClient {
+public class WorkerClientThriftImpl implements WorkerClient, InitializingBean, DisposableBean {
 
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(WorkerClientThriftImpl.class);
@@ -58,6 +64,8 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 	@Value(value = "${frontend.backendConnections:10}")
 	private int backendConnections;
+	
+	private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 	
 	@Override
 	public UserAndScore validateUserAndInsertQuestionRequest(
@@ -484,11 +492,11 @@ public class WorkerClientThriftImpl implements WorkerClient {
 				throw new FactoryException(e);
 			} finally {
 				long creationtime = System.currentTimeMillis() - starttime;
-				// if (creationtime > 20L) {
-				LOGGER.info(
+				if (creationtime > 20L) {
+					LOGGER.warn(
 						"ThriftClientFactory create new connection to {} in {} ms",
 						workerHost.getHost(), creationtime);
-				// }
+				}
 			}
 		}
 
@@ -556,6 +564,10 @@ public class WorkerClientThriftImpl implements WorkerClient {
 			}
 		}
 
+		public List<WorkerHost> getKeys() {
+			return Collections.unmodifiableList(keys);
+		}
+		
 	}
 
 	static final class WorkerHost {
@@ -653,8 +665,54 @@ public class WorkerClientThriftImpl implements WorkerClient {
 
 			@Override
 			protected String getActionDescription() {
-				return String.format("initialize()");
+				return String.format("gameCreated()");
 			}
 		}.doAction();
+	}
+	
+	@Override
+	public void ping() {
+		new ThriftAction<Integer>(pools) {
+
+			@Override
+			protected Integer action(final Client client) throws TException {
+				client.ping(USELESS_INT);
+				return USELESS_INT;
+			}
+
+			@Override
+			protected String getActionDescription() {
+				return String.format("ping()");
+			}
+		}.doAction();
+	}
+	
+	private class ThriftPoolTestWorker implements Runnable {
+
+		private final ThriftMultiPool multiPool;
+		
+		public ThriftPoolTestWorker(ThriftMultiPool multiPool) {
+			this.multiPool = multiPool;
+		}
+		
+		@Override
+		public void run() {
+			List<WorkerHost> keys = multiPool.getKeys();
+			int numIterations = keys.size() * 2;
+			for (int i = 0; i < numIterations; i++) {
+				ping();
+			}
+		}
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		scheduledExecutorService.scheduleWithFixedDelay(new ThriftPoolTestWorker((ThriftMultiPool)pools), 30, 10, TimeUnit.SECONDS);
+	}
+
+	@Override
+	public void destroy() throws Exception {
+		scheduledExecutorService.shutdown();
+		scheduledExecutorService.awaitTermination(30, TimeUnit.SECONDS);
 	}
 }

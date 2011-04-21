@@ -359,5 +359,8 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 	public void gameCreated(final int useless) throws TException {
 		userService.gameCreated();
 	}
+	
+	@Override
+	public void ping(final int useless) throws TException {}
 
 }
