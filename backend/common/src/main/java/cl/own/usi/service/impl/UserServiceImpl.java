@@ -158,4 +158,9 @@ public class UserServiceImpl implements UserService {
 	public void gameCreated() {
 		userDAO.gameCreated();
 	}
+	
+	@Override
+	public List<User> getUsers(final int numToSkip, final int limit) {
+		return userDAO.getUsers(numToSkip, limit);
+	}
 }

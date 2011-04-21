@@ -3,6 +3,7 @@ package cl.own.usi.worker.thrift.impl;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.thrift.TException;
@@ -363,4 +364,13 @@ public class WorkerFacadeThriftImpl implements WorkerRPC.Iface,
 	@Override
 	public void ping(final int useless) throws TException {}
 
+	@Override
+	public List<UserInfoAndScore> getUsers(final int from, final int limit) {
+		final List<UserInfoAndScore> users = new ArrayList<UserInfoAndScore>(limit);
+		final List<User> gotUsers = userService.getUsers(from, limit);
+		for (final User user : gotUsers) {
+			users.add(map(user));
+		}
+		return users;
+	}
 }

@@ -63,5 +63,8 @@ service WorkerRPC {
 	void gameEnded(1: i32 useless),
 	void gameCreated(1: i32 useless),
 	
-	void ping(1: i32 useless)
+	void ping(1: i32 useless),
+	
+	list<UserInfoAndScore> getUsers(1: i32 from, 2: i32 limit)
+	
 }

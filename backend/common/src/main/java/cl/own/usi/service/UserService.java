@@ -81,4 +81,6 @@ public interface UserService {
 
 	void gameCreated();
 
+	List<User> getUsers(int numToSkip, int limit);
+	
 }

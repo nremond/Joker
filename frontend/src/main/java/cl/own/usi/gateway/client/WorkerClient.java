@@ -50,4 +50,7 @@ public interface WorkerClient {
 	void gameCreated();
 	
 	void ping();
+	
+	List<UserInfoAndScore> getUsers(int from, int limit);
+	
 }

@@ -715,4 +715,28 @@ public class WorkerClientThriftImpl implements WorkerClient, InitializingBean, D
 		scheduledExecutorService.shutdown();
 		scheduledExecutorService.awaitTermination(30, TimeUnit.SECONDS);
 	}
+
+	@Override
+	public List<UserInfoAndScore> getUsers(final int from, final int limit) {
+		
+		return new ThriftAction<List<UserInfoAndScore>>(pools) {
+
+			@Override
+			protected List<UserInfoAndScore> action(Client client)
+					throws TException {
+				final List<cl.own.usi.thrift.UserInfoAndScore> users = client
+						.getUsers(from, limit);
+
+				final List<UserInfoAndScore> retUsers = map(users);
+
+				return retUsers;
+			}
+
+			@Override
+			protected String getActionDescription() {
+				return String.format("getUsers(%d, %d)", from, limit);
+			}
+		}.doAction();
+		
+	}
 }
