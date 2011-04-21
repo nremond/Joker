@@ -7,10 +7,10 @@ import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByNames;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScore;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.orderByScoreNames;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.passwordField;
+import static cl.own.usi.dao.impl.mongo.DaoHelper.questionFieldPrefix;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.scoreField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.userIdField;
 import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
-import static cl.own.usi.dao.impl.mongo.DaoHelper.questionFieldPrefix;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,6 +34,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.CommandResult;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
 import com.mongodb.WriteResult;
@@ -136,6 +137,25 @@ public class UserDAOMongoImpl implements UserDAO, InitializingBean {
 			LOGGER.debug("fetching userId={} is impossible, not in db", userId);
 			return null;
 		}
+	}
+
+	@Override
+	public List<User> getUsers(final int numToSkip, final int limit) {
+		DBCollection dbUsers = db.getCollection(usersCollection);
+
+		// TODO I don't understand what its doing
+		final int batchSize = 0;
+		DBCursor dbCursor = dbUsers
+				.find(dbFindAll, userFieldsToFetch, numToSkip, batchSize)
+				.limit(limit).sort(userIdIndex);
+
+		List<User> users = new ArrayList<User>(limit);
+		while (dbCursor.hasNext()) {
+			DBObject dbUser = dbCursor.next();
+			User user = DaoHelper.fromDBObject(dbUser);
+			users.add(user);
+		}
+		return users;
 	}
 
 	@Override

@@ -43,6 +43,7 @@ import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.RangeSlicesQuery;
 import me.prettyprint.hector.api.query.SliceQuery;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -742,5 +743,10 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	public User getUserByEmail(String email) {
 		final String userId = CassandraHelper.generateUserId(email);
 		return getUserById(userId);
+	}
+
+	@Override
+	public List<User> getUsers(int numToSkip, int limit) {
+		throw new NotImplementedException();
 	}
 }

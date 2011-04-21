@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.base64.Base64;
 import org.jboss.netty.handler.codec.base64.Base64Dialect;
@@ -158,6 +159,11 @@ public class UserDAOImpl implements UserDAO {
 	public User getUserByEmail(String email) {
 		final String userId = generateUserId(email);
 		return getUserById(userId);
+	}
+
+	@Override
+	public List<User> getUsers(int numToSkip, int limit) {
+		throw new NotImplementedException();
 	}
 
 }

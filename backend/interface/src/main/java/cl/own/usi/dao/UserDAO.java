@@ -18,6 +18,8 @@ public interface UserDAO {
 	 */
 	boolean insertUser(User user);
 
+	List<User> getUsers(int numToSkip, int limit);
+
 	User getUserById(String userId);
 
 	User getUserByEmail(String email);
