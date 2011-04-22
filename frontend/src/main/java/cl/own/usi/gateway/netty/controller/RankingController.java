@@ -14,9 +14,6 @@ import org.springframework.stereotype.Component;
 
 import cl.own.usi.cache.CacheManager;
 import cl.own.usi.cache.CachedUser;
-import cl.own.usi.gateway.client.BeforeAndAfterScores;
-import cl.own.usi.gateway.client.WorkerClient;
-import cl.own.usi.gateway.utils.ScoresHelper;
 import cl.own.usi.service.CachedScoreService;
 import cl.own.usi.service.GameService;
 
@@ -30,19 +27,16 @@ import cl.own.usi.service.GameService;
 public class RankingController extends AbstractController {
 
 	private static final int NUMBER_BEFORE_AFTER = 5;
-	
-	@Autowired
-	private WorkerClient workerClient;
 
 	@Autowired
 	private GameService gameService;
 
 	@Autowired
 	private CacheManager cacheManager;
-	
+
 	@Autowired
 	private CachedScoreService cachedScoreService;
-	
+
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 			throws Exception {
@@ -58,7 +52,7 @@ public class RankingController extends AbstractController {
 			if (!gameService.isRankingRequestAllowed()) {
 				writeResponse(e, BAD_REQUEST);
 			} else {
-				
+
 				final CachedUser cachedUser = cacheManager.loadUser(userId);
 
 				if (cachedUser == null) {
@@ -67,9 +61,9 @@ public class RankingController extends AbstractController {
 				} else {
 
 					if (cachedUser.setRankingRequested()) {
-						gameService.enterGame(userId);
+						gameService.requestRanking(userId);
 					}
-					
+
 					StringBuilder sb = new StringBuilder("{");
 
 					sb.append("\"score\":\"")
