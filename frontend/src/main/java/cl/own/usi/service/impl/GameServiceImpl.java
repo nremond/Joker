@@ -189,8 +189,8 @@ public class GameServiceImpl implements GameService {
 
 	@Override
 	public boolean enterGame(String userId) {
+		gameRunning.compareAndSet(false, true);
 		if (gameSynchronization != null) {
-			gameRunning.compareAndSet(false, true);
 			gameSynchronization.waitForFirstLogin.countDown();
 			return true;
 		} else {
@@ -250,7 +250,13 @@ public class GameServiceImpl implements GameService {
 					if (awaited) {
 						LOGGER.info("Enough users have joined the game and requested the first question.");
 					} else {
-						LOGGER.info("Waiting time is ellapsed, starting anyway.");
+						final long playersCount = gameSynchronization.enoughUsersLatch
+								.getCount();
+						LOGGER.info(
+								"Waiting time is ellapsed, starting anyway with {} players.",
+								playersCount);
+						gameSynchronization.alterPlayerNumber(playersCount);
+
 					}
 				} catch (InterruptedException e) {
 					LOGGER.warn("Interrupted", e);
@@ -359,9 +365,12 @@ public class GameServiceImpl implements GameService {
 					top100AsString.set(sb.toString());
 
 					int concurrentWorkers = executorUtil.getPoolSize();
-					int slicePortion = (gameSynchronization.game.getUsersLimit() / concurrentWorkers) + 1;
+					int slicePortion = (gameSynchronization.game
+							.getUsersLimit() / concurrentWorkers) + 1;
 					for (int i = 0; i < concurrentWorkers; i++) {
-						executorUtil.getExecutorService().execute(new ScoreLoadingWorker(i * slicePortion, slicePortion));
+						executorUtil.getExecutorService().execute(
+								new ScoreLoadingWorker(i * slicePortion,
+										slicePortion));
 					}
 
 					long stoptime = System.currentTimeMillis();
@@ -458,7 +467,7 @@ public class GameServiceImpl implements GameService {
 
 		private final CountDownLatch enoughUsersLatch;
 
-		private final CountDownLatch allUsersRankingLatch;
+		private CountDownLatch allUsersRankingLatch;
 
 		private final Map<Question, QuestionSynchronization> questionSynchronizations;
 
@@ -470,7 +479,7 @@ public class GameServiceImpl implements GameService {
 		private final Game game;
 		private volatile boolean reseted = false;
 
-		public GameSynchronization(Game game) {
+		public GameSynchronization(final Game game) {
 
 			this.game = game;
 
@@ -490,6 +499,11 @@ public class GameServiceImpl implements GameService {
 		QuestionSynchronization getQuestionSynchronization(int questionNumber) {
 			return questionSynchronizations.get(game.getQuestions().get(
 					questionNumber - 1));
+		}
+
+		public void alterPlayerNumber(final long nbPlayers) {
+			// Unsafe cast here, hopefully it won't break anything!
+			allUsersRankingLatch = new CountDownLatch((int) nbPlayers);
 		}
 
 	}
@@ -602,25 +616,34 @@ public class GameServiceImpl implements GameService {
 			int currentLimit;
 			boolean nextIteration = true;
 			do {
-				currentLimit = Math.min(limit - currentFrom + from + 1, BATCH_SIZE);
+				currentLimit = Math.min(limit - currentFrom + from + 1,
+						BATCH_SIZE);
 
 				long starttime = System.currentTimeMillis();
 
-				List<UserInfoAndScore> users = workerClient.getUsers(currentFrom, currentLimit);
+				List<UserInfoAndScore> users = workerClient.getUsers(
+						currentFrom, currentLimit);
 
-				LOGGER.info("Loaded {} users from {} limit {} in {} ms", new Object[] {users.size(), currentFrom, currentLimit, System.currentTimeMillis() - starttime});
+				LOGGER.info("Loaded {} users from {} limit {} in {} ms",
+						new Object[] { users.size(), currentFrom, currentLimit,
+								System.currentTimeMillis() - starttime });
 
 				for (UserInfoAndScore user : users) {
-					scoreService.addUser(user.getUserId(), user.getLastname(), user.getFirstname(), user.getEmail(), user.getScore());
+					scoreService.addUser(user.getUserId(), user.getLastname(),
+							user.getFirstname(), user.getEmail(),
+							user.getScore());
 				}
 
-				if (users.size() < currentLimit || currentFrom >= from + limit || currentLimit < BATCH_SIZE) {
+				if (users.size() < currentLimit || currentFrom >= from + limit
+						|| currentLimit < BATCH_SIZE) {
 					nextIteration = false;
 				} else {
 					currentFrom += currentLimit;
 				}
 
-				LOGGER.info("Processed {} users (loading and inserting in the sortedset) in {} ms", users.size(), System.currentTimeMillis() - starttime);
+				LOGGER.info(
+						"Processed {} users (loading and inserting in the sortedset) in {} ms",
+						users.size(), System.currentTimeMillis() - starttime);
 
 			} while (nextIteration);
 		}
