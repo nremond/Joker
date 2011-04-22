@@ -84,7 +84,7 @@ public class GameServiceImpl implements GameService {
 			int pollingTimeLimit, int synchroTimeLimit,
 			List<Map<String, Map<String, Boolean>>> questions) {
 
-		if (!gameRunning.get()) {
+		if (gameRunning.get()) {
 			return false;
 		}
 
