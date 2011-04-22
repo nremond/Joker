@@ -35,9 +35,9 @@ import cl.own.usi.service.GameService;
 
 /**
  * Game service implementation.
- * 
+ *
  * @author bperroud
- * 
+ *
  */
 @Service
 public class GameServiceImpl implements GameService {
@@ -56,7 +56,7 @@ public class GameServiceImpl implements GameService {
 
 	@Autowired
 	private WorkerClient workerClient;
-	
+
 	@Autowired
 	private CachedScoreService scoreService;
 
@@ -84,7 +84,7 @@ public class GameServiceImpl implements GameService {
 			int pollingTimeLimit, int synchroTimeLimit,
 			List<Map<String, Map<String, Boolean>>> questions) {
 
-		if (!gameRunning.compareAndSet(false, true)) {
+		if (!gameRunning.get()) {
 			return false;
 		}
 
@@ -190,6 +190,7 @@ public class GameServiceImpl implements GameService {
 	@Override
 	public boolean enterGame(String userId) {
 		if (gameSynchronization != null) {
+			gameRunning.compareAndSet(false, true);
 			gameSynchronization.waitForFirstLogin.countDown();
 			return true;
 		} else {
@@ -205,9 +206,9 @@ public class GameServiceImpl implements GameService {
 	/**
 	 * Class managing the game flow. A new instance is started at each new
 	 * {@link Game}.
-	 * 
+	 *
 	 * @author bperroud
-	 * 
+	 *
 	 */
 	private class GameFlowWorker implements Runnable {
 
@@ -362,7 +363,7 @@ public class GameServiceImpl implements GameService {
 					for (int i = 0; i < concurrentWorkers; i++) {
 						executorUtil.getExecutorService().execute(new ScoreLoadingWorker(i * slicePortion, slicePortion));
 					}
-					
+
 					long stoptime = System.currentTimeMillis();
 
 					LOGGER.debug(
@@ -447,9 +448,9 @@ public class GameServiceImpl implements GameService {
 	/**
 	 * Containers of all needed synchronization stuff for the current
 	 * {@link Game}. A new instance is created at each new {@link Game}.
-	 * 
+	 *
 	 * @author bperroud
-	 * 
+	 *
 	 */
 	private static class GameSynchronization {
 
@@ -496,9 +497,9 @@ public class GameServiceImpl implements GameService {
 	/**
 	 * Containers of all needed synchronization stuff for the {@link Question}s.
 	 * A new instance is created at each {@link Question} in a new {@link Game}.
-	 * 
+	 *
 	 * @author bperroud
-	 * 
+	 *
 	 */
 	private static class QuestionSynchronization {
 
@@ -585,18 +586,18 @@ public class GameServiceImpl implements GameService {
 	private class ScoreLoadingWorker implements Runnable {
 
 		private static final int BATCH_SIZE = 2000;
-		
+
 		private final int from;
 		private final int limit;
-		
+
 		public ScoreLoadingWorker(final int from, final int limit) {
 			this.from = from;
 			this.limit = limit;
 		}
-		
+
 		@Override
 		public void run() {
-			
+
 			int currentFrom = from;
 			int currentLimit;
 			boolean nextIteration = true;
@@ -604,7 +605,7 @@ public class GameServiceImpl implements GameService {
 				currentLimit = Math.min(limit - currentFrom + from + 1, BATCH_SIZE);
 
 				long starttime = System.currentTimeMillis();
-				
+
 				List<UserInfoAndScore> users = workerClient.getUsers(currentFrom, currentLimit);
 
 				LOGGER.info("Loaded {} users from {} limit {} in {} ms", new Object[] {users.size(), currentFrom, currentLimit, System.currentTimeMillis() - starttime});
@@ -612,17 +613,17 @@ public class GameServiceImpl implements GameService {
 				for (UserInfoAndScore user : users) {
 					scoreService.addUser(user.getUserId(), user.getLastname(), user.getFirstname(), user.getEmail(), user.getScore());
 				}
-				
+
 				if (users.size() < currentLimit || currentFrom >= from + limit || currentLimit < BATCH_SIZE) {
 					nextIteration = false;
 				} else {
 					currentFrom += currentLimit;
 				}
-				
+
 				LOGGER.info("Processed {} users (loading and inserting in the sortedset) in {} ms", users.size(), System.currentTimeMillis() - starttime);
-				
+
 			} while (nextIteration);
 		}
-		
+
 	}
 }
