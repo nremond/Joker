@@ -82,4 +82,8 @@ public class SortedCachedUser implements Comparable<SortedCachedUser> {
 		}
 	}
 	
+	@Override
+	public String toString() {
+		return "User " + getLastname() + " : " + getScore();
+	}
 }

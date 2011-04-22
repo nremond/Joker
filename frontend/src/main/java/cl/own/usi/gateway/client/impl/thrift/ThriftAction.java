@@ -52,8 +52,8 @@ abstract class ThriftAction<T> {
 					release(client);
 				}
 				long actionTime = System.currentTimeMillis() - starttime;
-				if (actionTime > 300L) {
-					LOGGER.debug("Thrift call to {} took {} ms", getActionDescription(), actionTime);
+				if (actionTime > 2500L) {
+					LOGGER.warn("Thrift call to {} took {} ms", getActionDescription(), actionTime);
 				}
 			}
 		}
@@ -82,8 +82,8 @@ abstract class ThriftAction<T> {
 			throw new IllegalStateException("No pool borrowed...", e);
 		} finally {
 			long timeToGetAClient = System.currentTimeMillis() - starttime;
-			if (timeToGetAClient > 100L) {
-				LOGGER.debug("Waiting to a thrift client to be available took {} ms", timeToGetAClient);
+			if (timeToGetAClient > 1000L) {
+				LOGGER.warn("Waiting to a thrift client to be available took {} ms", timeToGetAClient);
 			}
 		}
 	}

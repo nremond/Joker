@@ -107,7 +107,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 			Long enqueuedTime = (Long) parentCtx.getAttachment();
 			if (enqueuedTime != null) {
 				long waitTime = System.currentTimeMillis() - enqueuedTime;
-				if (waitTime > 80L) {
+				if (waitTime > 500L) {
 					logger.debug("Message waited {} ms before being processed.", waitTime);
 				}
 			}

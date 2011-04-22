@@ -299,7 +299,6 @@ public class GameServiceImpl implements GameService {
 							gameSynchronization.currentQuestionToAnswer++;
 							gameSynchronization.currentQuestionRunning = false;
 							for (Runnable r : questionSynchronization.waitingQueue) {
-								LOGGER.debug("Inserting a early requester to the working queue");
 								executorUtil.getExecutorService().execute(r);
 							}
 							questionSynchronization.lock.unlock();
@@ -602,20 +601,26 @@ public class GameServiceImpl implements GameService {
 			int currentLimit;
 			boolean nextIteration = true;
 			do {
-				currentLimit = Math.min(limit - currentFrom + from, BATCH_SIZE);
-				LOGGER.debug("Loading users from {} limit {}", currentFrom, currentLimit);
-				List<UserInfoAndScore> users = workerClient.getUsers(currentFrom, currentLimit);
+				currentLimit = Math.min(limit - currentFrom + from + 1, BATCH_SIZE);
+
+				long starttime = System.currentTimeMillis();
 				
+				List<UserInfoAndScore> users = workerClient.getUsers(currentFrom, currentLimit);
+
+				LOGGER.info("Loaded {} users from {} limit {} in {} ms", new Object[] {users.size(), currentFrom, currentLimit, System.currentTimeMillis() - starttime});
+
 				for (UserInfoAndScore user : users) {
 					scoreService.addUser(user.getUserId(), user.getLastname(), user.getFirstname(), user.getEmail(), user.getScore());
 				}
 				
-				if (users.size() < currentLimit || currentFrom >= from + limit) {
+				if (users.size() < currentLimit || currentFrom >= from + limit || currentLimit < BATCH_SIZE) {
 					nextIteration = false;
 				} else {
 					currentFrom += currentLimit;
 				}
-					
+				
+				LOGGER.info("Processed {} users (loading and inserting in the sortedset) in {} ms", users.size(), System.currentTimeMillis() - starttime);
+				
 			} while (nextIteration);
 		}
 		

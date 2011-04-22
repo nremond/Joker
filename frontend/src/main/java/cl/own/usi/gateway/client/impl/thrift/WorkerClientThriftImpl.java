@@ -218,7 +218,6 @@ public class WorkerClientThriftImpl implements WorkerClient, InitializingBean, D
 						.getTop100(USELESS_INT);
 
 				int size = users == null ? 0 : users.size();
-				LOGGER.debug("Returned {} users", size);
 
 				final List<UserInfoAndScore> retUsers = new ArrayList<UserInfoAndScore>(
 						size);
