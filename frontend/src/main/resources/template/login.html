@@ -1,60 +1,167 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"> 
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
 	<script type="text/javascript" src="/lib/jquery.min.js"></script>
-	
-	<title>Failed to open page</title>
+	<style type="text/css">
+	#global {
+		background: url("http://www.borer.name/joker/accueil_fond.jpg") no-repeat scroll 0 0 #FFFFFF;
+		height: 530px;
+		text-align: center;
+		width: 996px;
+		margin:0px auto;
+	}
+
+	#identification {
+		padding-top: 360px;
+	}
+
+	form {
+		margin:0 auto;
+		width:400px;
+		padding:14px;
+	}
+
+	#identification {
+		padding-top: 360px;
+	}
+
+	#identification h1 {
+		font-size: 18px;
+		font-weight: bold;
+		margin-bottom: 4px;
+		color: #e00b0b;
+	}
+
+	#identification p {
+		font-size: 11px;
+		color: #666666;
+		margin-bottom: 20px;
+		padding-bottom: 10px;
+	}
+
+	#identification label {
+		display: block;
+		font-weight: bold;
+		text-align: right;
+		width: 140px;
+		float: left;
+	}
+
+	#identification .small {
+		color: #666666;
+		display: block;
+		font-size: 11px;
+		font-weight: normal;
+		text-align: right;
+		width: 140px;
+	}
+
+	#identification input {
+		float: left;
+		font-size: 12px;
+		padding: 4px 2px;
+		border: solid 1px #aacfe4;
+		width: 200px;
+		margin: 2px 0 20px 10px;
+	}
+
+	#identification button {
+		clear: both;
+		margin-left: 150px;
+		width: 160px;
+		height: 31px;
+		background: #666666 no-repeat;
+		text-align: center;
+		line-height: 31px;
+		color: #FFFFFF;
+		font-size: 11px;
+		font-weight: bold;
+	}
+
+	#footer {
+		padding-top: 60px;
+		font-size: 11px;
+	}
+
+	.ok {
+		color: green;
+		font-style: italic;
+		font-size: 16px;
+	}
+
+	.ko {
+		color: red;
+		font-weight: bold;
+		font-size: 18px;
+	}
+	</style>
+
+	<title>Bienvenue &agrave;... question pour un champion. Du clic!</title>
 </head>
 <body>
-
-	<div> Identification </div>
-
+<div id="global">
+	<div id="identification">
 	<form action="/" id="loginForm">
-		Mail: <input type="text" name="mail" /><br />
-		Password: <input type="password" name="password" /><br />
-		<input type="submit" value="OK"  />
+	<h1>Prendre part &agrave; la partie</h1>
+	<p>Saisissez vos informations pour prendre imm&eacute;diatement part &agrave; la prochaine partie!</p>
+
+	<label>Email
+	<span class="small">Email pour le quizz</span>
+	</label>
+	<input type="text" name="mail" />
+
+	<label>Mot de passe
+	<span class="small">Mot de passe associ&eacute; &agrave; votre compte</span>
+	</label>
+	<input type="password" name="password" />
+
+	<button type="submit">Prendre part au jeu</button>
+	<div class="spacer"></div>
 	</form>
-	
+	</div>
+
 	<!-- the result of the search will be rendered inside this div -->
 	<div id="result"> </div>
-	
+
+	<div id="footer">Image de fond &copy; 2011 France T&eacute;l&eacute;visions.</div>
+
 	<script>
 	  // attach a submit handler to the form
 	  $("#loginForm").submit(function(event) {
 
+		$( "#result" ).html("");
+
 		// stop form from submitting normally
-		event.preventDefault(); 
-			
+		event.preventDefault();
+
 		// get some values from elements on the page:
 		var form = $( this );
 		var	mail = form.find( 'input[name="mail"]' ).val();
 		var	password = form.find( 'input[name="password"]' ).val();
-		
-		
+
 		$.ajax({
 			url :  "/api/login",
-			data : "{ \"mail\":"+mail+ ",\"password\":"+password+" }",
+			data : "{ \"mail\":\""+mail+ "\",\"password\":\""+password+"\" }",
 			type : "POST",
 			statusCode: {
 				201: function(data) {
-					$( "#result" ).html( "User logged in" );
-					
+					$( "#result" ).html( "<span class=\"ok\">Vous &ecirc;tes connect&eacute; avec succ&egrave;s</span>" );
+
 					window.location.replace("/api/play");
 				},
-				
-				401: function(data) { 
-					$( "#result" ).html( "Invalid credentials" );
+
+				401: function(data) {
+					$( "#result" ).html( "<span class=\"ko\">Donn&eacute;es de connexion incorrectes!</span>" );
 				},
-				
+
 				400: function(data) {
-					$( "#result" ).html( "User already logged in" );
-				}	
+					$( "#result" ).html( "<span class=\"ko\">Votre compte participe d&eacute;j&agrave; &agrave; la partie courante!</span>" );
+				}
 			}
 		});
-		
+
 	  });
 	</script>
-		
-	
+</div>
 </body>
 </html>

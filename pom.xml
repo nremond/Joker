@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	
+
 	<groupId>cl.own.usi</groupId>
 	<artifactId>joker</artifactId>
 	<version>1.0-SNAPSHOT</version>
@@ -30,13 +30,13 @@
 				<updatePolicy>never</updatePolicy>
 			</snapshots>
 		</repository>
-		
+
 		<repository>
 			<id>maven.noisette</id>
 			<name>Noisette Custom repo</name>
 			<url>http://maven.noisette.ch/</url>
 		</repository>
-		
+
 	</repositories>
 
 	<pluginRepositories>
@@ -44,13 +44,13 @@
 			<id>dtrott</id>
 			<url>http://maven.davidtrott.com/repository</url>
 		</pluginRepository>
-		
+
 		<pluginRepository>
 			<id>cloudera</id>
 			<url>https://repository.cloudera.com/content/repositories/cloudera-repos/</url>
 		</pluginRepository>
 	</pluginRepositories>
-	
+
 	<modules>
 		<module>frontend</module>
 		<module>backend</module>
@@ -75,7 +75,7 @@
 				<artifactId>commons-httpclient</artifactId>
 				<version>3.1</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>org.jboss.netty</groupId>
 				<artifactId>netty</artifactId>
@@ -86,14 +86,14 @@
 			<dependency>
 				<groupId>org.codehaus.jackson</groupId>
 				<artifactId>jackson-mapper-lgpl</artifactId>
-				<version>1.7.4</version>
+				<version>1.7.6</version>
 			</dependency>
 			<dependency>
 				<groupId>org.codehaus.jackson</groupId>
 				<artifactId>jackson-core-lgpl</artifactId>
-				<version>1.7.4</version>
+				<version>1.7.6</version>
 			</dependency>
-			
+
 			<!-- commons-logging sucks, scope it as provided to exclude it fully -->
 			<dependency>
 				<groupId>commons-logging</groupId>
@@ -121,19 +121,19 @@
 				<artifactId>logback-classic</artifactId>
 				<version>0.9.28</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>commons-lang</groupId>
 				<artifactId>commons-lang</artifactId>
 				<version>2.6</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>junit</groupId>
 				<artifactId>junit</artifactId>
 				<version>4.8.2</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-core</artifactId>
@@ -149,7 +149,7 @@
 				<artifactId>spring-context</artifactId>
 				<version>3.0.5.RELEASE</version>
 			</dependency>
-			
+
 			<dependency>
 				<!-- todo: remote this deps, uses Jackson instead -->
 				<groupId>com.googlecode.json-simple</groupId>
@@ -170,13 +170,13 @@
 				<artifactId>cglib-nodep</artifactId>
 				<version>2.2</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>org.apache.thrift</groupId>
 				<artifactId>libthrift</artifactId>
 				<version>0.5.0</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>com.google.guava</groupId>
 				<artifactId>guava</artifactId>
@@ -198,18 +198,18 @@
 		  <groupId>com.google.guava</groupId>
 		  <artifactId>guava</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -231,7 +231,7 @@
 						<optimize>true</optimize>
 					</configuration>
 				</plugin>
-				
+
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-eclipse-plugin</artifactId>
@@ -241,13 +241,13 @@
 						<wtpversion>1.5</wtpversion>
 					</configuration>
 				</plugin>
-				
+
 				<plugin>
 					<groupId>org.apache.thrift.tools</groupId>
 					<artifactId>maven-thrift-plugin</artifactId>
 					<version>0.1.10</version>
 				</plugin>
-				
+
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-shade-plugin</artifactId>
@@ -256,11 +256,11 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-	
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
-	
+
 	<profiles>
 		<profile>
 			<id>debug</id>
@@ -281,5 +281,5 @@
 			</build>
 		</profile>
 	</profiles>
-		
+
 </project>
