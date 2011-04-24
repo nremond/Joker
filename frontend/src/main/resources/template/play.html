@@ -192,7 +192,7 @@
 			//var good_answer = data["good_answer"];
 			var score = data['score'];
 			
-			var okMsg = ok ? 'Good' : 'Bad';		
+			var okMsg = ok == "true" ? 'Good' : 'Bad';
 			var resultMsg = '<p>' + okMsg + ' answer !<br/>';
 			resultMsg += 'Your score : ' + score + ' points</p>';
 			
