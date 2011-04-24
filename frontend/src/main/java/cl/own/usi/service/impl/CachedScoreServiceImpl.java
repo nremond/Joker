@@ -32,7 +32,7 @@ public class CachedScoreServiceImpl implements CachedScoreService {
 
 		List<SortedCachedUser> users = sortedUsersList.getBefore(userId, limit);
 
-		if (users.isEmpty()) {
+		if (users == null) {
 			return EMPTY_SB;
 		} else {
 			StringBuilder sb = appendUsersScores(users);
@@ -53,7 +53,7 @@ public class CachedScoreServiceImpl implements CachedScoreService {
 
 		List<SortedCachedUser> users = sortedUsersList.getAfter(userId, limit);
 
-		if (users.isEmpty()) {
+		if (users == null) {
 			return EMPTY_SB;
 		} else {
 			StringBuilder sb = appendUsersScores(users);
