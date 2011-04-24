@@ -109,15 +109,28 @@ public class GameServiceImpl implements GameService {
 		GameSynchronization oldGameSynchronization = gameSynchronization;
 		if (oldGameSynchronization != null) {
 			oldGameSynchronization.currentQuestionToAnswer = 0;
+			oldGameSynchronization.currentQuestionToRequest = 0;
 			oldGameSynchronization.reseted = true;
+			oldGameSynchronization.rankingRequestAllowed = false;
+			
+			oldGameSynchronization.waitForFirstLogin.countDown();
+			long latchCount = oldGameSynchronization.enoughUsersLatch.getCount();
+			for (long i = 0L; i < latchCount; i++) {
+				oldGameSynchronization.enoughUsersLatch.countDown();
+			}
+			
 			for (Map.Entry<Question, QuestionSynchronization> entry : oldGameSynchronization.questionSynchronizations
 					.entrySet()) {
-				QuestionSynchronization questionSynchronization = entry
+				QuestionSynchronization oldQuestionSynchronization = entry
 						.getValue();
-				questionSynchronization.questionReadyLatch.countDown();
+				oldQuestionSynchronization.questionReadyLatch.countDown();
+				for (Runnable r : oldQuestionSynchronization.waitingQueue) {
+					executorUtil.getExecutorService().execute(r);
+				}
 			}
 
-			for (int i = 0; i < oldGameSynchronization.game.getUsersLimit(); i++) {
+			latchCount = oldGameSynchronization.allUsersRankingLatch.getCount();
+			for (long i = 0L; i < latchCount; i++) {
 				oldGameSynchronization.allUsersRankingLatch.countDown();
 			}
 		}
@@ -250,12 +263,11 @@ public class GameServiceImpl implements GameService {
 					if (awaited) {
 						LOGGER.info("Enough users have joined the game and requested the first question.");
 					} else {
-						final long playersCount = gameSynchronization.enoughUsersLatch
+						final long playersCount = gameSynchronization.game.getUsersLimit() - gameSynchronization.enoughUsersLatch
 								.getCount();
 						LOGGER.info(
 								"Waiting time is ellapsed, starting anyway with {} players.",
 								playersCount);
-						gameSynchronization.alterPlayerNumber(playersCount);
 
 					}
 				} catch (InterruptedException e) {
@@ -351,18 +363,14 @@ public class GameServiceImpl implements GameService {
 
 				LOGGER.debug("Latest synchrotime ...");
 
-				long starttime = System.currentTimeMillis();
-
-				gameSynchronization.currentQuestionToAnswer++;
-				gameSynchronization.currentQuestionRunning = false;
-
 				if (!gameSynchronization.reseted) {
-					workerClient.gameEnded();
+					
+					long starttime = System.currentTimeMillis();
 
-					List<UserInfoAndScore> top100 = workerClient.getTop100();
-					StringBuilder sb = new StringBuilder();
-					ScoresHelper.appendUsersScores(top100, sb);
-					top100AsString.set(sb.toString());
+					gameSynchronization.currentQuestionToAnswer++;
+					gameSynchronization.currentQuestionRunning = false;
+					
+					workerClient.gameEnded();
 
 					int concurrentWorkers = executorUtil.getPoolSize();
 					int slicePortion = (gameSynchronization.game
@@ -373,6 +381,11 @@ public class GameServiceImpl implements GameService {
 										slicePortion));
 					}
 
+					List<UserInfoAndScore> top100 = workerClient.getTop100();
+					StringBuilder sb = new StringBuilder();
+					ScoresHelper.appendUsersScores(top100, sb);
+					top100AsString.set(sb.toString());
+					
 					long stoptime = System.currentTimeMillis();
 
 					LOGGER.debug(
@@ -467,7 +480,7 @@ public class GameServiceImpl implements GameService {
 
 		private final CountDownLatch enoughUsersLatch;
 
-		private CountDownLatch allUsersRankingLatch;
+		private final CountDownLatch allUsersRankingLatch;
 
 		private final Map<Question, QuestionSynchronization> questionSynchronizations;
 
@@ -499,11 +512,6 @@ public class GameServiceImpl implements GameService {
 		QuestionSynchronization getQuestionSynchronization(int questionNumber) {
 			return questionSynchronizations.get(game.getQuestions().get(
 					questionNumber - 1));
-		}
-
-		public void alterPlayerNumber(final long nbPlayers) {
-			// Unsafe cast here, hopefully it won't break anything!
-			allUsersRankingLatch = new CountDownLatch((int) nbPlayers);
 		}
 
 	}
