@@ -143,10 +143,13 @@ public class UserDAOMongoImpl implements UserDAO, InitializingBean {
 	public List<User> getUsers(final int numToSkip, final int limit) {
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
+		DBObject query = new BasicDBObject();
+		query.put(isLoggedField, Boolean.TRUE);
+		
 		// TODO I don't understand what its doing
 		final int batchSize = 0;
 		DBCursor dbCursor = dbUsers
-				.find(dbFindAll, userFieldsToFetch, numToSkip, batchSize)
+				.find(query, userFieldsToFetch, numToSkip, batchSize)
 				.limit(limit).sort(userIdIndex);
 
 		List<User> users = new ArrayList<User>(limit);
