@@ -62,8 +62,8 @@ public class BasicInjectorMain {
 	private static final boolean FLUSHUSERSTABLE = true;
 	private static final int DEFAULT_NBUSERS = 10;
 	private static final int NBQUESTIONS = 20; // don't change me...
-	private static final int QUESTIONTIMEFRAME = 15;
-	private static final int SYNCHROTIME = 4;
+	private static final int QUESTIONTIMEFRAME = 30;
+	private static final int SYNCHROTIME = 10;
 	private static final int LOGINTIMEOUT = 120;
 
 	private static int NBUSERS = DEFAULT_NBUSERS;
@@ -92,6 +92,7 @@ public class BasicInjectorMain {
 	private static boolean createGame = true;
 	private static boolean insertUsers = true;
 
+	private static final Random r = new Random();
 	
 	// Shared async http client, because it run internal workers and lot of
 	// heavy stuff.
@@ -175,7 +176,7 @@ public class BasicInjectorMain {
 
 		LOGGER.info("All gamers have answered all questions, let's wait synchrotime");
 
-		Thread.sleep((QUESTIONTIMEFRAME + SYNCHROTIME) * 1000);
+		Thread.sleep((QUESTIONTIMEFRAME + SYNCHROTIME) * 1000 + r.nextInt((QUESTIONTIMEFRAME + SYNCHROTIME + 1) * 1000));
 
 		LOGGER.info("Reinsert all workers in the queue to request ranking");
 
