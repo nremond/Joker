@@ -2,20 +2,132 @@
 <html>
 <head>
 	<script type="text/javascript" src="/lib/jquery.min.js"></script>
+	<style type="text/css">
+	#global {
+		background: url("http://www.borer.name/joker/article_fond_haut.jpg") no-repeat scroll 0 0 #FFFFFF;
+		height: 530px;
+		text-align: center;
+		width: 996px;
+		margin: 0px auto;;
+		border: 1px solid #b8d8f1;
+	}
+	
+	#title {
+		padding-top: 2em;
+		padding-left: 20px;
+		color: white;
+		font-size: 18px;
+		font-style: italic;
+	}
+	
+	#desc {
+		color: white;
+	}
+	
+	#questionForm {
+		margin-right: 80px;
+	}
+	
+	#questionForm button {
+		clear: both;
+		width: 160px;
+		height: 31px;
+		background: #666666 no-repeat;
+		text-align: center;
+		line-height: 31px;
+		color: #FFFFFF;
+		font-size: 11px;
+		font-weight: bold;
+		margin-top: 10px;
+	}
+	
+	#score {
+		position: relative;
+		float: left;
+		top: 146px;
+		left: 816px;
+		color: #ffb739;
+		font-weight: bolder;
+		font-size: 16pt;
+		border: 2px solid #ffb739;
+		padding: 3px;
+	}
+	
+	#info {
+		margin-right: 80px;
+		padding-top: 40px;
+		font-size: 22px;
+	}
+	
+	#waiting {
+		color: blue;
+		font-style: italic;
+		font-size: 24px;
+	}
+
+	#ranking {
+		color: green;
+		font-style: italic;
+	}
+	
+	#answer-ok {
+		color: green;
+		font-size: 24pt;
+		font-weight: bold;
+	}
+	
+	#answer-ko {
+		color: red;
+		font-size: 24pt;
+		font-weight: bold;
+	}
+	
+	#you {
+		font-size: 24pt;
+		font-style: italic;
+		color: white;
+	}	
+	
+	ul {
+		list-style-type: decimal;
+	}
+	
+	#before, #after {
+		font-style: italic;
+	}
+	
+	#top100 {
+		font-style: italic;
+		font-weight: bold;
+	}
+	
+	#footer {
+		padding-top: 300px;
+		font-size: 11px;
+	}
+
+	</style>
+	<title>Vous participez &agrave;... question pour un champion. Du clic!</title>
 </head>
 <body>
-
+<div id="global">
+	<h3 id="title">Vous participez &agrave;... question pour un champion. Du clic!</h3>
+	<h5 id="desc">R&eacute;pondez le plus vite possible aux questions pos&eacute;es<br /> et d&eacute;couvrez votre classement &agrave; la fin de la partie.</h5>
+	
+	<div id="score">0 pt</div>
+	
 	<div id="info"></div>
 
 	<form id="questionForm" name="questionForm"></form>
 	
+	<div id="footer">Inspiration &copy; 2011 France T&eacute;l&eacute;visions.</div>
+
 	<script>
 
 		// Waiting message
-		var waitingMsg = '<p>Waiting for other players.</p>';
-		waitingMsg += '<p>Be ready !</p>';
+		var waitingMsg = '<p id="waiting">En attente des autres joueurs...<br />Tenez-vous pr&ecirc;t!</p>';
 		
-		var waitingRankingMsg = '<p>Game is over, waiting for the ranking.</p>';
+		var waitingRankingMsg = '<p id="ranking">La partie est termin&eacute;e, calcul de<br />votre classement en cours...</p>';
 		
 		// Display the waiting message
 		$("#info").html(waitingMsg);
@@ -49,7 +161,7 @@
 					ask_next_question();
 				}
 
-			});						
+			});
 		});
 		
 		// is the game finished so that we can ask for the ranking ?
@@ -58,8 +170,6 @@
 		
 		// Start the game
 		ask_question();
-	
-	
 	
 		function ask_question() {
 			
@@ -74,7 +184,6 @@
 					}
 				});
 			} else {
-			
 				// try to call the ranking until we are allowed to
 				ranking_interval = setInterval("call_ranking()", %RANKING_WAITING_TIME%);
 			}
@@ -105,19 +214,19 @@
 			var ranking = '';
 			
 			var score = data['score'];
-			ranking += '<p>Your score : ' + score + ' points</p>';
-			
-			ranking += '<p> The 100 first users are : <br/>';
-			ranking += render_ranking(data['top_scores']);
-			ranking += '</p>';
-			
-			ranking += '<p> The 5 users before me are : <br/>';
+			ranking += '<div id="you">Votre score final: ' + score + ' points</div>';
+
+			ranking += '<div id="classement"><p id="before"> Les 5 joueurs avant vous sont: <br/><ul>';
 			ranking += render_ranking(data['before']);
-			ranking += '</p>';
+			ranking += '</ul></p>';
 			
-			ranking += '<p> The 5 users after me are : <br/>';
+			ranking += '<p id="after"> Les 5 joueurs apr&egrave;s vous sont: <br/><ul>';
 			ranking += render_ranking(data['after']);
-			ranking += '</p>';
+			ranking += '</ul></p></div>';
+
+			ranking += '<div id="top100"> Top 100 des participants : <br/><ul>';
+			ranking += render_ranking(data['top_scores']);
+			ranking += '</ul></div>';
 		
 			$("#info").html(ranking);
 			$("#questionForm").html("");
@@ -133,7 +242,7 @@
 			
 			var n = scores.length;
 			for(var i=0; i<n; i++) {
-				ranking += firstnames[i] + ' ' + lastnames[i] + ' : ' + scores[i] + '<br/>';
+				ranking += '<li>' + firstnames[i] + ' ' + lastnames[i] + ' : ' + scores[i] + ' pts</li>';
 			}
 			
 			return ranking
@@ -153,10 +262,10 @@
 					break;
 				}
 			}
-			sform += '<input type="submit" value="OK"/>';
+			sform += '<button type="submit">R&eacute;pondre</button>';
 			
 			
-			$("#info").html("");			
+			$("#info").html("");
 			$("#questionForm").html(sform);
 				
 			
@@ -172,8 +281,8 @@
 		
 		function timeout_callback() {
 			
-			var tooSlowMsg = "<p>You've been to slow to answer.</p>";
-			var nextQuestionMsg = "<p>Going to the next question.</p>";
+			var tooSlowMsg = "<p id=\"slow\">D&eacute;sol&eacute;, le temps de r&eacute;ponse<br />&agrave; la question est d&eacute;pass&eacute;.</p>";
+			var nextQuestionMsg = "<p id=\"next\">Chargement de la question suivante...</p>";
 			
 			if(questionNumber == %NB_QUESTIONS%) {
 				$("#info").html(tooSlowMsg + waitingRankingMsg);
@@ -190,12 +299,11 @@
 			
 			var ok = data['are_u_right'];
 			//var good_answer = data["good_answer"];
-			var score = data['score'];
+			var score = data['score'] + ' pt';
 			
-			var okMsg = ok == "true" ? 'Good' : 'Bad';
-			var resultMsg = '<p>' + okMsg + ' answer !<br/>';
-			resultMsg += 'Your score : ' + score + ' points</p>';
-			
+			var okMsg = ok == "true" ? 'Bonne' : 'Mauvaise';
+			var cssClass = ok == "true" ? 'answer-ok' : 'answer-ko';
+			var resultMsg = '<p id="' + cssClass + '">' + okMsg + ' r&eacute;ponse !</p>';
 						
 			if(questionNumber == %NB_QUESTIONS%) {
 				$("#info").html(resultMsg + waitingRankingMsg);
@@ -203,6 +311,8 @@
 				$("#info").html(resultMsg + waitingMsg);
 			}
 			$("#questionForm").html("");
+			
+			$("#score").html(score);
 			
 			ask_next_question();
 		}
@@ -213,5 +323,6 @@
 		}
 	
 	</script>
+</div>
 </body>
 </html>

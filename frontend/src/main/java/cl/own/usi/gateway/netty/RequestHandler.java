@@ -1,5 +1,6 @@
 package cl.own.usi.gateway.netty;
 
+import static cl.own.usi.gateway.netty.ResponseHelper.doRedirect;
 import static cl.own.usi.gateway.netty.ResponseHelper.writeResponse;
 import static cl.own.usi.gateway.netty.controller.AbstractController.URI_API;
 import static cl.own.usi.gateway.netty.controller.AbstractController.URI_API_LENGTH;
@@ -101,20 +102,23 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 			throws Exception {
-		
-		ChannelHandlerContext parentCtx = ctx.getPipeline().getContext("executor1");
+
+		ChannelHandlerContext parentCtx = ctx.getPipeline().getContext(
+				"executor1");
 		if (parentCtx != null) {
 			Long enqueuedTime = (Long) parentCtx.getAttachment();
 			if (enqueuedTime != null) {
 				long waitTime = System.currentTimeMillis() - enqueuedTime;
 				if (waitTime > 500L) {
-					logger.debug("Message waited {} ms before being processed.", waitTime);
+					logger.debug(
+							"Message waited {} ms before being processed.",
+							waitTime);
 				}
 			}
 		}
-		
+
 		try {
-			
+
 			HttpRequest request = (HttpRequest) e.getMessage();
 
 			String uri = request.getUri();
@@ -149,7 +153,7 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 			} else if (uri.startsWith(URI_JQUERY)) {
 				jQueryController.messageReceived(ctx, e);
 			} else {
-				writeResponse(e, NOT_FOUND);
+				doRedirect(e, URI_API + URI_LOGIN);
 			}
 		} catch (Exception ex) {
 			logger.warn("Exception thrown", ex);
