@@ -1,6 +1,7 @@
 package cl.own.usi.gateway.netty;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import org.jboss.netty.bootstrap.ServerBootstrap;
@@ -17,9 +18,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Netty initialization stuff.
- *
+ * 
  * @author bperroud
- *
+ * 
  */
 @Component
 public class GatewayServiceImpl implements InitializingBean, DisposableBean {
@@ -40,6 +41,20 @@ public class GatewayServiceImpl implements InitializingBean, DisposableBean {
 		this.port = port;
 	}
 
+	private boolean fixedWorkerThreadPool = false;
+
+	@Value(value = "${frontend.fixedWorkerThreadPool:false}")
+	public void setFixedWorkerThreadPool(boolean fixedWorkerThreadPool) {
+		this.fixedWorkerThreadPool = fixedWorkerThreadPool;
+	}
+
+	private int numberOfWorkerThreads;
+
+	@Value(value = "${frontend.numberOfWorkerThreads:4}")
+	public void setNumberOfWorkerThreads(int numberOfWorkerThreads) {
+		this.numberOfWorkerThreads = numberOfWorkerThreads;
+	}
+
 	public void setChannelPipelineFactory(
 			ChannelPipelineFactory channelPipelineFactory) {
 		this.channelPipelineFactory = channelPipelineFactory;
@@ -49,9 +64,17 @@ public class GatewayServiceImpl implements InitializingBean, DisposableBean {
 
 		LOGGER.info("Netty configured for listening on port {}", port);
 
+		Executor workerExecutor;
+		if (fixedWorkerThreadPool) {
+			workerExecutor = Executors
+					.newFixedThreadPool(numberOfWorkerThreads);
+		} else {
+			workerExecutor = Executors.newCachedThreadPool();
+		}
+
 		bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(
-				Executors.newCachedThreadPool(),
-				Executors.newCachedThreadPool()));
+				Executors.newCachedThreadPool(), workerExecutor,
+				numberOfWorkerThreads));
 
 		// Set up the event pipeline factory.
 		bootstrap.setPipelineFactory(channelPipelineFactory);
