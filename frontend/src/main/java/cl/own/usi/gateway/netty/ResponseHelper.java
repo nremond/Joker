@@ -74,8 +74,8 @@ public class ResponseHelper {
 		
 		final ChannelBuffer buf = ChannelBuffers.wrappedBuffer(b);
 
-		response.setHeader(HEADER_SERVER_LABEL, HEADER_SERVER_VALUE);
-		response.setHeader(HEADER_CONNECTION_LABEL, HEADER_CONNECTION_VALUE);
+		response.setHeader(SERVER, HEADER_SERVER_VALUE);
+		response.setHeader(CONNECTION, HEADER_CONNECTION_VALUE);
 		response.setContent(buf);
 
 		final ChannelFuture future = e.getChannel().write(response);
