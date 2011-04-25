@@ -71,8 +71,8 @@ public class AnswerController extends AbstractController {
 						getLogger().info("Invalid userId {}", userId);
 						return;
 					}
-					getLogger().debug(
-							"Answer Question {} for user {} ", questionNumber, userId);
+//					getLogger().debug(
+//							"Answer Question {} for user {} ", questionNumber, userId);
 
 //					gameService.userAnswer(questionNumber);
 
@@ -121,10 +121,9 @@ public class AnswerController extends AbstractController {
 						}
 
 						sb.append("\",\"good_answer\":\"");
-						sb.append(question.getChoices().get(
-								question.getCorrectChoice() - 1));
+						sb.append(question.getCorrectChoice());
 						sb.append("\",\"score\":\"");
-						sb.append(userAndScoreAndAnswer.getScore());
+						sb.append(String.valueOf(userAndScoreAndAnswer.getScore()));
 						sb.append("\"}");
 
 						writeStringToReponse(sb.toString(), e, CREATED);

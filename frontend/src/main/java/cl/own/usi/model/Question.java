@@ -19,7 +19,7 @@ public class Question implements Serializable {
 
 	private List<String> choices;
 
-	private int correctChoice;
+	private int correctChoiceNumber;
 
 	private int value = 0;
 
@@ -47,12 +47,18 @@ public class Question implements Serializable {
 		this.choices = choices;
 	}
 
-	public int getCorrectChoice() {
+	public int getCorrectChoiceNumber() {
+		return correctChoiceNumber;
+	}
+	
+	private String correctChoice;
+	public String getCorrectChoice() {
 		return correctChoice;
 	}
 
-	public void setCorrectChoice(int correctChoice) {
-		this.correctChoice = correctChoice;
+	public void setCorrectChoice(int correctChoiceNumber) {
+		this.correctChoiceNumber = correctChoiceNumber;
+		this.correctChoice = getChoices().get(correctChoiceNumber - 1);
 	}
 
 	public int getValue() {

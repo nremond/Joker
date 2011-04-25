@@ -43,15 +43,8 @@ public class ResponseHelper {
 	public static void writeStringToReponse(final String s,
 			final MessageEvent e, final HttpResponse response) {
 
-		final ChannelBuffer buf = ChannelBuffers.copiedBuffer(s,
-				CharsetUtil.UTF_8);
+		writeBytesToResponse(s.getBytes(CharsetUtil.UTF_8), e, response);
 
-		response.setHeader(HEADER_SERVER_LABEL, HEADER_SERVER_VALUE);
-		response.setHeader(HEADER_CONNECTION_LABEL, HEADER_CONNECTION_VALUE);
-		response.setContent(buf);
-
-		final ChannelFuture future = e.getChannel().write(response);
-		future.addListener(ChannelFutureListener.CLOSE);
 	}
 	
 	public static void writeStringToReponse(final String s,
@@ -60,6 +53,19 @@ public class ResponseHelper {
 		final HttpResponse response = new DefaultHttpResponse(HTTP_1_1, status);
 		
 		writeStringToReponse(s, e, response);
+		
+	}
+	
+	public static void writeBytesToResponse(final byte[] b, final MessageEvent e, final HttpResponse response) {
+		
+		final ChannelBuffer buf = ChannelBuffers.wrappedBuffer(b);
+
+		response.setHeader(HEADER_SERVER_LABEL, HEADER_SERVER_VALUE);
+		response.setHeader(HEADER_CONNECTION_LABEL, HEADER_CONNECTION_VALUE);
+		response.setContent(buf);
+
+		final ChannelFuture future = e.getChannel().write(response);
+		future.addListener(ChannelFutureListener.CLOSE);
 		
 	}
 

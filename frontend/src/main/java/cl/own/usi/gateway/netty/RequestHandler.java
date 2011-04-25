@@ -123,10 +123,10 @@ public class RequestHandler extends SimpleChannelUpstreamHandler {
 
 				uri = uri.substring(URI_API_LENGTH);
 
-				if (uri.startsWith(URI_QUESTION)) {
-					questionController.messageReceived(ctx, e);
-				} else if (uri.startsWith(URI_ANSWER)) {
+				if (uri.startsWith(URI_ANSWER)) {
 					answerController.messageReceived(ctx, e);
+				} else if (uri.startsWith(URI_QUESTION)) {
+					questionController.messageReceived(ctx, e);
 				} else if (uri.startsWith(URI_RANKING)) {
 					rankingController.messageReceived(ctx, e);
 				} else if (uri.startsWith(URI_LOGIN)) {

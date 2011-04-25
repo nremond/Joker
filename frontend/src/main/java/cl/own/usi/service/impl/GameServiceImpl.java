@@ -592,7 +592,7 @@ public class GameServiceImpl implements GameService {
 			if (question == null) {
 				return false;
 			} else {
-				return question.getCorrectChoice() == validatedAnswer;
+				return question.getCorrectChoiceNumber() == validatedAnswer;
 			}
 		}
 	}

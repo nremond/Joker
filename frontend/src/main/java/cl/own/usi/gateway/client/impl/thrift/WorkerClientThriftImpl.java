@@ -321,7 +321,7 @@ public class WorkerClientThriftImpl implements WorkerClient, InitializingBean, D
 							questions.size());
 
 					for (Question question : questions) {
-						goodAnswers.add(question.getCorrectChoice());
+						goodAnswers.add(question.getCorrectChoiceNumber());
 					}
 
 					return client.getAllAnswersAsJson(email, goodAnswers);
@@ -333,7 +333,7 @@ public class WorkerClientThriftImpl implements WorkerClient, InitializingBean, D
 					for (Question question : questions) {
 						if (questionNumber.equals(question.getNumber())) {
 							questionString = question.getLabel();
-							goodAnswer = question.getCorrectChoice();
+							goodAnswer = question.getCorrectChoiceNumber();
 						}
 					}
 
