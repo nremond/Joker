@@ -40,12 +40,12 @@ public class ServerPipelineFactory implements ChannelPipelineFactory,
 	private int threadsNumber;
 	private boolean fixedThreadPool;
 	
-	@Value(value = "${frontend.fixedThreadsNumber:10}")
+	@Value(value = "${frontend.handler.fixedThreadsNumber:10}")
 	public void setFixedThreadsNumber(int threadsNumber) {
 		this.threadsNumber = threadsNumber;
 	}
 	
-	@Value(value = "${frontend.fixedThreadPool:false}")
+	@Value(value = "${frontend.handler.fixedThreadPool:false}")
 	public void setFixedThreadPool(boolean fixedThreadPool) {
 		this.fixedThreadPool = fixedThreadPool;
 	}
