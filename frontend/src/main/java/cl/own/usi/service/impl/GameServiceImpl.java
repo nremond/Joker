@@ -424,7 +424,10 @@ public class GameServiceImpl implements GameService {
 					gameRunning.set(false);
 
 					try {
+						long startrankingtime = System.currentTimeMillis();
 						gameSynchronization.allUsersRankingLatch.await();
+
+						LOGGER.info("All ranking has been requested in {} ms", System.currentTimeMillis() - startrankingtime);
 
 						if (twitt && !gameSynchronization.reseted) {
 							twitter.twitt(String.format(TWITTER_MESSAGE,

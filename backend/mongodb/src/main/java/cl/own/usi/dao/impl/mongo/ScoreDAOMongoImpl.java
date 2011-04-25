@@ -12,10 +12,14 @@ import static cl.own.usi.dao.impl.mongo.DaoHelper.usersCollection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import cl.own.usi.dao.ScoreDAO;
@@ -26,9 +30,10 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
+import com.mongodb.WriteResult;
 
 @Repository
-public class ScoreDAOMongoImpl implements ScoreDAO {
+public class ScoreDAOMongoImpl implements ScoreDAO, InitializingBean {
 
 	@Autowired
 	private DB db;
@@ -36,6 +41,10 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(ScoreDAOMongoImpl.class);
 
+	private int threadsNumber = 4;
+	
+	private ExecutorService writeExecutor;
+	
 	// Natural order operator
 	private static enum OrderOperator {
 		GreatherThan("$gt"), LesserThan("$lt");
@@ -56,9 +65,15 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 			.append(userIdField, 1).append(namesEmailField, 1)
 			.append(scoreField, 1);
 
-	private final static DBObject scoreFieldsToFetch = new BasicDBObject()
-			.append(scoreField, 1);
-
+	private int getThreadsNumber() {
+		return threadsNumber;
+	}
+	
+	@Value(value = "${backend.mongo.threadsNumber:4}")
+	private void setThreadsNumber(int threadsNumber) {
+		this.threadsNumber = threadsNumber;
+	}
+	
 	private List<User> getUsers(DBObject query, int limit) {
 
 		DBCollection dbUsers = db.getCollection(usersCollection);
@@ -143,9 +158,23 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 
 		DBCollection dbUsers = db.getCollection(usersCollection);
 
-		DBObject dbUser = new BasicDBObject();
-		dbUser.put(userIdField, userId);
+		DBObject dbId = new BasicDBObject();
+		dbId.put(userIdField, userId);
 
+		DBObject scoreBonusFieldsToFetch = new BasicDBObject();
+		scoreBonusFieldsToFetch.put(scoreField, 1);
+
+		long starttime = System.currentTimeMillis();
+		
+		DBObject dbUser = dbUsers.findOne(dbId, scoreBonusFieldsToFetch);
+		
+		long loadtime = System.currentTimeMillis() - starttime;
+		if (loadtime > 350L) {
+			LOGGER.warn("Loading {} took {} ms", userId, loadtime);
+		}
+		
+		final int score = (Integer) dbUser.get(scoreField);
+		
 		DBObject dbUpdate = new BasicDBObject();
 		// Reset the bonus
 		dbUpdate.put(bonusField, Integer.valueOf(0));
@@ -153,22 +182,12 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		dbUpdate.put(questionFieldPrefix + questionNumber,
 				Integer.valueOf(answer));
 
-		DBObject dbSetUpdate = new BasicDBObject();
-		dbSetUpdate.put("$set", dbUpdate);
-
-		// Only fetch the score and set the bonus to zero
-		final FindAndModifyAction findAndModifyAction = new FindAndModifyAction(
-				dbUsers, dbUser, scoreFieldsToFetch, null, false, dbSetUpdate,
-				false, false);
-
-		DBObject user = findAndModifyAction.safeAction();
-
-		Integer score = (Integer) user.get(scoreField);
-
+		writeExecutor.execute(new AsyncWriter(dbId, dbUpdate));
+		
 		LOGGER.debug("setBadAnswer for user {} whose score is now {}", userId,
 				score);
 
-		return score.intValue();
+		return score;
 	}
 
 	@Override
@@ -191,8 +210,15 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 			scoreBonusFieldsToFetch.put(previousQuestion, 1);
 		}
 
+		long starttime = System.currentTimeMillis();
+
 		DBObject dbUser = dbUsers.findOne(dbId, scoreBonusFieldsToFetch);
 
+		long loadtime = System.currentTimeMillis() - starttime;
+		if (loadtime > 350L) {
+			LOGGER.warn("Loading {} took {} ms", userId, loadtime);
+		}
+		
 		int bonus = (Integer) dbUser.get(bonusField);
 		final int score = (Integer) dbUser.get(scoreField);
 
@@ -216,10 +242,7 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		dbUpdate.put(questionFieldPrefix + questionNumber,
 				Integer.valueOf(answer));
 
-		DBObject dbSetUpdate = new BasicDBObject();
-		dbSetUpdate.put("$set", dbUpdate);
-
-		dbUsers.update(dbId, dbSetUpdate);
+		writeExecutor.execute(new AsyncWriter(dbId, dbUpdate));
 
 		LOGGER.debug(
 				"setGoodAnswer for user {} whose previous score was {} and is now {}",
@@ -238,4 +261,33 @@ public class ScoreDAOMongoImpl implements ScoreDAO {
 		// not needed in this implementation
 	}
 
+	private class AsyncWriter implements Runnable {
+
+		private final DBObject id;
+		private final DBObject value;
+		
+		public AsyncWriter(DBObject id, DBObject value){
+			this.id = id;
+			this.value = value;
+		}
+		
+		@Override
+		public void run() {
+			DBCollection dbUsers = db.getCollection(usersCollection);
+			
+			final DBObject dbSetUpdate = new BasicDBObject();
+			dbSetUpdate.put("$set", value);
+
+			WriteResult result = dbUsers.update(id, dbSetUpdate);
+			
+		}
+		
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		
+		writeExecutor = Executors.newFixedThreadPool(getThreadsNumber());
+		
+	}
 }

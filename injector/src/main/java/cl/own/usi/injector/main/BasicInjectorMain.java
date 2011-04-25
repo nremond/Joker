@@ -102,9 +102,9 @@ public class BasicInjectorMain {
 				.setMaximumConnectionsPerHost(MAXNOFILES);
 		ASYNC_HTTP_CLIENT_CONFIG_BUILDER.setMaximumConnectionsTotal(MAXNOFILES);
 		ASYNC_HTTP_CLIENT_CONFIG_BUILDER.setRequestTimeoutInMs(Math.max(
-				QUESTIONTIMEFRAME + SYNCHROTIME, LOGINTIMEOUT) * 1000 * 2);
+				QUESTIONTIMEFRAME + SYNCHROTIME, LOGINTIMEOUT) * 1000 * 3);
 		ASYNC_HTTP_CLIENT_CONFIG_BUILDER.setConnectionTimeoutInMs(Math.min(
-				QUESTIONTIMEFRAME + SYNCHROTIME, LOGINTIMEOUT) * 1000);
+				QUESTIONTIMEFRAME + SYNCHROTIME, LOGINTIMEOUT) * 1000 * 2);
 	}
 
 	private static final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
