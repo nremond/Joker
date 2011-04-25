@@ -43,14 +43,14 @@ public class GatewayServiceImpl implements InitializingBean, DisposableBean {
 
 	private boolean fixedWorkerThreadPool = false;
 
-	@Value(value = "${frontend.fixedWorkerThreadPool:false}")
+	@Value(value = "${frontend.netty.fixedWorkerThreadPool:false}")
 	public void setFixedWorkerThreadPool(boolean fixedWorkerThreadPool) {
 		this.fixedWorkerThreadPool = fixedWorkerThreadPool;
 	}
 
 	private int numberOfWorkerThreads;
 
-	@Value(value = "${frontend.numberOfWorkerThreads:4}")
+	@Value(value = "${frontend.netty.numberOfWorkerThreads:4}")
 	public void setNumberOfWorkerThreads(int numberOfWorkerThreads) {
 		this.numberOfWorkerThreads = numberOfWorkerThreads;
 	}
