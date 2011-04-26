@@ -53,7 +53,7 @@ start_config() {
 
 start_routing() {
 	sleep 2
-	mongos --configdb 192.168.1.2:$CONFIGDB_PORT,192.168.1.3:$CONFIGDB_PORT,192.168.1.4:$CONFIGDB_PORT --chunkSize 5 --logpath ${LOG_FOLDER}mongos.log --logappend --fork
+	mongos --configdb 192.168.1.2:$CONFIGDB_PORT,192.168.1.3:$CONFIGDB_PORT,192.168.1.4:$CONFIGDB_PORT --chunkSize 30 --logpath ${LOG_FOLDER}mongos.log --logappend --fork
 }
 
 stop_all() {
