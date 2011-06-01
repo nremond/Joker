@@ -280,6 +280,10 @@ public class GameServiceImpl implements GameService {
 				for (int i = FIRST_QUESTION; i <= gameSynchronization.game
 						.getNumberOfQuestion(); i++) {
 
+					if (gameSynchronization.reseted) {
+						break;
+					}
+					
 					gameSynchronization.currentQuestionToRequest = i + 1;
 
 					LOGGER.info(
@@ -352,10 +356,6 @@ public class GameServiceImpl implements GameService {
 					LOGGER.info(
 							"Question {} finished, going to the next question",
 							i);
-
-					if (gameSynchronization.reseted) {
-						break;
-					}
 
 				}
 

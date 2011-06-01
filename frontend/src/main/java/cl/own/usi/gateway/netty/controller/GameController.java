@@ -219,7 +219,19 @@ public class GameController extends AbstractAuthenticateController {
 						nbusersthreshold, questiontimeframe, logintimeout,
 						synchrotime, questions);
 
-				if (!gameInserted) {
+				if (gameInserted) {
+					// Flush cache manager 
+					getCacheManager().flush();
+					
+					// Reset all users' state when a new game is created (logged = false, score = bonus = 0)
+					long starttime = System.currentTimeMillis();
+					workerClient.flushUsers();
+					getLogger().info("Flushed in {} ms",
+							(System.currentTimeMillis() - starttime));
+					
+					workerClient.gameCreated();
+					
+				} else {
 					getLogger()
 							.error("Cannot re-create a game as previous one is not ended");
 					writeResponse(e, BAD_REQUEST);
@@ -227,14 +239,12 @@ public class GameController extends AbstractAuthenticateController {
 				}
 
 				if (flushusertable) {
-					long starttime = System.currentTimeMillis();
-					workerClient.flushUsers();
-					getCacheManager().flush();
-					getLogger().info("Flushed in {} ms",
-							(System.currentTimeMillis() - starttime));
+					// TODO : So what to do here ? Empty the whole db ?
+//					long starttime = System.currentTimeMillis();
+//					workerClient.flushUsers();
+//					getLogger().info("Flushed in {} ms",
+//							(System.currentTimeMillis() - starttime));
 				}
-				
-				workerClient.gameCreated();
 
 			} catch (JDOMParseException ex) {
 				LOGGER.warn("JDOMexception", ex);
