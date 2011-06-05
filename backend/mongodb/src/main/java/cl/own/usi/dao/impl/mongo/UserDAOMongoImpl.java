@@ -29,6 +29,7 @@ import cl.own.usi.dao.UserDAO;
 import cl.own.usi.exception.UserAlreadyLoggedException;
 import cl.own.usi.model.Answer;
 import cl.own.usi.model.User;
+import cl.own.usi.model.util.IdHelper;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.CommandResult;
@@ -163,7 +164,7 @@ public class UserDAOMongoImpl implements UserDAO, InitializingBean {
 
 	@Override
 	public User getUserByEmail(String email) {
-		final String userId = DaoHelper.generateUserId(email);
+		final String userId = IdHelper.generateUserId(email);
 		return getUserById(userId);
 	}
 
@@ -173,7 +174,7 @@ public class UserDAOMongoImpl implements UserDAO, InitializingBean {
 
 		final DBCollection dbUsers = db.getCollection(usersCollection);
 
-		final String userId = DaoHelper.generateUserId(email);
+		final String userId = IdHelper.generateUserId(email);
 
 		// Get the current score and bonus
 		DBObject dbId = new BasicDBObject();
@@ -235,7 +236,7 @@ public class UserDAOMongoImpl implements UserDAO, InitializingBean {
 	@Override
 	public List<Answer> getAnswersByEmail(final String email) {
 
-		final String userId = DaoHelper.generateUserId(email);
+		final String userId = IdHelper.generateUserId(email);
 		return getAnswers(userId);
 	}
 

@@ -1,9 +1,7 @@
 package cl.own.usi.dao.impl.mongo;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
 import cl.own.usi.model.User;
+import cl.own.usi.model.util.IdHelper;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
@@ -33,7 +31,7 @@ public class DaoHelper {
 
 	public static DBObject toDBObject(final User user) {
 		DBObject dbUser = new BasicDBObject();
-		dbUser.put(userIdField, DaoHelper.generateUserId(user.getEmail()));
+		dbUser.put(userIdField, IdHelper.generateUserId(user.getEmail()));
 		dbUser.put(passwordField, user.getPassword());
 		dbUser.put(scoreField, user.getScore());
 		dbUser.put(isLoggedField, Boolean.FALSE);
@@ -80,62 +78,6 @@ public class DaoHelper {
 		user.setLastname((String) lastname);
 
 		return user;
-	}
-
-	static final String baseTable = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-	// encode method
-	public static String base64Encode(byte[] bytes) {
-		StringBuilder tmp = new StringBuilder();
-		int i = 0;
-		byte pos;
-		for (i = 0; i < bytes.length - bytes.length % 3; i += 3) {
-			pos = (byte) (bytes[i] >> 2 & 63);
-			tmp.append(baseTable.charAt(pos));
-			pos = (byte) (((bytes[i] & 3) << 4) + (bytes[i + 1] >> 4 & 15));
-			tmp.append(baseTable.charAt(pos));
-			pos = (byte) (((bytes[i + 1] & 15) << 2) + (bytes[i + 2] >> 6 & 3));
-			tmp.append(baseTable.charAt(pos));
-			pos = (byte) (bytes[i + 2] & 63);
-			tmp.append(baseTable.charAt(pos));
-		}
-		if (bytes.length % 3 != 0) {
-			if (bytes.length % 3 == 2) {
-				pos = (byte) (bytes[i] >> 2 & 63);
-				tmp.append(baseTable.charAt(pos));
-				pos = (byte) (((bytes[i] & 3) << 4) + (bytes[i + 1] >> 4 & 15));
-				tmp.append(baseTable.charAt(pos));
-				pos = (byte) ((bytes[i + 1] & 15) << 2);
-				tmp.append(baseTable.charAt(pos));
-				// tmp.append("=");
-			} else if (bytes.length % 3 == 1) {
-				pos = (byte) (bytes[i] >> 2 & 63);
-				tmp.append(baseTable.charAt(pos));
-				pos = (byte) ((bytes[i] & 3) << 4);
-				tmp.append(baseTable.charAt(pos));
-				// tmp.append("==");
-			}
-		}
-		return tmp.toString();
-	}
-
-	private static final String USER_ID_SALT = "[B@190d11+";
-
-	public static String generateUserId(final String email) {
-		byte[] hash = sha1(email + USER_ID_SALT);
-		// return Base64.encode(hash);
-		return base64Encode(hash);
-	}
-
-	private static byte[] sha1(final String s) {
-		MessageDigest md;
-		try {
-			md = MessageDigest.getInstance("SHA-1");
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		}
-		md.update((s + USER_ID_SALT).getBytes());
-		return md.digest();
 	}
 
 	/*

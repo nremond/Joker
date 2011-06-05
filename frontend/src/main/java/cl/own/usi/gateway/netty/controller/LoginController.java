@@ -30,6 +30,7 @@ import cl.own.usi.gateway.client.UserLogin;
 import cl.own.usi.gateway.client.WorkerClient;
 import cl.own.usi.json.LoginRequest;
 import cl.own.usi.model.User;
+import cl.own.usi.model.util.IdHelper;
 import cl.own.usi.service.GameService;
 
 /**
@@ -64,6 +65,14 @@ public class LoginController extends AbstractController {
 					request.getContent().toString(CharsetUtil.UTF_8),
 					LoginRequest.class);
 			
+			// Ugly hack to fail fast in case of users already logged in (and avoid a call to the backend)
+			final String tmpUserId = IdHelper.generateUserId(loginRequest.getMail());
+			final CachedUser tmpCachedUser = getCacheManager().getCachedUser(tmpUserId);
+			if (tmpCachedUser != null && tmpCachedUser.isLogged()) {
+				writeResponse(e, BAD_REQUEST);
+				return;
+			}
+			
 			final UserLogin userLogin = workerClient.loginUser(loginRequest.getMail(),
 					loginRequest.getPassword());
 
@@ -74,7 +83,7 @@ public class LoginController extends AbstractController {
 				return;
 			} else if (userLogin.isAlreadyLogged()) {
 				writeResponse(e, BAD_REQUEST);
-				getLogger().warn(
+				getLogger().debug(
 						"User already logged for session {}", loginRequest.getMail());
 				return;
 			}

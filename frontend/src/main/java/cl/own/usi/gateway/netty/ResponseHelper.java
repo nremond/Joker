@@ -3,6 +3,8 @@ package cl.own.usi.gateway.netty;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONNECTION;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.LOCATION;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.SERVER;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGTH;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -76,6 +78,8 @@ public class ResponseHelper {
 
 		response.setHeader(SERVER, HEADER_SERVER_VALUE);
 		response.setHeader(CONNECTION, HEADER_CONNECTION_VALUE);
+		response.setHeader(CONTENT_LENGTH, b.length);
+
 		response.setContent(buf);
 
 		final ChannelFuture future = e.getChannel().write(response);

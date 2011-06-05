@@ -115,9 +115,9 @@ public class AnswerController extends AbstractController {
 						final StringBuilder sb = new StringBuilder(
 								"{\"are_u_right\":\"");
 						if (userAndScoreAndAnswer.isAnswer()) {
-							sb.append("true");
+							sb.append("True");
 						} else {
-							sb.append("false");
+							sb.append("False");
 						}
 
 						sb.append("\",\"good_answer\":\"");
