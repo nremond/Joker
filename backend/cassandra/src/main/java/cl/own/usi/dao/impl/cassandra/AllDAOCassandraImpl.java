@@ -1,7 +1,7 @@
 package cl.own.usi.dao.impl.cassandra;
 
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.emailColumn;
-import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.dbKeyspace;
+import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.keyspaceName;
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.answersColumnFamily;
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.firstnameColumn;
 import static cl.own.usi.dao.impl.cassandra.CassandraConfiguration.lastnameColumn;
@@ -462,12 +462,12 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 
 		long starttime = System.currentTimeMillis();
 
-		cluster.truncate(dbKeyspace, answersColumnFamily);
-		cluster.truncate(dbKeyspace, usersColumnFamily);
-		cluster.truncate(dbKeyspace, bonusesColumnFamily);
-		cluster.truncate(dbKeyspace, ranksColumnFamily);
-		cluster.truncate(dbKeyspace, scoresColumnFamily);
-		cluster.truncate(dbKeyspace, loginsColumnFamily);
+		cluster.truncate(keyspaceName, answersColumnFamily);
+		cluster.truncate(keyspaceName, usersColumnFamily);
+		cluster.truncate(keyspaceName, bonusesColumnFamily);
+		cluster.truncate(keyspaceName, ranksColumnFamily);
+		cluster.truncate(keyspaceName, scoresColumnFamily);
+		cluster.truncate(keyspaceName, loginsColumnFamily);
 
 		orderedScores = Collections.<Integer> emptyList();
 		reverseOrderedScores = Collections.<Integer> emptyList();
@@ -689,9 +689,9 @@ public class AllDAOCassandraImpl implements ScoreDAO, UserDAO, InitializingBean 
 	@Override
 	public void afterPropertiesSet() throws Exception {
 
-		consistencyOneKeyspace = HFactory.createKeyspace(dbKeyspace, cluster,
+		consistencyOneKeyspace = HFactory.createKeyspace(keyspaceName, cluster,
 				new AllOneConsistencyLevelPolicy());
-		consistencyQuorumKeyspace = HFactory.createKeyspace(dbKeyspace,
+		consistencyQuorumKeyspace = HFactory.createKeyspace(keyspaceName,
 				cluster, new QuorumAllConsistencyLevelPolicy());
 
 	}

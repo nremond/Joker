@@ -24,12 +24,12 @@ public class CassandraConfiguration implements InitializingBean {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	// Cluster
-	final static private String dbcluster = "JokerCluster";
-	final static private String dbhost = "localhost";
-	final static private int dbPort = 9160;
+	final static private String clusterName = "JokerCluster";
+	final static private String host = "localhost";
+	final static private int port = 9160;
 
 	// Keyspace
-	final static public String dbKeyspace = "JokerKeySpace";
+	final static public String keyspaceName = "JokerKeySpace";
 
 	// Column Family
 	final static public String usersColumnFamily = "UsersInfo";
@@ -68,7 +68,7 @@ public class CassandraConfiguration implements InitializingBean {
 	
 	@Bean
 	public Cluster cluster() {
-		return HFactory.getOrCreateCluster(dbcluster, dbhost + ":" + dbPort);
+		return HFactory.getOrCreateCluster(clusterName, host + ":" + String.valueOf(port));
 	}
 
 	@Override
@@ -95,7 +95,7 @@ public class CassandraConfiguration implements InitializingBean {
 		
 		logger.debug("Droping keyspace");
 		
-		cluster.dropKeyspace(dbKeyspace);
+		cluster.dropKeyspace(keyspaceName);
 		
 		try {
 			Thread.sleep(5000);
@@ -110,7 +110,7 @@ public class CassandraConfiguration implements InitializingBean {
 		
 		// Definition of the Keyspace
 		BasicKeyspaceDefinition keyspaceDefinition = new BasicKeyspaceDefinition();
-		keyspaceDefinition.setName(dbKeyspace);
+		keyspaceDefinition.setName(keyspaceName);
 		keyspaceDefinition.setReplicationFactor(replicationFactor);
 		keyspaceDefinition.setStrategyClass(strategyClass);
 		// keyspaceDefinition.setStrategyOption(field, value);
@@ -118,7 +118,7 @@ public class CassandraConfiguration implements InitializingBean {
 		BasicColumnFamilyDefinition usersColumnFamilyDefinition = new BasicColumnFamilyDefinition();
 		usersColumnFamilyDefinition.setComparatorType(ComparatorType.UTF8TYPE);
 		usersColumnFamilyDefinition.setName(usersColumnFamily);
-		usersColumnFamilyDefinition.setKeyspaceName(dbKeyspace);
+		usersColumnFamilyDefinition.setKeyspaceName(keyspaceName);
 		usersColumnFamilyDefinition.setKeyCacheSize(1000000);
 		usersColumnFamilyDefinition.setRowCacheSize(1000000);
 //		usersColumnFamilyDefinition.setReadRepairChance(0);
@@ -131,7 +131,7 @@ public class CassandraConfiguration implements InitializingBean {
 		answersColumnFamilyDefinition
 				.setComparatorType(ComparatorType.INTEGERTYPE);
 		answersColumnFamilyDefinition.setName(answersColumnFamily);
-		answersColumnFamilyDefinition.setKeyspaceName(dbKeyspace);
+		answersColumnFamilyDefinition.setKeyspaceName(keyspaceName);
 		answersColumnFamilyDefinition.setKeyCacheSize(1000000);
 		keyspaceDefinition.addColumnFamily(new ThriftCfDef(
 				answersColumnFamilyDefinition));
@@ -139,7 +139,7 @@ public class CassandraConfiguration implements InitializingBean {
 		BasicColumnFamilyDefinition bonusesColumnFamilyDefinition = new BasicColumnFamilyDefinition();
 		bonusesColumnFamilyDefinition.setComparatorType(ComparatorType.INTEGERTYPE);
 		bonusesColumnFamilyDefinition.setName(bonusesColumnFamily);
-		bonusesColumnFamilyDefinition.setKeyspaceName(dbKeyspace);
+		bonusesColumnFamilyDefinition.setKeyspaceName(keyspaceName);
 		bonusesColumnFamilyDefinition.setKeyCacheSize(1000000);
 		bonusesColumnFamilyDefinition.setRowCacheSize(1000000);
 		keyspaceDefinition.addColumnFamily(new ThriftCfDef(
@@ -148,7 +148,7 @@ public class CassandraConfiguration implements InitializingBean {
 		BasicColumnFamilyDefinition ranksColumnFamilyDefinition = new BasicColumnFamilyDefinition();
 		ranksColumnFamilyDefinition.setComparatorType(ComparatorType.UTF8TYPE);
 		ranksColumnFamilyDefinition.setName(ranksColumnFamily);
-		ranksColumnFamilyDefinition.setKeyspaceName(dbKeyspace);
+		ranksColumnFamilyDefinition.setKeyspaceName(keyspaceName);
 		ranksColumnFamilyDefinition.setKeyCacheSize(1000);
 		ranksColumnFamilyDefinition.setRowCacheSize(1000);
 		keyspaceDefinition.addColumnFamily(new ThriftCfDef(
@@ -157,7 +157,7 @@ public class CassandraConfiguration implements InitializingBean {
 		BasicColumnFamilyDefinition loginsColumnFamilyDefinition = new BasicColumnFamilyDefinition();
 		loginsColumnFamilyDefinition.setComparatorType(ComparatorType.LONGTYPE);
 		loginsColumnFamilyDefinition.setName(loginsColumnFamily);
-		loginsColumnFamilyDefinition.setKeyspaceName(dbKeyspace);
+		loginsColumnFamilyDefinition.setKeyspaceName(keyspaceName);
 		loginsColumnFamilyDefinition.setKeyCacheSize(1000000);
 		loginsColumnFamilyDefinition.setRowCacheSize(1000000);
 		keyspaceDefinition.addColumnFamily(new ThriftCfDef(
@@ -167,7 +167,7 @@ public class CassandraConfiguration implements InitializingBean {
 		scoresColumnFamilyDefinition
 				.setComparatorType(ComparatorType.INTEGERTYPE);
 		scoresColumnFamilyDefinition.setName(scoresColumnFamily);
-		scoresColumnFamilyDefinition.setKeyspaceName(dbKeyspace);
+		scoresColumnFamilyDefinition.setKeyspaceName(keyspaceName);
 		scoresColumnFamilyDefinition.setKeyCacheSize(1000000);
 		scoresColumnFamilyDefinition.setRowCacheSize(1000000);
 		keyspaceDefinition.addColumnFamily(new ThriftCfDef(
@@ -181,7 +181,7 @@ public class CassandraConfiguration implements InitializingBean {
 		boolean keyspaceExists = false;
 		List<KeyspaceDefinition> keyspaces = cluster.describeKeyspaces();
 		for (KeyspaceDefinition kd : keyspaces) {
-			if (kd.getName().equals(dbKeyspace)) {
+			if (kd.getName().equals(keyspaceName)) {
 				keyspaceExists = true;
 				break;
 			}
