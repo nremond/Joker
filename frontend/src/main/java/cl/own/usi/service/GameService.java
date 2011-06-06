@@ -3,7 +3,6 @@ package cl.own.usi.service;
 import java.util.List;
 import java.util.Map;
 
-import cl.own.usi.gateway.netty.QuestionWorker;
 import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
 import cl.own.usi.model.User;
@@ -99,7 +98,7 @@ public interface GameService {
 	 *
 	 * @param questionWorker
 	 */
-	void scheduleQuestionReply(QuestionWorker questionWorker);
+	void scheduleQuestionReply(RunnableWithQuestionNumber questionWorker);
 
 	/**
 	 * Validates the answer and tells if the answer is correct or not
@@ -110,6 +109,13 @@ public interface GameService {
 	 */
 	boolean isAnswerCorrect(int questionNumber, Integer answer);
 
+	/**
+	 * Tells if the ranking request is allowed or not.
+	 *
+	 * @return
+	 */
+	boolean isLoginAllowed();
+	
 	/**
 	 * Tells if the ranking request is allowed or not.
 	 *

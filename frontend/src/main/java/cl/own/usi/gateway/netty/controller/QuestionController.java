@@ -9,6 +9,7 @@ import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.util.CharsetUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,7 @@ import cl.own.usi.cache.CachedUser;
 import cl.own.usi.gateway.netty.QuestionWorker;
 import cl.own.usi.model.Question;
 import cl.own.usi.service.GameService;
+import cl.own.usi.service.RunnableWithQuestionNumber;
 
 /**
  * Controller that send asynchronously the {@link Question}
@@ -52,27 +54,28 @@ public class QuestionController extends AbstractController {
 							.substring(URI_QUESTION_LENGTH));
 
 					if (!gameService.validateQuestionToRequest(questionNumber)) {
-						writeResponse(e, BAD_REQUEST);
-						getLogger().debug(
-								"Invalid question number {} requested", questionNumber);
+						gameService
+								.scheduleQuestionReply(new WrongQuestionWorker(
+										questionNumber, e));
 					} else {
 
-						final CachedUser cachedUser = getCacheManager().loadUser(userId);
-						
+						final CachedUser cachedUser = getCacheManager()
+								.loadUser(userId);
+
 						if (cachedUser == null) {
 							writeResponse(e, UNAUTHORIZED);
 							getLogger().info("User not authorized");
 							return;
-//						}
-//						
-//						UserAndScore userAndScore = workerClient
-//								.validateUserAndInsertQuestionRequest(userId,
-//										questionNumber);
-//
-//						if (userAndScore == null
-//								|| userAndScore.getUserId() == null) {
-//							writeResponse(e, UNAUTHORIZED);
-//							getLogger().info("Invalid userId {}", userId);
+							// }
+							//
+							// UserAndScore userAndScore = workerClient
+							// .validateUserAndInsertQuestionRequest(userId,
+							// questionNumber);
+							//
+							// if (userAndScore == null
+							// || userAndScore.getUserId() == null) {
+							// writeResponse(e, UNAUTHORIZED);
+							// getLogger().info("Invalid userId {}", userId);
 						} else {
 							getLogger().debug("Get Question {} for user {}",
 									questionNumber, userId);
@@ -91,10 +94,16 @@ public class QuestionController extends AbstractController {
 										.append("\"");
 							}
 
+							sb.append(",\"score\":\"").append(
+									cachedUser.getScore());
+							sb.append("\"}");
+
 							gameService
 									.scheduleQuestionReply(new QuestionWorker(
-											questionNumber, cachedUser.getScore(), e, sb
-													.toString(), gameService));
+											questionNumber, e,
+											sb.toString().getBytes(
+													CharsetUtil.UTF_8),
+											gameService));
 						}
 					}
 
@@ -110,4 +119,27 @@ public class QuestionController extends AbstractController {
 
 	}
 
+	private class WrongQuestionWorker implements RunnableWithQuestionNumber {
+
+		private final int questionNumber;
+		private final MessageEvent e;
+
+		public WrongQuestionWorker(final int questionNumber,
+				final MessageEvent e) {
+			this.questionNumber = questionNumber;
+			this.e = e;
+		}
+
+		public int getQuestionNumber() {
+			return questionNumber;
+		}
+
+		public void run() {
+
+			writeResponse(e, BAD_REQUEST);
+			getLogger().debug("Invalid question number {} requested",
+					questionNumber);
+
+		}
+	}
 }

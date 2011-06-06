@@ -58,6 +58,15 @@ public class ResponseHelper {
 		writeStringToReponse(s, e, response);
 
 	}
+	
+	public static void writeStringToReponse(final byte[] s,
+			final MessageEvent e, final HttpResponseStatus status) {
+
+		final HttpResponse response = new DefaultHttpResponse(HTTP_1_1, status);
+
+		writeBytesToResponse(s, e, response);
+
+	}
 
 	public static void doRedirect(final MessageEvent e, final String location) {
 

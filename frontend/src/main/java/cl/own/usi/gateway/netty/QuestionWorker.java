@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cl.own.usi.service.GameService;
+import cl.own.usi.service.RunnableWithQuestionNumber;
 
 /**
  * Thread that write asynchronously write the question to the channel.
@@ -17,39 +18,32 @@ import cl.own.usi.service.GameService;
  * @author bperroud
  *
  */
-public class QuestionWorker implements Runnable {
+public class QuestionWorker implements RunnableWithQuestionNumber {
 
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(QuestionWorker.class);
 
 	private final int questionNumber;
-	private final int score;
 	private final MessageEvent e;
-	private final String questionFirstPart;
+	private final byte[] message;
 
 	private GameService gameService;
 
-	public QuestionWorker(final int questionNumber, final int score, final MessageEvent e,
-			final String questionFirstPart, final GameService gameService) {
+	public QuestionWorker(final int questionNumber, final MessageEvent e,
+			final byte[] message, final GameService gameService) {
 		this.questionNumber = questionNumber;
-		this.score = score;
 		this.e = e;
-		this.questionFirstPart = questionFirstPart;
+		this.message = message;
 		this.gameService = gameService;
 	}
 
 	public void run() {
 
-		StringBuilder sb = new StringBuilder(questionFirstPart);
-
 		try {
 
 			if (gameService.waitOtherUsers(questionNumber)) {
 
-				sb.append(",\"score\":\"").append(score);
-				sb.append("\"}");
-
-				writeStringToReponse(sb.toString(), e, OK);
+				writeStringToReponse(message, e, OK);
 
 			} else {
 

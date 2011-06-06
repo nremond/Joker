@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import cl.own.usi.dao.GameDAO;
 import cl.own.usi.gateway.client.UserInfoAndScore;
 import cl.own.usi.gateway.client.WorkerClient;
-import cl.own.usi.gateway.netty.QuestionWorker;
 import cl.own.usi.gateway.utils.ExecutorUtil;
 import cl.own.usi.gateway.utils.ScoresHelper;
 import cl.own.usi.gateway.utils.Twitter;
@@ -32,6 +31,7 @@ import cl.own.usi.model.Game;
 import cl.own.usi.model.Question;
 import cl.own.usi.service.CachedScoreService;
 import cl.own.usi.service.GameService;
+import cl.own.usi.service.RunnableWithQuestionNumber;
 
 /**
  * Game service implementation.
@@ -75,11 +75,18 @@ public class GameServiceImpl implements GameService {
 
 	private final AtomicBoolean gameRunning = new AtomicBoolean(false);
 
+	private int proportionalDelta = 0;
+	
 	@Value(value = "${frontend.twitt:false}")
 	public void setTwitt(boolean twitt) {
 		this.twitt = twitt;
 	}
 
+	@Value(value = "${frontend.proportionalDelta:0}")
+	public void setProportionalDelta(int proportionalDelta) {
+		this.proportionalDelta = proportionalDelta;
+	}
+	
 	public boolean insertGame(int usersLimit, int questionTimeLimit,
 			int pollingTimeLimit, int synchroTimeLimit,
 			List<Map<String, Map<String, Boolean>>> questions) {
@@ -89,6 +96,9 @@ public class GameServiceImpl implements GameService {
 		}
 
 		resetPreviousGame();
+		
+		// cheat a little :)
+		questionTimeLimit += proportionalDelta;
 
 		Game game = gameDAO.insertGame(usersLimit, questionTimeLimit,
 				pollingTimeLimit, synchroTimeLimit, mapToQuestion(questions));
@@ -239,7 +249,7 @@ public class GameServiceImpl implements GameService {
 						"Start game with {} questions, {} users, {} seconds of question time frame, {} seconds of synchrotime",
 						new Object[] { gameDAO.getGame().getNumberOfQuestion(),
 								gameDAO.getGame().getUsersLimit(),
-								gameDAO.getGame().getQuestionTimeLimit(),
+								gameDAO.getGame().getQuestionTimeLimit() - proportionalDelta,
 								gameDAO.getGame().getSynchroTimeLimit() });
 
 				// Wait for the first login before starting pollingtimelimit
@@ -260,6 +270,7 @@ public class GameServiceImpl implements GameService {
 					boolean awaited = gameSynchronization.enoughUsersLatch
 							.await(gameSynchronization.game
 									.getPollingTimeLimit(), TimeUnit.SECONDS);
+					gameSynchronization.loginAllowed = false;
 					if (awaited) {
 						LOGGER.info("Enough users have joined the game and requested the first question.");
 					} else {
@@ -301,7 +312,7 @@ public class GameServiceImpl implements GameService {
 					try {
 						LOGGER.debug(
 								"Wait to all users answer, or till the timeout {}",
-								gameSynchronization.game.getQuestionTimeLimit());
+								gameSynchronization.game.getQuestionTimeLimit() - proportionalDelta);
 
 						// Wait the question time limit
 						LOGGER.debug("Question wait time ...");
@@ -494,6 +505,7 @@ public class GameServiceImpl implements GameService {
 
 		private final Game game;
 		private volatile boolean reseted = false;
+		private volatile boolean loginAllowed = true;
 
 		public GameSynchronization(final Game game) {
 
@@ -539,7 +551,7 @@ public class GameServiceImpl implements GameService {
 
 	}
 
-	public void scheduleQuestionReply(QuestionWorker questionWorker) {
+	public void scheduleQuestionReply(RunnableWithQuestionNumber questionWorker) {
 
 		if (questionWorker.getQuestionNumber() <= gameSynchronization.currentQuestionToRequest) {
 			executorUtil.getExecutorService().execute(questionWorker);
@@ -659,5 +671,11 @@ public class GameServiceImpl implements GameService {
 			} while (nextIteration);
 		}
 
+	}
+
+	@Override
+	public boolean isLoginAllowed() {
+		final GameSynchronization gameSynchronization = this.gameSynchronization;
+		return gameSynchronization == null || gameSynchronization.loginAllowed;
 	}
 }

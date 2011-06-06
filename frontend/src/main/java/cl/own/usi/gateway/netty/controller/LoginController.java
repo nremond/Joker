@@ -61,6 +61,11 @@ public class LoginController extends AbstractController {
 
 		if (request.getMethod() == HttpMethod.POST) {
 
+			if (!gameService.isLoginAllowed()) {
+				writeResponse(e, BAD_REQUEST);
+				return;
+			}
+			
 			final LoginRequest loginRequest = jsonObjectMapper.readValue(
 					request.getContent().toString(CharsetUtil.UTF_8),
 					LoginRequest.class);
